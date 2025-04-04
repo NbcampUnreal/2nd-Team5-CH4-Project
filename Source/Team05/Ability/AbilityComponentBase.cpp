@@ -20,6 +20,7 @@ void UAbilityComponentBase::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UAbilityComponentBase::Attack()
 {
+	
 }
 
 void UAbilityComponentBase::UpperAttack()
@@ -33,5 +34,6 @@ void UAbilityComponentBase::LowerAttack()
 void UAbilityComponentBase::FrontAttack()
 {
 }
+
 
 

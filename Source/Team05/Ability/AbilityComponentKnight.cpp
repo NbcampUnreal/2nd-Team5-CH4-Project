@@ -34,3 +34,19 @@ void UAbilityComponentKnight::TickComponent(float DeltaTime, ELevelTick TickType
 	// ...
 }
 
+void UAbilityComponentKnight::SpecialAttack()
+{
+}
+
+void UAbilityComponentKnight::SpecialUpperAttack()
+{
+}
+
+void UAbilityComponentKnight::SpecialLowerAttack()
+{
+}
+
+void UAbilityComponentKnight::SpecialFrontAttack()
+{
+}
+
