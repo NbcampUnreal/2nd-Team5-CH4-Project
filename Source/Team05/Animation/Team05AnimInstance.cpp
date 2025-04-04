@@ -2,6 +2,7 @@
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Team05/Character/BaseCharacter.h"
 
 void UTeam05AnimInstance::NativeInitializeAnimation()
 {
@@ -27,5 +28,14 @@ void UTeam05AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	GroundSpeed = FVector(Velocity.X, Velocity.Y, 0.f).Size();
 	bShouldMove = ((OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero()) == false) && (GroundSpeed > 3.f);
 	bIsFalling = OwnerCharacterMovementComponent->IsFalling();
+}
+
+void UTeam05AnimInstance::AnimNotify_CheckAttackHit()
+{
+	ABaseCharacter* OwnerPlayerCharacter = Cast<ABaseCharacter>(OwnerCharacter);
+	if (IsValid(OwnerPlayerCharacter))
+	{
+		OwnerPlayerCharacter->CheckAttackHit();
+	}
 }
 
