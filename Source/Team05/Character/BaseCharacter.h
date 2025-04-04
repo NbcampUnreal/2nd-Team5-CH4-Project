@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UAbilityComponentKnight;
 struct FInputActionValue;
 
 UENUM()
@@ -38,6 +39,9 @@ protected:
 	int32 Life;
 	// 현재 키보드 입력 방향
 	EDirectionEnum CurrentDirection;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAbilityComponentKnight> AbilityComponent;
 
 public:	
 	// Called every frame

@@ -5,6 +5,7 @@
 #include "MyPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Team05/Ability/AbilityComponentKnight.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -17,6 +18,8 @@ ABaseCharacter::ABaseCharacter()
 	GetCharacterMovement()->AirControl = 1.0f;
 	FatigueRate = 0;
 	Life = 3;
+
+	AbilityComponent = CreateDefaultSubobject<UAbilityComponentKnight>("Ability Component");
 }
 
 // Called when the game starts or when spawned
@@ -203,6 +206,7 @@ void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
 
 void ABaseCharacter::SpecialAttack(const FInputActionValue& Value)
 {
+	AbilityComponent->SpecialAttack();
 }
 
 void ABaseCharacter::SpecialMove(const FInputActionValue& Value)
