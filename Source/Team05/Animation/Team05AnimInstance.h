@@ -35,4 +35,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	uint8 bIsFalling : 1;
+
+	bool bIsAIControlled = false;
 };

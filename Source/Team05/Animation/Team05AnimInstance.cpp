@@ -1,5 +1,6 @@
 #include "Team05AnimInstance.h"
 
+#include "Elements/Framework/TypedElementQueryBuilder.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -7,6 +8,11 @@ void UTeam05AnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
+	if (TryGetPawnOwner()->IsPlayerControlled() == false)
+	{
+		bIsAIControlled = true;
+	}
+	
 	OwnerCharacter = Cast<ACharacter>(GetOwningActor());
 	if (IsValid(OwnerCharacter) == true)
 	{
@@ -23,9 +29,18 @@ void UTeam05AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
+	bIsFalling = OwnerCharacterMovementComponent->IsFalling();
 	Velocity = OwnerCharacterMovementComponent->Velocity;
 	GroundSpeed = FVector(Velocity.X, Velocity.Y, 0.f).Size();
-	bShouldMove = ((OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero()) == false) && (GroundSpeed > 3.f);
-	bIsFalling = OwnerCharacterMovementComponent->IsFalling();
+	
+	if (bIsAIControlled == true)
+	{
+		bShouldMove = GroundSpeed > 3.f;
+	}
+	else
+	{
+
+		bShouldMove = ((OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero()) == false) && (GroundSpeed > 3.f);
+	}
 }
 
