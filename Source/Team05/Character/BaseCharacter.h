@@ -57,13 +57,13 @@ protected:
 	TObjectPtr<UAnimMontage> EmoteMontage;
 
 	// 서버
-	UPROPERTY(ReplicatedUsing = OnRep_ServerRotationYaw)
-	float ServerRotationYaw;
+
+	// 플레이어 입력 가능 여부
+	// 공격, 특수 공격, 가드 중 다른 입력 막기 (bInputEnabled = true)
+	// 각 애니메이션이 끝났을 때 replication 됨
 	UPROPERTY(ReplicatedUsing = OnRep_InputEnabled)
 	uint8 bInputEnabled : 1;
-
-	UFUNCTION()
-	void OnRep_ServerRotationYaw();
+	
 	UFUNCTION()
 	void OnRep_TakeDamage();
 	UFUNCTION()
@@ -74,6 +74,9 @@ protected:
 	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerAttack(float InStartAttackTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRotateCharacter(float YawValue);
 
 public:	
 	// Called every frame
@@ -102,4 +105,6 @@ public:
 	void Emote(const FInputActionValue& Value);
 
 	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
+
+	void DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
 };

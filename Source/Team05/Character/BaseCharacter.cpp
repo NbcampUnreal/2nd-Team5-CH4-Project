@@ -19,10 +19,7 @@ ABaseCharacter::ABaseCharacter()
 	AttackTimeDifference(0.f),
 	bInputEnabled(true)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	// 코드로 직접 로테이션 제어하기 위해 비활성화
-	bUseControllerRotationYaw = false;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
 	GetCharacterMovement()->AirControl = 1.0f;
 }
@@ -30,10 +27,9 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ThisClass, ServerRotationYaw);
+	DOREPLIFETIME(ThisClass, bInputEnabled);
 }
 
-// Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -41,11 +37,6 @@ void ABaseCharacter::BeginPlay()
 	{
 		BaseAttackMontagePlayTime = BaseAttackMontage->GetPlayLength();	
 	}
-}
-
-void ABaseCharacter::OnRep_ServerRotationYaw()
-{
-	SetActorRotation(FRotator(0.f, ServerRotationYaw, 0.f));
 }
 
 void ABaseCharacter::OnRep_TakeDamage()
@@ -78,7 +69,7 @@ void ABaseCharacter::OnRep_InputEnabled()
 
 void ABaseCharacter::MulticastRPCAttack_Implementation()
 {
-	if (HasAuthority() == false && IsLocallyControlled() == false)
+	if (!HasAuthority() && !IsLocallyControlled())
 	{
 		PlayMontage(BaseAttackMontage);
 	}
@@ -97,7 +88,7 @@ void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
 		FTimerHandle TimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
 		{
-			// bInputEnabled = true;
+			bInputEnabled = true;
 			// OnRep_InputEnabled();
 		}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
 	}
@@ -110,18 +101,21 @@ void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
 
 bool ABaseCharacter::ServerAttack_Validate(float InStartAttackTime)
 {
-#if WITH_EDITOR
-	UE_LOG(LogTemp, Warning, TEXT("PIE Client Index: %d"), static_cast<int32>(GPlayInEditorID));
-#endif
 	FName Name = *GetName();
 	if (LastStartAttackTime == 0.0f)
 	{
 		// 최초 공격은 일단 통과.
 		return true;
 	}
-
 	return (BaseAttackMontagePlayTime - 0.1f) < (InStartAttackTime - LastStartAttackTime);
 }
+
+void ABaseCharacter::ServerRotateCharacter_Implementation(const float YawValue)
+{
+	
+	SetActorRotation(FRotator(0.f, YawValue, 0.f));
+}
+
 
 float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
@@ -129,15 +123,16 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	{
 		return 0;
 	}
-	
-	FatigueRate += DamageAmount;
+	const int DamageAmountInt = static_cast<int32>(DamageAmount);
+	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
+	FatigueRate += DamageAmountInt;
 	return DamageAmount;
 }
 
 
 void ABaseCharacter::CheckAttackHit()
 {
-	if (IsLocallyControlled())
+	if (HasAuthority())
 	{
 		TArray<FHitResult> OutHitResults;
 		TSet<ACharacter*> DamagedCharacters;
@@ -156,7 +151,7 @@ void ABaseCharacter::CheckAttackHit()
 			for (auto const& OutHitResult : OutHitResults)
 			{
 				ACharacter* DamagedCharacter = Cast<ACharacter>(OutHitResult.GetActor());
-				if (IsValid(DamagedCharacter) == true)
+				if (IsValid(DamagedCharacter))
 				{
 					DamagedCharacters.Add(DamagedCharacter);
 				}
@@ -166,6 +161,9 @@ void ABaseCharacter::CheckAttackHit()
 			{
 				UGameplayStatics::ApplyDamage(DamagedCharacter, 5.0f, GetController(), this, UDamageType::StaticClass());
 			}
+
+			FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
+			DrawDebugMeleeAttack(DrawColor, Start, End, Forward);
 		}
 	}
 }
@@ -290,12 +288,13 @@ void ABaseCharacter::Move1D(const FInputActionValue& Value)
 
 	if (const float MoveInput = Value.Get<float>(); !FMath::IsNearlyZero(MoveInput))
 	{
-		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), MoveInput);
+		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveInput);
 		if (bInputEnabled)
 		{
-			// 캐릭터 회전 반영
-			ServerRotationYaw = MoveInput > 0.f ? 0.f : 180.f;
-			OnRep_ServerRotationYaw();
+			const float Yaw = MoveInput > 0.f ? 0.f : 180.f;
+
+			// 회전 적용
+			GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
 		}
 	}
 }
@@ -332,16 +331,8 @@ void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
 {
 	if (bInputEnabled)
 	{
-		// bInputEnabled = false;
-		// OnRep_InputEnabled();
-		//
-		// GetCharacterMovement()->SetMovementMode(MOVE_None);
-		if (!HasAuthority() && IsLocallyControlled())
-		{
-			ServerAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
-		}
-		// PlayMontage(BaseAttackMontage);
-		
+		ServerAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
+		PlayMontage(BaseAttackMontage);
 	}
 }
 
@@ -372,3 +363,12 @@ void ABaseCharacter::PlayMontage(const TObjectPtr<UAnimMontage>& Montage)
 	}
 }
 
+void ABaseCharacter::DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd,
+	FVector Forward)
+{
+	const float MeleeAttackRange = 50.f;
+	const float MeleeAttackRadius = 50.f;
+	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
+	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
+	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
+}
