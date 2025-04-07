@@ -8,9 +8,13 @@ void UTeam05AnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	if (TryGetPawnOwner()->IsPlayerControlled() == false)
+	APawn* PossessedPawn = TryGetPawnOwner();
+	if (IsValid(PossessedPawn) == true)
 	{
-		bIsAIControlled = true;
+		if (PossessedPawn->IsPlayerControlled() == false)
+		{
+			bIsAIControlled = true;
+		}
 	}
 	
 	OwnerCharacter = Cast<ACharacter>(GetOwningActor());
