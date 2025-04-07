@@ -38,4 +38,6 @@ protected:
 
 	UFUNCTION()
 	void AnimNotify_CheckAttackHit();
+
+	bool bIsAIControlled = false;
 };

@@ -7,6 +7,7 @@
 #include "BaseCharacter.generated.h"
 
 class UInputAction;
+class UAbilityComponentKnight;
 struct FInputActionValue;
 
 UENUM()
@@ -77,6 +78,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRotateCharacter(float YawValue);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAbilityComponentKnight> AbilityComponent;
 
 public:	
 	// Called every frame

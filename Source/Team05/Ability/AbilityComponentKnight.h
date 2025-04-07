@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +5,7 @@
 #include "Components/SceneComponent.h"
 #include "AbilityComponentKnight.generated.h"
 
+class ABaseCharacter;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class TEAM05_API UAbilityComponentKnight : public USceneComponent, public ISpecialAttack
@@ -14,15 +13,12 @@ class TEAM05_API UAbilityComponentKnight : public USceneComponent, public ISpeci
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
 	UAbilityComponentKnight();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -30,4 +26,25 @@ public:
 	virtual void SpecialUpperAttack() override;
 	virtual void SpecialLowerAttack() override;
 	virtual void SpecialFrontAttack() override;
+
+	void CheckAttackHit();
+	void OnAttackMontageEnded();
+	void DrawDebugAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> SpecialAttackAnimMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> SpecialUpperAttackAnimMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> SpecialLowerAttackAnimMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> SpecialFrontAttackAnimMontage;
+	
+	TObjectPtr<ABaseCharacter> OwnerCharacter;
+	
+	bool bCanAttack;
 };

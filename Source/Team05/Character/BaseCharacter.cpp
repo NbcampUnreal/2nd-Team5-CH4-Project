@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
+#include "Team05/Ability/AbilityComponentKnight.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -22,6 +23,10 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
 	GetCharacterMovement()->AirControl = 1.0f;
+	FatigueRate = 0;
+	Life = 3;
+
+	AbilityComponent = CreateDefaultSubobject<UAbilityComponentKnight>("Ability Component");
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -240,7 +245,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			{
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->SpecialAttackAction,
-					ETriggerEvent::Triggered,
+					ETriggerEvent::Started,
 					this,
 					&ABaseCharacter::SpecialAttack
 				);
@@ -251,7 +256,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			{
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->SpecialMoveAction,
-					ETriggerEvent::Triggered,
+					ETriggerEvent::Started,
 					this,
 					&ABaseCharacter::SpecialMove
 				);
@@ -273,7 +278,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			{
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->EmoteAction,
-					ETriggerEvent::Triggered,
+					ETriggerEvent::Started,
 					this,
 					&ABaseCharacter::Emote
 				);
@@ -338,6 +343,7 @@ void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
 
 void ABaseCharacter::SpecialAttack(const FInputActionValue& Value)
 {
+	AbilityComponent->SpecialAttack();
 }
 
 void ABaseCharacter::SpecialMove(const FInputActionValue& Value)
