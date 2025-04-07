@@ -120,19 +120,3 @@ void UAbilityComponentKnight::DrawDebugAttack(const FColor& DrawColor, FVector T
 	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
 }
 
-void UAbilityComponentKnight::SpecialAttack()
-{
-}
-
-void UAbilityComponentKnight::SpecialUpperAttack()
-{
-}
-
-void UAbilityComponentKnight::SpecialLowerAttack()
-{
-}
-
-void UAbilityComponentKnight::SpecialFrontAttack()
-{
-}
-

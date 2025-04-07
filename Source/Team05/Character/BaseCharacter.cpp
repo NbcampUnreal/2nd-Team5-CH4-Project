@@ -106,7 +106,6 @@ void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
 
 bool ABaseCharacter::ServerAttack_Validate(float InStartAttackTime)
 {
-	FName Name = *GetName();
 	if (LastStartAttackTime == 0.0f)
 	{
 		// 최초 공격은 일단 통과.
