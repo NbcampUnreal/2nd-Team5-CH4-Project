@@ -15,9 +15,11 @@ class TEAM05_API ISpecialAttack
 	GENERATED_BODY()
 
 public:
-	virtual void UpperAttack() = 0;
+	virtual void SpecialAttack() = 0;
+	
+	virtual void SpecialUpperAttack() = 0;
 
-	virtual void LowerAttack() = 0;
+	virtual void SpecialLowerAttack() = 0;
 
-	virtual void FrontAttack() = 0;
+	virtual void SpecialFrontAttack() = 0;
 };

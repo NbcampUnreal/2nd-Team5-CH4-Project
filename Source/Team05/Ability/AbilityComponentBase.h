@@ -3,25 +3,24 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "SpecialAttack.h"
-#include "AttackComponentBase.generated.h"
+#include "AbilityComponentBase.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class TEAM05_API UAttackComponentBase : public UActorComponent, public ISpecialAttack
+class TEAM05_API UAbilityComponentBase : public USceneComponent
 {
 	GENERATED_BODY()
 
 public:
-	UAttackComponentBase();
+	UAbilityComponentBase();
 
 protected:
 	virtual void BeginPlay() override;
 	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
-
-	virtual void UpperAttack() override;
-
-	virtual void LowerAttack() override;
-
-	virtual void FrontAttack() override;
+	
+	void Attack();
+	void UpperAttack();
+	void LowerAttack();
+	void FrontAttack();
 };

@@ -35,4 +35,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	uint8 bIsFalling : 1;
+
+	UFUNCTION()
+	void AnimNotify_CheckAttackHit();
+
+	bool bIsAIControlled = false;
 };

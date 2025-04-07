@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UInputAction;
+class UAbilityComponentKnight;
 struct FInputActionValue;
 
 UENUM()
@@ -25,19 +27,58 @@ class TEAM05_API ABaseCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ABaseCharacter();
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	// 피로도 (높을 수록 멀리 타격됨, 매치마다 0으로 초기화)
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
 	int32 FatigueRate;
 	// 생명 (매치마다 3개로 초기화)
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
 	int32 Life;
 	// 현재 키보드 입력 방향
 	EDirectionEnum CurrentDirection;
+
+	float BaseAttackMontagePlayTime;
+	float LastStartAttackTime;
+	float AttackTimeDifference;
+
+	// 몽타주 리스트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> BaseAttackMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> GuardMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> EmoteMontage;
+
+	// 서버
+
+	// 플레이어 입력 가능 여부
+	// 공격, 특수 공격, 가드 중 다른 입력 막기 (bInputEnabled = true)
+	// 각 애니메이션이 끝났을 때 replication 됨
+	UPROPERTY(ReplicatedUsing = OnRep_InputEnabled)
+	uint8 bInputEnabled : 1;
+	
+	UFUNCTION()
+	void OnRep_TakeDamage();
+	UFUNCTION()
+	void OnRep_InputEnabled();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastRPCAttack();
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerAttack(float InStartAttackTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRotateCharacter(float YawValue);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAbilityComponentKnight> AbilityComponent;
 
 public:	
 	// Called every frame
@@ -46,12 +87,12 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	void CheckAttackHit();
+	
 	UFUNCTION()
 	void Move1D(const FInputActionValue& Value);
-	UFUNCTION()
-	void JumpStart(const FInputActionValue& Value);
-	UFUNCTION()
-	void JumpEnd(const FInputActionValue& Value);
 	UFUNCTION()
 	void SetDirection(const FInputActionValue& Value);
 	UFUNCTION()
@@ -64,4 +105,8 @@ public:
 	void Guard(const FInputActionValue& Value);
 	UFUNCTION()
 	void Emote(const FInputActionValue& Value);
+
+	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
+
+	void DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
 };
