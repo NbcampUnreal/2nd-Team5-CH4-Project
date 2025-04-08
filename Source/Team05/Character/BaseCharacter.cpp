@@ -195,7 +195,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 					MyPlayerController->MoveAction,
 					ETriggerEvent::Triggered,
 					this,
-					&ABaseCharacter::Move1D
+					&ABaseCharacter::Move1D_Input
 				);
 			}
 	
@@ -224,7 +224,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 					MyPlayerController->DirectionAction,
 					ETriggerEvent::Triggered,
 					this,
-					&ABaseCharacter::SetDirection
+					&ABaseCharacter::SetDirection_Input
+				);
+
+				EnhancedInputComponent->BindAction(
+					MyPlayerController->DirectionAction,
+					ETriggerEvent::Completed,
+					this,
+					&ABaseCharacter::ResetDirection
 				);
 			}
 	
@@ -286,32 +293,42 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
-void ABaseCharacter::Move1D(const FInputActionValue& Value)
+void ABaseCharacter::Move1D_Input(const FInputActionValue& Value)
 {
 	if (!Controller) return;
 
 	if (const float MoveInput = Value.Get<float>(); !FMath::IsNearlyZero(MoveInput))
 	{
-		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveInput);
-		if (bInputEnabled)
-		{
-			const float Yaw = MoveInput > 0.f ? 0.f : 180.f;
-
-			// 회전 적용
-			GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
-		}
+		Move1D(MoveInput);
 	}
 }
 
-void ABaseCharacter::SetDirection(const FInputActionValue& Value)
+void ABaseCharacter::SetDirection_Input(const FInputActionValue& Value)
 {
 	const FVector2D InputDirection = Value.Get<FVector2D>();
 
+	SetDirection(InputDirection);
+}
+
+void ABaseCharacter::Move1D(const float Value)
+{
+	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), Value);
+	if (bInputEnabled)
+	{
+		const float Yaw = Value > 0.f ? 0.f : 180.f;
+
+		// 회전 적용
+		GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
+	}
+}
+
+void ABaseCharacter::SetDirection(const FVector2D Value)
+{
 	// 키보드 입력을 구분하기 위한 각도 계산
 	// 위   90   (x = 0, y = 1)
 	// 아래 -90  (x = 0, y = 0)
 	// 앞   0    (x = 1, u = 0)
-	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(InputDirection.X, InputDirection.Y));
+	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
 	
 	if (AngleDegrees > 45.0f && AngleDegrees < 135.0f)
 	{
@@ -331,7 +348,12 @@ void ABaseCharacter::SetDirection(const FInputActionValue& Value)
 	}
 }
 
-void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
+void ABaseCharacter::ResetDirection()
+{
+	CurrentDirection = CurrentDirection = EDirectionEnum::ENone;
+}
+
+void ABaseCharacter::BaseAttack()
 {
 	if (bInputEnabled)
 	{
@@ -340,21 +362,21 @@ void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
 	}
 }
 
-void ABaseCharacter::SpecialAttack(const FInputActionValue& Value)
+void ABaseCharacter::SpecialAttack()
 {
 	AbilityComponent->SpecialAttack();
 }
 
-void ABaseCharacter::SpecialMove(const FInputActionValue& Value)
+void ABaseCharacter::SpecialMove()
 {
 	
 }
 
-void ABaseCharacter::Guard(const FInputActionValue& Value)
+void ABaseCharacter::Guard()
 {
 }
 
-void ABaseCharacter::Emote(const FInputActionValue& Value)
+void ABaseCharacter::Emote()
 {
 }
 
