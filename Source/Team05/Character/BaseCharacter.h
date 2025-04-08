@@ -19,6 +19,16 @@ enum EDirectionEnum
 	EDown,
 };
 
+UENUM()
+enum ECharacterState
+{
+    STATE_Idle,
+	STATE_Attack,
+	STATE_Guard,
+	STATE_OnAttacked
+};
+
+
 UCLASS()
 class TEAM05_API ABaseCharacter : public ACharacter
 {
