@@ -2,14 +2,16 @@
 
 
 #include "BaseCharacter.h"
+
+#include "MyPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
-#include "MyPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Team05/Ability/AbilityComponentKnight.h"
+
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -183,7 +185,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		if (AMyPlayerController* MyPlayerController = Cast<AMyPlayerController>(GetController()))
@@ -191,12 +193,16 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			// 캐릭터 이동 바인딩
 			if (MyPlayerController->MoveAction)
 			{
+				UE_LOG(LogTemp, Log, TEXT("Move Bind OK"));
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->MoveAction,
 					ETriggerEvent::Triggered,
 					this,
 					&ABaseCharacter::Move1D
 				);
+			}
+			else {
+				UE_LOG(LogTemp, Log, TEXT("Move Bind Fail"));
 			}
 	
 			// 캐릭터 점프 바인딩
@@ -283,23 +289,34 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 				);
 			}
 		}
+		else {
+			UE_LOG(LogTemp, Log, TEXT("Controller Cast Fail"));
+		}
+	}else {
+		UE_LOG(LogTemp, Log, TEXT("InputSystem Cast Fail"));
 	}
 }
 
 void ABaseCharacter::Move1D(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Log, TEXT("Move Called Start"));
 	if (!Controller) return;
-
+	UE_LOG(LogTemp, Log, TEXT("Move Controller OK"));
 	if (const float MoveInput = Value.Get<float>(); !FMath::IsNearlyZero(MoveInput))
 	{
 		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveInput);
 		if (bInputEnabled)
 		{
+			UE_LOG(LogTemp, Log, TEXT("Move Called"));
 			const float Yaw = MoveInput > 0.f ? 0.f : 180.f;
 
 			// 회전 적용
 			GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Move Fail"));
 	}
 }
 
@@ -376,4 +393,27 @@ void ABaseCharacter::DrawDebugMeleeAttack(const FColor& DrawColor, FVector Trace
 	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
 	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
 	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
+}
+
+void ABaseCharacter::PossessedBy(AController* NewController)
+{
+	// 부모 클래스 로직을 먼저 실행
+	Super::PossessedBy(NewController);
+
+	if (HasAuthority())
+	{
+		bInputEnabled = true;
+		OnRep_InputEnabled();
+	}
+}
+
+void ABaseCharacter::OnRep_Owner()
+{
+	// 부모 클래스의 처리 실행
+	Super::OnRep_Owner();
+}
+
+void ABaseCharacter::PostNetInit()
+{
+	Super::PostNetInit();
 }
