@@ -123,21 +123,31 @@ public:
 	void CheckAttackHit();
 	
 	UFUNCTION()
-	void Move1D(const FInputActionValue& Value);
+	void Move1D_Input(const FInputActionValue& Value);
 	UFUNCTION()
-	void SetDirection(const FInputActionValue& Value);
+	void SetDirection_Input(const FInputActionValue& Value);
+
+	// 캐릭터 행동 시작
+	// AI에서 그대로 사용
 	UFUNCTION()
-	void BaseAttack(const FInputActionValue& Value);
+	void Move1D(const float Value);
 	UFUNCTION()
-	virtual void SpecialAttack(const FInputActionValue& Value);
+	void SetDirection(FVector2D Value);
 	UFUNCTION()
-	virtual void SpecialMove(const FInputActionValue& Value);
+	void ResetDirection();
 	UFUNCTION()
-	void StartGuard(const FInputActionValue& Value);
+	void BaseAttack();
+	UFUNCTION()
+	virtual void SpecialAttack();
+	UFUNCTION()
+	virtual void SpecialMove();
+	UFUNCTION()
+	void StartGuard();
 	UFUNCTION()
 	void StopGuard();
 	UFUNCTION()
-	void Emote(const FInputActionValue& Value);
+	void Emote();
+	// 캐릭터 행동 끝
 
 	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
 
