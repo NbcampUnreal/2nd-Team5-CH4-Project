@@ -73,6 +73,27 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_InputEnabled)
 	uint8 bInputEnabled : 1;
 	
+	ECharacterState CurrentState;
+
+#pragma region Guard
+	UPROPERTY(ReplicatedUsing = OnRep_GuardState)
+	uint8 bOnGuard : 1;
+	int32 GuardStamina;
+	int32 MaxGuardStamina;
+	int32 GuardDamageReduction;
+	FTimerHandle GuardStaminaTimer;
+
+	UFUNCTION()
+	void OnRep_GuardState();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerRPCStartGuard();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPCStopGuard();
+	
+#pragma endregion
+	
 	UFUNCTION()
 	void OnRep_TakeDamage();
 	UFUNCTION()
@@ -112,7 +133,9 @@ public:
 	UFUNCTION()
 	virtual void SpecialMove(const FInputActionValue& Value);
 	UFUNCTION()
-	void Guard(const FInputActionValue& Value);
+	void StartGuard(const FInputActionValue& Value);
+	UFUNCTION()
+	void StopGuard();
 	UFUNCTION()
 	void Emote(const FInputActionValue& Value);
 
