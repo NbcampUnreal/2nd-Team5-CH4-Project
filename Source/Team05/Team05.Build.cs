@@ -8,7 +8,7 @@ public class Team05 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "CommonUI", "ModelViewViewModel", "UMG" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
