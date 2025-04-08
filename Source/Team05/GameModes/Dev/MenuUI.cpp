@@ -26,7 +26,8 @@ void UMenuUI::OnPlayButtonClicked()
 	if (IsValid(PlayerController) == true)
 	{
 		FText ServerIP = ServerIPEditableText->GetText();
-		PlayerController->JoinServer(ServerIP.ToString());
+		GetWorld()->ServerTravel("_MarioMap");
+		//PlayerController->JoinServer(ServerIP.ToString());
 	}
 }
 

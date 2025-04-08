@@ -34,22 +34,22 @@ void AGM_BattleMode::PostLogin(APlayerController* NewPlayer)
 	}
 
 	// 테스트용: Knight 캐릭터 강제 스폰
-	APS_PlayerState* PS = Cast<APS_PlayerState>(NewPlayer->PlayerState);
-	if (PS)
-	{
-		TSubclassOf<APawn> KnightClass = KnightCharacterClass;
-		if (KnightClass)
-		{
-			FVector SpawnLocation = FVector::ZeroVector; // TODO: 스폰 위치 조정
-			FRotator SpawnRotation = FRotator::ZeroRotator;
-			APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(KnightClass, SpawnLocation, SpawnRotation);
-			if (SpawnedPawn)
-			{
-				NewPlayer->Possess(SpawnedPawn);
-				UE_LOG(LogTemp, Log, TEXT("Knight Spawn And Posses Complete"));
-			}
-		}
-	}
+	//APS_PlayerState* PS = Cast<APS_PlayerState>(NewPlayer->PlayerState);
+	//if (PS)
+	//{
+	//	TSubclassOf<APawn> KnightClass = KnightCharacterClass;
+	//	if (KnightClass)
+	//	{
+	//		FVector SpawnLocation = FVector::ZeroVector; // TODO: 스폰 위치 조정
+	//		FRotator SpawnRotation = FRotator::ZeroRotator;
+	//		APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(KnightClass, SpawnLocation, SpawnRotation);
+	//		if (SpawnedPawn)
+	//		{
+	//			NewPlayer->Possess(SpawnedPawn);
+	//			UE_LOG(LogTemp, Log, TEXT("Knight Spawn And Posses Complete"));
+	//		}
+	//	}
+	//}
 }
 
 void AGM_BattleMode::Logout(AController* Exiting)
