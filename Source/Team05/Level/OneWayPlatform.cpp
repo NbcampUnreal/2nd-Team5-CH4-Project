@@ -52,15 +52,13 @@ void AOneWayPlatform::CheckPlayersPosition()
 
         if (PlayerZ < PlatformZ)
         {
-            // 아래에 있음 - 통과시킴
-            CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-            CollisionBox->IgnoreActorWhenMoving(Player, true);
+           
+            Player->GetCapsuleComponent()->IgnoreActorWhenMoving(this, true);// 캐릭터 측에서도 이 플랫폼을 무시하게 설정
 		}
         else
         {
-            // 위에 있음 - 막음
-            CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-            CollisionBox->IgnoreActorWhenMoving(Player, false);
+            
+            Player->GetCapsuleComponent()->IgnoreActorWhenMoving(this, false);
         }
     }
 }
