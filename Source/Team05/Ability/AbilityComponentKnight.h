@@ -28,8 +28,6 @@ public:
 	virtual void SpecialFrontAttack() override;
 
 	void CheckAttackHit();
-	void OnAttackMontageEnded();
-	void DrawDebugAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
