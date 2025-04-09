@@ -88,7 +88,6 @@ protected:
 	ECharacterState CurrentState;
 
 #pragma region Guard
-	UPROPERTY(ReplicatedUsing = OnRep_GuardState)
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
@@ -102,6 +101,9 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPCStopGuard();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCChangeGuard(bool bGuardState);
 	
 #pragma endregion
 	

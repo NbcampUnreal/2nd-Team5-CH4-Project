@@ -37,18 +37,14 @@ void UAbilityComponentKnight::SpecialAttack()
 	if (IsValid(OwnerCharacter) == true)
 	{
 		bCanAttack = false;
-		UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-		if (IsValid(AnimInstance) == true)
-		{
-			float MontagePlayTime = SpecialAttackAnimMontage->GetPlayLength();
-			OwnerCharacter->PlayMontage(SpecialAttackAnimMontage);
-			
-			FTimerHandle TimerHandle;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+		float MontagePlayTime = SpecialAttackAnimMontage->GetPlayLength();
+		OwnerCharacter->PlayMontage(SpecialAttackAnimMontage);
+		
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
 		{
 			bCanAttack = true;
 		}), MontagePlayTime, false, -1.f);
-		}
 	}
 
 	/*TArray<FHitResult> HitResults;
