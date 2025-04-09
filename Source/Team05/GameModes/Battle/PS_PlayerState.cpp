@@ -1,0 +1,31 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "PS_PlayerState.h"
+
+#include "Net/UnrealNetwork.h"
+
+APS_PlayerState::APS_PlayerState()
+{
+	// 기본 캐릭터는 Knight로 설정
+	CharacterType = ECharacterType::Knight;
+}
+
+void APS_PlayerState::SetCharacterType(ECharacterType InType)
+{
+	CharacterType = InType;
+}
+
+ECharacterType APS_PlayerState::GetCharacterType() const
+{
+	return CharacterType;
+}
+
+void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APS_PlayerState, CharacterType);
+}
+
+

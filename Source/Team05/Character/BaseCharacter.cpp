@@ -2,14 +2,16 @@
 
 
 #include "BaseCharacter.h"
+
+#include "MyPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
-#include "MyPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Team05/Ability/AbilityComponentKnight.h"
+
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -267,7 +269,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		if (AMyPlayerController* MyPlayerController = Cast<AMyPlayerController>(GetController()))
@@ -388,6 +390,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ABaseCharacter::Move1D_Input(const FInputActionValue& Value)
 {
+	
 	if (!Controller) return;
 
 	if (bInputEnabled == false)
@@ -505,4 +508,27 @@ void ABaseCharacter::DrawDebugMeleeAttack(const FColor& DrawColor, FVector Trace
 	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
 	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
 	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
+}
+
+void ABaseCharacter::PossessedBy(AController* NewController)
+{
+	// 부모 클래스 로직을 먼저 실행
+	Super::PossessedBy(NewController);
+
+	if (HasAuthority())
+	{
+		bInputEnabled = true;
+		OnRep_InputEnabled();
+	}
+}
+
+void ABaseCharacter::OnRep_Owner()
+{
+	// 부모 클래스의 처리 실행
+	Super::OnRep_Owner();
+}
+
+void ABaseCharacter::PostNetInit()
+{
+	Super::PostNetInit();
 }

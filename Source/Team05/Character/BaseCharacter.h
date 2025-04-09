@@ -152,4 +152,14 @@ public:
 	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
 
 	void DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
+
+	//서버 관련
+	// 서버에서 이 캐릭터를 특정 컨트롤러가 점유(Possess)할 때 호출됩니다.
+	virtual void PossessedBy(AController* NewController) override;
+
+	// 클라이언트에서 Owner가 복제될 때 호출됩니다.
+	virtual void OnRep_Owner() override;
+
+	// 네트워크 초기화 이후 호출됩니다. (PostReplication 관련)
+	virtual void PostNetInit() override;
 };

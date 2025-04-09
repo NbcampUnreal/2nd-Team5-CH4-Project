@@ -61,4 +61,17 @@ public:
 	UInputAction* EmoteAction;
 
 	virtual void BeginPlay() override;
+
+	// 서버 관련 함수들
+	// 컴포넌트 초기화 이후 호출
+	virtual void PostInitializeComponents() override;
+
+	// 네트워크 초기화 이후 호출
+	virtual void PostNetInit() override;
+
+	// 캐릭터 소유권 획득 시 호출
+	virtual void OnPossess(APawn* InPawn) override;
+
+	// 복제 변수 등록
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
