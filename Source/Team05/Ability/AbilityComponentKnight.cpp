@@ -36,22 +36,22 @@ void UAbilityComponentKnight::SpecialAttack()
 	
 	if (IsValid(OwnerCharacter) == true)
 	{
+		bCanAttack = false;
 		UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
 		if (IsValid(AnimInstance) == true)
 		{
-			bCanAttack = false;
 			float MontagePlayTime = SpecialAttackAnimMontage->GetPlayLength();
-			AnimInstance->StopAllMontages(true);
-			AnimInstance->Montage_Play(SpecialAttackAnimMontage);
+			OwnerCharacter->PlayMontage(SpecialAttackAnimMontage);
+			
 			FTimerHandle TimerHandle;
 			GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
 		{
-			OnAttackMontageEnded();
+			bCanAttack = true;
 		}), MontagePlayTime, false, -1.f);
 		}
 	}
 
-	TArray<FHitResult> HitResults;
+	/*TArray<FHitResult> HitResults;
 	TSet<ACharacter*> DamagedCharacters;
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(OwnerCharacter);
@@ -80,10 +80,7 @@ void UAbilityComponentKnight::SpecialAttack()
 		{
 			UGameplayStatics::ApplyDamage(DamagedCharacter, AttackDamage, OwnerCharacter->GetController(), OwnerCharacter, UDamageType::StaticClass());
 		}
-	}
-
-	FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
-	DrawDebugAttack(DrawColor, Start, End, Forward);
+	}*/
 }
 
 void UAbilityComponentKnight::SpecialUpperAttack()
@@ -103,20 +100,5 @@ void UAbilityComponentKnight::SpecialFrontAttack()
 
 void UAbilityComponentKnight::CheckAttackHit()
 {
-}
-
-void UAbilityComponentKnight::OnAttackMontageEnded()
-{
-	bCanAttack = true;
-}
-
-void UAbilityComponentKnight::DrawDebugAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd,
-	FVector Forward)
-{
-	const float MeleeAttackRange = 150.f;
-	const float MeleeAttackRadius = 100.f;
-	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
-	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
-	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
 }
 
