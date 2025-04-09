@@ -1,3 +1,4 @@
+//TitleGameMode.h
 
 #pragma once
 
@@ -10,7 +11,5 @@ UCLASS()
 class TEAM05_API ATitleGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
-public:
-	ATitleGameMode();
+
 };

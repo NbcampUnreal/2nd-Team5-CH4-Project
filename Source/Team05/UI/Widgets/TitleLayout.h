@@ -1,3 +1,4 @@
+//TitleLayout.h
 
 #pragma once
 
@@ -5,30 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "TitleLayout.generated.h"
 
-class UButton;
-
 UCLASS()
 class TEAM05_API UTitleLayout : public UUserWidget
 {
 	GENERATED_BODY()
-	
-public:
-	UTitleLayout(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-protected:
-	virtual void NativeConstruct() override;
-
-	UFUNCTION()
-	void OnPlayButtonClicked();
-
-	UFUNCTION()
-	void OnExitButtonClicked();
-
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = USTitleWidget, Meta = (AllowPrivateAccess, BindWidget))
-	TObjectPtr<UButton> PlayButton;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = USTitleWidget, Meta = (AllowPrivateAccess, BindWidget))
-	TObjectPtr<UButton> ExitButton;
 
 };

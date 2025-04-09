@@ -1,3 +1,4 @@
+//LoadingGameMode.h
 
 #pragma once
 
@@ -10,7 +11,5 @@ UCLASS()
 class TEAM05_API ALoadingGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
-public:
-	ALoadingGameMode();
+
 };
