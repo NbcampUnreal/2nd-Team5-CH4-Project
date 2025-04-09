@@ -53,6 +53,16 @@ protected:
 	// 현재 키보드 입력 방향
 	EDirectionEnum CurrentDirection;
 
+	// 넉백 관련 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KnockBack")
+	float DefaultKnockBackX;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KnockBack")
+	float DefaultKnockBackZ;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KnockBack")
+	float KnockBackCoefficientX;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KnockBack")
+	float KnockBackCoefficientZ;
+
 	float BaseAttackMontagePlayTime;
 	float LastStartAttackTime;
 	float AttackTimeDifference;
@@ -60,6 +70,8 @@ protected:
 	// 몽타주 리스트
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> BaseAttackMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> HitMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> GuardMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -80,7 +92,6 @@ protected:
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
-	int32 GuardDamageReduction;
 	FTimerHandle GuardStaminaTimer;
 
 	UFUNCTION()
@@ -107,6 +118,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRotateCharacter(float YawValue);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientHit();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAbilityComponentKnight> AbilityComponent;
@@ -149,6 +163,8 @@ public:
 	void Emote();
 	// 캐릭터 행동 끝
 
+	void KnockBack(const AActor* DamageCauser);
+	
 	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
 
 	void DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
