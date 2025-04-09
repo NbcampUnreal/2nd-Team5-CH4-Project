@@ -18,11 +18,11 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 	Super::PostLogin(NewPlayer);
 
 	// 테스트용: 접속한 플레이어는 자동으로 Ready 상태로 설정
-	if (APS_LobbyPlayer* PS = Cast<APS_LobbyPlayer>(NewPlayer->PlayerState))
+	/*if (APS_LobbyPlayer* PS = Cast<APS_LobbyPlayer>(NewPlayer->PlayerState))
 	{
 		PS->SetReady(true);
 		UE_LOG(LogTemp, Log, TEXT("Player %s is set to Ready (Test Mode)"), *PS->GetPlayerName());
-	}
+	}*/
 }
 
 void AGM_LobbyMode::Logout(AController* Exiting)
@@ -53,7 +53,6 @@ void AGM_LobbyMode::TryStartBattle()
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("LobbyMode: ReadyCount = %d / Total = %d"), ReadyCount, GameState->PlayerArray.Num());
 
 	if (ReadyCount >= MinPlayersToStart && ReadyCount == GameState->PlayerArray.Num())
 	{
@@ -65,8 +64,6 @@ void AGM_LobbyMode::TryStartBattle()
 			GS->SetLobbyState(ELobbyState::Countdown);
 			GS->SetCountdownTime(CountdownRemaining);
 		}
-
-		UE_LOG(LogTemp, Log, TEXT("LobbyMode: Countdown Started (%f seconds)"), BattleStartDelay);
 	}
 }
 

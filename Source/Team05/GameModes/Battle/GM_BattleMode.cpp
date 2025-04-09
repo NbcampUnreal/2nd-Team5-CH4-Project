@@ -11,6 +11,7 @@
 
 AGM_BattleMode::AGM_BattleMode()
 {
+	test = 0;
 }
 
 void AGM_BattleMode::PostLogin(APlayerController* NewPlayer)

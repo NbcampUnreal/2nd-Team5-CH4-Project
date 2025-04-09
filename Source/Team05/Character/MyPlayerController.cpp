@@ -23,6 +23,11 @@ void AMyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 게임 전용 입력 모드 설정
+	FInputModeGameOnly Mode;
+	SetInputMode(Mode);
+	bShowMouseCursor = false;
+
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
@@ -31,28 +36,6 @@ void AMyPlayerController::BeginPlay()
 			{
 				Subsystem->AddMappingContext(InputMappingContext, 0);
 			}
-			UE_LOG(LogTemp, Log, TEXT("CheckPoint"));
-		}
-	}
-
-	// Check if this is a local controller
-	if (IsLocalController())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Client] BeginPlay - Local Controller confirmed"));
-
-		// Check if the pawn is already possessed
-		APawn* MyPawn = GetPawn();
-		if (MyPawn)
-		{
-			// Try to get the display name of the pawn (character)
-			FString PawnName = MyPawn->GetName();
-			FString CharacterLabel = MyPawn->GetHumanReadableName();
-
-			UE_LOG(LogTemp, Warning, TEXT("[Client] Possessed Pawn: %s (Label: %s)"), *PawnName, *CharacterLabel);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("[Client] No Pawn possessed! Possess() might not have been called on client side"));
 		}
 	}
 }

@@ -36,3 +36,4 @@ void AMenuController::JoinServer(const FString& InIPAddress)
 	FName NextLevelName = FName(*InIPAddress);
 	UGameplayStatics::OpenLevel(GetWorld(), NextLevelName, true);
 }
+

@@ -193,16 +193,12 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			// 캐릭터 이동 바인딩
 			if (MyPlayerController->MoveAction)
 			{
-				UE_LOG(LogTemp, Log, TEXT("Move Bind OK"));
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->MoveAction,
 					ETriggerEvent::Triggered,
 					this,
 					&ABaseCharacter::Move1D
 				);
-			}
-			else {
-				UE_LOG(LogTemp, Log, TEXT("Move Bind Fail"));
 			}
 	
 			// 캐릭터 점프 바인딩
@@ -289,34 +285,24 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 				);
 			}
 		}
-		else {
-			UE_LOG(LogTemp, Log, TEXT("Controller Cast Fail"));
-		}
-	}else {
-		UE_LOG(LogTemp, Log, TEXT("InputSystem Cast Fail"));
 	}
 }
 
 void ABaseCharacter::Move1D(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Log, TEXT("Move Called Start"));
+	
 	if (!Controller) return;
-	UE_LOG(LogTemp, Log, TEXT("Move Controller OK"));
+	
 	if (const float MoveInput = Value.Get<float>(); !FMath::IsNearlyZero(MoveInput))
 	{
 		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveInput);
 		if (bInputEnabled)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Move Called"));
 			const float Yaw = MoveInput > 0.f ? 0.f : 180.f;
 
 			// 회전 적용
 			GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Move Fail"));
 	}
 }
 
