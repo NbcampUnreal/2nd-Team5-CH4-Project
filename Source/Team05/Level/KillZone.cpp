@@ -73,7 +73,7 @@ void AKillZone::OnCollisionBeginOverlap(
             UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(
                 GetWorld(),
                 P_Death,
-                FTransform(Rotation, Location, FVector(0.5f))  // Scale 0.5, 0.5, 0.5
+                FTransform(Rotation, Location, FVector(1.0f))  
             );
 
             if (PSC)
@@ -86,7 +86,7 @@ void AKillZone::OnCollisionBeginOverlap(
         //// 디버그 메시지
         //if (GEngine)
         //{
-        //    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("KillZone! 위치이동 + 사운드"));
+        //    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("KillZone!"));
         //}
 	}
 }

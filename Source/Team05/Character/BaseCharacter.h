@@ -73,6 +73,27 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_InputEnabled)
 	uint8 bInputEnabled : 1;
 	
+	ECharacterState CurrentState;
+
+#pragma region Guard
+	UPROPERTY(ReplicatedUsing = OnRep_GuardState)
+	uint8 bOnGuard : 1;
+	int32 GuardStamina;
+	int32 MaxGuardStamina;
+	int32 GuardDamageReduction;
+	FTimerHandle GuardStaminaTimer;
+
+	UFUNCTION()
+	void OnRep_GuardState();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerRPCStartGuard();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPCStopGuard();
+	
+#pragma endregion
+	
 	UFUNCTION()
 	void OnRep_TakeDamage();
 	UFUNCTION()
@@ -102,19 +123,31 @@ public:
 	void CheckAttackHit();
 	
 	UFUNCTION()
-	void Move1D(const FInputActionValue& Value);
+	void Move1D_Input(const FInputActionValue& Value);
 	UFUNCTION()
-	void SetDirection(const FInputActionValue& Value);
+	void SetDirection_Input(const FInputActionValue& Value);
+
+	// 캐릭터 행동 시작
+	// AI에서 그대로 사용
 	UFUNCTION()
-	void BaseAttack(const FInputActionValue& Value);
+	void Move1D(const float Value);
 	UFUNCTION()
-	virtual void SpecialAttack(const FInputActionValue& Value);
+	void SetDirection(FVector2D Value);
 	UFUNCTION()
-	virtual void SpecialMove(const FInputActionValue& Value);
+	void ResetDirection();
 	UFUNCTION()
-	void Guard(const FInputActionValue& Value);
+	void BaseAttack();
 	UFUNCTION()
-	void Emote(const FInputActionValue& Value);
+	virtual void SpecialAttack();
+	UFUNCTION()
+	virtual void SpecialMove();
+	UFUNCTION()
+	void StartGuard();
+	UFUNCTION()
+	void StopGuard();
+	UFUNCTION()
+	void Emote();
+	// 캐릭터 행동 끝
 
 	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
 

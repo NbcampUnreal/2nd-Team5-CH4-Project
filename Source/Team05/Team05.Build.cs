@@ -8,13 +8,14 @@ public class Team05 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "CommonUI", "ModelViewViewModel", "UMG" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
         PublicIncludePaths.AddRange(new string[]
         {
-            "Team05", // ÀÌ°Ô ¾øÀ¸¸é Çì´õÆÄÀÏ ÀÎÅ¬·çµå½Ã °æ·Î¸¦ Ã£Áö ¸øÇÔ.
+            "Team05", // ï¿½Ì°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Î¸ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		});
 
         // Uncomment if you are using Slate UI

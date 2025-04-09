@@ -20,7 +20,10 @@ ABaseCharacter::ABaseCharacter()
 	Life(3),
 	LastStartAttackTime(0.f),
 	AttackTimeDifference(0.f),
-	bInputEnabled(true)
+	bInputEnabled(true),
+	GuardStamina(100),
+	MaxGuardStamina(100),
+	GuardDamageReduction(100)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
@@ -35,6 +38,7 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ThisClass, bInputEnabled);
+	DOREPLIFETIME(ThisClass, bOnGuard);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -54,12 +58,22 @@ void ABaseCharacter::OnRep_TakeDamage()
 
 	//피격 사운드 실행
 
-	GEngine->AddOnScreenDebugMessage(
+	if (CurrentState == STATE_Guard)
+	{
+		GEngine->AddOnScreenDebugMessage(
 		-1,
 		5.0f,                  
 		FColor::Blue,
-		FString::Printf(TEXT("피격됨 피로도: %d"), FatigueRate)
-	);
+		FString::Printf(TEXT("피격되었지만 방어함 피로도: %d"), FatigueRate));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(
+		-1,
+		5.0f,                  
+		FColor::Blue,
+		FString::Printf(TEXT("피격됨 피로도: %d"), FatigueRate));
+	}
 }
 
 void ABaseCharacter::OnRep_InputEnabled()
@@ -127,12 +141,21 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 {
 	if (!HasAuthority())
 	{
-		return 0;
+		return 0.f;
 	}
-	const int DamageAmountInt = static_cast<int32>(DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
-	FatigueRate += DamageAmountInt;
-	return DamageAmount;
+
+	int32 ActualDamage = static_cast<int32>(Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser));
+	
+	if (CurrentState == STATE_Guard)
+	{
+		ActualDamage -= GuardDamageReduction;
+	}
+
+	// const int DamageAmountInt = static_cast<int32>(DamageAmount);
+	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), ActualDamage, FatigueRate);
+	
+	FatigueRate += ActualDamage;
+	return ActualDamage;
 }
 
 
@@ -174,6 +197,67 @@ void ABaseCharacter::CheckAttackHit()
 	}
 }
 
+void ABaseCharacter::OnRep_GuardState()
+{
+	if (bOnGuard)
+	{
+		PlayMontage(GuardMontage);
+	}
+	else
+	{
+		StopAnimMontage(GuardMontage);
+	}
+}
+
+void ABaseCharacter::ServerRPCStartGuard_Implementation()
+{
+	CurrentState = STATE_Guard;
+	bInputEnabled = false;
+	bOnGuard = true;
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			GuardStamina = FMath::Clamp(GuardStamina - 1, 0, MaxGuardStamina);
+			if (GuardStamina <= 0)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+				StopGuard();
+			}
+		}), 0.1f, true);
+	}
+}
+
+bool ABaseCharacter::ServerRPCStartGuard_Validate()
+{
+	if (GuardStamina > 10)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void ABaseCharacter::ServerRPCStopGuard_Implementation()
+{
+	CurrentState = STATE_Idle;
+	bInputEnabled = true;
+	bOnGuard = false;
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			GuardStamina = FMath::Clamp(GuardStamina + 1, 0, MaxGuardStamina);
+			if (GuardStamina >= MaxGuardStamina)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			}
+		}), 0.1f, true);
+	}
+}
+
 // Called every frame
 void ABaseCharacter::Tick(float DeltaTime)
 {
@@ -197,7 +281,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 					MyPlayerController->MoveAction,
 					ETriggerEvent::Triggered,
 					this,
-					&ABaseCharacter::Move1D
+					&ABaseCharacter::Move1D_Input
 				);
 			}
 	
@@ -226,7 +310,14 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 					MyPlayerController->DirectionAction,
 					ETriggerEvent::Triggered,
 					this,
-					&ABaseCharacter::SetDirection
+					&ABaseCharacter::SetDirection_Input
+				);
+
+				EnhancedInputComponent->BindAction(
+					MyPlayerController->DirectionAction,
+					ETriggerEvent::Completed,
+					this,
+					&ABaseCharacter::ResetDirection
 				);
 			}
 	
@@ -268,9 +359,18 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			{
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->GuardAction,
-					ETriggerEvent::Triggered,
+					ETriggerEvent::Started,
 					this,
-					&ABaseCharacter::Guard
+					&ABaseCharacter::StartGuard
+				);
+			}
+			if (MyPlayerController->GuardAction)
+			{
+				EnhancedInputComponent->BindAction(
+					MyPlayerController->GuardAction,
+					ETriggerEvent::Completed,
+					this,
+					&ABaseCharacter::StopGuard
 				);
 			}
 	
@@ -288,33 +388,48 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
-void ABaseCharacter::Move1D(const FInputActionValue& Value)
+void ABaseCharacter::Move1D_Input(const FInputActionValue& Value)
 {
 	
 	if (!Controller) return;
-	
+
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	if (const float MoveInput = Value.Get<float>(); !FMath::IsNearlyZero(MoveInput))
 	{
-		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveInput);
-		if (bInputEnabled)
-		{
-			const float Yaw = MoveInput > 0.f ? 0.f : 180.f;
-
-			// 회전 적용
-			GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
-		}
+		Move1D(MoveInput);
 	}
 }
 
-void ABaseCharacter::SetDirection(const FInputActionValue& Value)
+void ABaseCharacter::SetDirection_Input(const FInputActionValue& Value)
 {
 	const FVector2D InputDirection = Value.Get<FVector2D>();
 
+	SetDirection(InputDirection);
+}
+
+void ABaseCharacter::Move1D(const float Value)
+{
+	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), Value);
+	if (bInputEnabled)
+	{
+		const float Yaw = Value > 0.f ? 0.f : 180.f;
+
+		// 회전 적용
+		GetController()->SetControlRotation(FRotator(0.0f, Yaw, 0.0f));
+	}
+}
+
+void ABaseCharacter::SetDirection(const FVector2D Value)
+{
 	// 키보드 입력을 구분하기 위한 각도 계산
 	// 위   90   (x = 0, y = 1)
 	// 아래 -90  (x = 0, y = 0)
 	// 앞   0    (x = 1, u = 0)
-	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(InputDirection.X, InputDirection.Y));
+	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
 	
 	if (AngleDegrees > 45.0f && AngleDegrees < 135.0f)
 	{
@@ -334,7 +449,12 @@ void ABaseCharacter::SetDirection(const FInputActionValue& Value)
 	}
 }
 
-void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
+void ABaseCharacter::ResetDirection()
+{
+	CurrentDirection = CurrentDirection = EDirectionEnum::ENone;
+}
+
+void ABaseCharacter::BaseAttack()
 {
 	if (bInputEnabled)
 	{
@@ -343,21 +463,30 @@ void ABaseCharacter::BaseAttack(const FInputActionValue& Value)
 	}
 }
 
-void ABaseCharacter::SpecialAttack(const FInputActionValue& Value)
+void ABaseCharacter::SpecialAttack()
 {
-	AbilityComponent->SpecialAttack();
+	if (bInputEnabled)
+	{
+		AbilityComponent->SpecialAttack();
+	}
 }
 
-void ABaseCharacter::SpecialMove(const FInputActionValue& Value)
+void ABaseCharacter::SpecialMove()
 {
 	
 }
 
-void ABaseCharacter::Guard(const FInputActionValue& Value)
+void ABaseCharacter::StartGuard()
 {
+	ServerRPCStartGuard();
 }
 
-void ABaseCharacter::Emote(const FInputActionValue& Value)
+void ABaseCharacter::StopGuard()
+{
+	ServerRPCStopGuard();
+}
+
+void ABaseCharacter::Emote()
 {
 }
 
