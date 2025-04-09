@@ -20,8 +20,7 @@ ABaseCharacter::ABaseCharacter()
 	AttackTimeDifference(0.f),
 	bInputEnabled(true),
 	GuardStamina(100),
-	MaxGuardStamina(100),
-	GuardDamageReduction(100)
+	MaxGuardStamina(100)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
@@ -30,6 +29,13 @@ ABaseCharacter::ABaseCharacter()
 	Life = 3;
 
 	AbilityComponent = CreateDefaultSubobject<UAbilityComponentKnight>("Ability Component");
+
+	// 넉백 초기화
+	DefaultKnockBackX = 100.f;
+	DefaultKnockBackZ = 200.f;
+	KnockBackCoefficientX = 10.f;
+	KnockBackCoefficientZ = 5.f;
+	
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -137,23 +143,21 @@ void ABaseCharacter::ServerRotateCharacter_Implementation(const float YawValue)
 
 float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || CurrentState == STATE_Guard)
 	{
 		return 0.f;
 	}
 
-	int32 ActualDamage = static_cast<int32>(Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser));
-	
-	if (CurrentState == STATE_Guard)
-	{
-		ActualDamage -= GuardDamageReduction;
-	}
+	const int DamageAmountInt = static_cast<int32>(DamageAmount);
+	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
 
-	// const int DamageAmountInt = static_cast<int32>(DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), ActualDamage, FatigueRate);
+	// 넉백 처리
+	KnockBack(DamageCauser);
 	
-	FatigueRate += ActualDamage;
-	return ActualDamage;
+	ClientHit();
+
+	FatigueRate += DamageAmountInt;
+	return DamageAmount;
 }
 
 
@@ -254,6 +258,11 @@ void ABaseCharacter::ServerRPCStopGuard_Implementation()
 			}
 		}), 0.1f, true);
 	}
+}
+
+void ABaseCharacter::ClientHit_Implementation()
+{
+	PlayMontage(HitMontage);
 }
 
 // Called every frame
@@ -390,11 +399,6 @@ void ABaseCharacter::Move1D_Input(const FInputActionValue& Value)
 {
 	if (!Controller) return;
 
-	if (bInputEnabled == false)
-	{
-		return;
-	}
-
 	if (const float MoveInput = Value.Get<float>(); !FMath::IsNearlyZero(MoveInput))
 	{
 		Move1D(MoveInput);
@@ -476,15 +480,32 @@ void ABaseCharacter::SpecialMove()
 void ABaseCharacter::StartGuard()
 {
 	ServerRPCStartGuard();
+	PlayMontage(GuardMontage);
 }
 
 void ABaseCharacter::StopGuard()
 {
 	ServerRPCStopGuard();
+	StopAnimMontage(GuardMontage);
 }
 
 void ABaseCharacter::Emote()
 {
+	PlayMontage(EmoteMontage);
+}
+
+void ABaseCharacter::KnockBack(const AActor* DamageCauser)
+{
+	float XDirection = GetActorLocation().X - DamageCauser->GetActorLocation().X;
+	XDirection = (XDirection >= 0.f) ? 1.f : -1.f;
+	
+	const int32 KnockBackAmount = DefaultKnockBackX + KnockBackCoefficientX * FatigueRate;
+	const FVector KnockBackDir = FVector(XDirection, 0.f, 0.f);
+
+	FVector LaunchVelocity = KnockBackDir * KnockBackAmount;
+	LaunchVelocity.Z = DefaultKnockBackZ + KnockBackCoefficientZ * FatigueRate;
+	
+	LaunchCharacter(LaunchVelocity, true, true);
 }
 
 void ABaseCharacter::PlayMontage(const TObjectPtr<UAnimMontage>& Montage)
