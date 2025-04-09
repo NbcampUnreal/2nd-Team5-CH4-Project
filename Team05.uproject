@@ -10,6 +10,8 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
+				"UMG",
+				"AIModule",
 				"ModelViewViewModel",
 				"CommonUI"
 			]
