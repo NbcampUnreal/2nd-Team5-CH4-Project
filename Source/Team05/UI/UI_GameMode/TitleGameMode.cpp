@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//TitleGameMode.cpp
 
-
-#include "TitleGameMode.h"
-
+#include "UI/UI_GameMode/TitleGameMode.h"
+#include "UI/UI_Controller/TitlePlayerController.h"

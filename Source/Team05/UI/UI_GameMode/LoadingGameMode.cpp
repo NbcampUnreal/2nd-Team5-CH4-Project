@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//LoadingGameMode.cpp
 
-
-#include "LoadingGameMode.h"
-
+#include "UI/UI_GameMode/LoadingGameMode.h"
+#include "UI/UI_Controller/LoadingPlayerController.h"
