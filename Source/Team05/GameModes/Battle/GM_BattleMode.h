@@ -34,5 +34,4 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<AMyPlayerController>> DeadPlayerControllers;
 
-	int32 test;
 };
