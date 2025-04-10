@@ -7,22 +7,16 @@
 
 APS_LobbyPlayer::APS_LobbyPlayer()
 {
-	bReplicates = true; // 네트워크 동기화 설정
+	bReplicates = true;
+
+	Nickname = TEXT("Player");
+	CharacterType = ECharacterType::Knight;
+	bReady = false;
 }
 
-bool APS_LobbyPlayer::IsReady() const
+void APS_LobbyPlayer::SetNickname(const FString& NewNickname)
 {
-	return bIsReady;
-}
-
-void APS_LobbyPlayer::SetReady(bool bReady)
-{
-	bIsReady = bReady;
-}
-
-void APS_LobbyPlayer::SetNickname(const FString& InName)
-{
-	Nickname = InName;
+	Nickname = NewNickname;
 }
 
 FString APS_LobbyPlayer::GetNickname() const
@@ -30,23 +24,32 @@ FString APS_LobbyPlayer::GetNickname() const
 	return Nickname;
 }
 
-void APS_LobbyPlayer::SetCharacterType(const FName& InType)
+void APS_LobbyPlayer::SetCharacterType(ECharacterType NewType)
 {
-	CharacterType = InType;
+	CharacterType = NewType;
 }
 
-FName APS_LobbyPlayer::GetCharacterType() const
+ECharacterType APS_LobbyPlayer::GetCharacterType() const
 {
 	return CharacterType;
+}
+
+void APS_LobbyPlayer::SetReady(bool bNewReady)
+{
+	bReady = bNewReady;
+}
+
+bool APS_LobbyPlayer::IsReady() const
+{
+	return bReady;
 }
 
 void APS_LobbyPlayer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// Replicated 처리될 변수들 명시
-	DOREPLIFETIME(APS_LobbyPlayer, bIsReady);
 	DOREPLIFETIME(APS_LobbyPlayer, Nickname);
 	DOREPLIFETIME(APS_LobbyPlayer, CharacterType);
+	DOREPLIFETIME(APS_LobbyPlayer, bReady);
 }
 

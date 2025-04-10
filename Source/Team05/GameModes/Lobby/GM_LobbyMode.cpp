@@ -10,19 +10,22 @@
 
 AGM_LobbyMode::AGM_LobbyMode()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+
+	// 초기 상태값 설정
+	BattleStartDelay = 10.0f;
+	MinPlayersToStart = 2;
+	bStartCountdownStarted = false;
+	bMatchStarted = false;
+	CountdownRemaining = 0.0f;
 }
 
 void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	// 테스트용: 접속한 플레이어는 자동으로 Ready 상태로 설정
-	/*if (APS_LobbyPlayer* PS = Cast<APS_LobbyPlayer>(NewPlayer->PlayerState))
-	{
-		PS->SetReady(true);
-		UE_LOG(LogTemp, Log, TEXT("Player %s is set to Ready (Test Mode)"), *PS->GetPlayerName());
-	}*/
+	// 1초 간격으로 시작 조건 체크
+	GetWorldTimerManager().SetTimer(CheckReadyTimerHandle, this, &AGM_LobbyMode::CheckReadyToStart, 1.0f, true);
 }
 
 void AGM_LobbyMode::Logout(AController* Exiting)
@@ -30,18 +33,12 @@ void AGM_LobbyMode::Logout(AController* Exiting)
 	Super::Logout(Exiting);
 }
 
-void AGM_LobbyMode::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	TryStartBattle();
-	UpdateCountdown(DeltaSeconds);
-}
-
 void AGM_LobbyMode::TryStartBattle()
 {
 	if (bMatchStarted || bStartCountdownStarted) return;
 
 	int32 ReadyCount = 0;
+
 	for (APlayerState* PS : GameState->PlayerArray)
 	{
 		if (const APS_LobbyPlayer* MyPS = Cast<APS_LobbyPlayer>(PS))
@@ -53,7 +50,9 @@ void AGM_LobbyMode::TryStartBattle()
 		}
 	}
 
+	UE_LOG(LogTemp, Log, TEXT("LobbyMode: ReadyCount = %d / Total = %d"), ReadyCount, GameState->PlayerArray.Num());
 
+	// 모든 플레이어가 Ready 상태면 카운트다운 시작
 	if (ReadyCount >= MinPlayersToStart && ReadyCount == GameState->PlayerArray.Num())
 	{
 		bStartCountdownStarted = true;
@@ -64,23 +63,35 @@ void AGM_LobbyMode::TryStartBattle()
 			GS->SetLobbyState(ELobbyState::Countdown);
 			GS->SetCountdownTime(CountdownRemaining);
 		}
+
+		// 타이머 시작 (1초 간격)
+		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AGM_LobbyMode::CountdownTick, 1.0f, true);
+
+		UE_LOG(LogTemp, Log, TEXT("LobbyMode: Countdown Started (%f seconds)"), BattleStartDelay);
 	}
 }
 
-void AGM_LobbyMode::UpdateCountdown(float DeltaTime)
+void AGM_LobbyMode::CountdownTick()
 {
-	if (!bStartCountdownStarted || bMatchStarted) return;
-
-	CountdownRemaining -= DeltaTime;
+	CountdownRemaining -= 1.0f;
 
 	if (AGS_LobbyState* GS = GetGameState<AGS_LobbyState>())
 	{
-		GS->SetCountdownTime(FMath::Max(CountdownRemaining, 0.f));
+		GS->SetCountdownTime(FMath::Max(CountdownRemaining, 0.0f));
 	}
 
 	if (CountdownRemaining <= 0.0f)
 	{
+		GetWorldTimerManager().ClearTimer(CountdownTimerHandle);
 		StartBattle();
+	}
+}
+
+void AGM_LobbyMode::CheckReadyToStart()
+{
+	if (!bMatchStarted && !bStartCountdownStarted)
+	{
+		TryStartBattle();
 	}
 }
 
@@ -88,35 +99,28 @@ void AGM_LobbyMode::StartBattle()
 {
 	bMatchStarted = true;
 
-	if (AGS_LobbyState* GS = GetGameState<AGS_LobbyState>())
-	{
-		GS->SetLobbyState(ELobbyState::Transitioning);
-	}
+	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Starting Battle..."));
 
-	EBattleMapType SelectedMap = GetRandomMapEnum();
-	const FString MapPath = GetMapPathFromEnum(SelectedMap);
-	
+	// 랜덤 맵 선택
+	int32 MapIndex = FMath::RandRange(0, 1);  // Enum 값 범위 맵 늘어나면 수정 (0~1)
+	EBattleMap SelectedMap = static_cast<EBattleMap>(MapIndex);
+	FString MapPath = GetBattleMapPath(SelectedMap);
+
+	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Selected Map = %s"), *MapPath);
+
+	// 전투 맵으로 전환
 	GetWorld()->ServerTravel(MapPath);
 }
 
-// 전투 맵 Enum 값으로 실제 경로 반환
-FString AGM_LobbyMode::GetMapPathFromEnum(EBattleMapType MapType) const
+FString AGM_LobbyMode::GetBattleMapPath(EBattleMap Map) const
 {
-	switch (MapType)
+	switch (Map)
 	{
-	case EBattleMapType::Battlefield_01:
-		return TEXT("TestMap");
-	case EBattleMapType::Battlefield_02:
-		return TEXT("TestMap");
+	case EBattleMap::Battlefield_01:
+		return TEXT("_MarioMap");
+	case EBattleMap::Battlefield_02:
+		return TEXT("_MarioMap");
 	default:
-		return TEXT("TestMap");
+		return TEXT("_MarioMap");
 	}
-}
-
-// 무작위 맵 Enum 선택
-EBattleMapType AGM_LobbyMode::GetRandomMapEnum() const
-{
-	//맵 늘리면 숫자 조정해야됨
-	int32 RandIndex = FMath::RandRange(0, 1);
-	return static_cast<EBattleMapType>(RandIndex);
 }

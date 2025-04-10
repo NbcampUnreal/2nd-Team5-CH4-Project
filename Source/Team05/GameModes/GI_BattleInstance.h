@@ -6,17 +6,36 @@
 #include "Engine/GameInstance.h"
 #include "GI_BattleInstance.generated.h"
 
-// 캐릭터 선택 정보 구조체
+// 캐릭터 종류를 나타내는 열거형
+UENUM(BlueprintType)
+enum class ECharacterType : uint8
+{
+	//일단 나이트 추후 추가하면 됨
+	Knight UMETA(DisplayName = "Knight"),
+	Knight_2 UMETA(DisplayName = "Knight")
+};
+
+// 한 명의 플레이어 정보를 저장할 구조체 (닉네임 + 캐릭터 종류)
 USTRUCT(BlueprintType)
-struct FPlayerSelectInfo
+struct FPlayerInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY()
 	FString Nickname;
 
-	UPROPERTY(BlueprintReadWrite)
-	FName CharacterType;
+	UPROPERTY()
+	ECharacterType CharacterType;
+
+	FPlayerInfo()
+		: Nickname(TEXT("")), CharacterType(ECharacterType::Knight)
+	{
+	}
+
+	FPlayerInfo(const FString& InNickname, ECharacterType InType)
+		: Nickname(InNickname), CharacterType(InType)
+	{
+	}
 };
 
 /**
@@ -28,22 +47,20 @@ class TEAM05_API UGI_BattleInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	bool HasCompletedLobbySetup() const;
+	// 닉네임 중복 확인
+	bool IsNicknameTaken(const FString& Nickname) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	void SetCompletedLobbySetup(bool bCompleted);
+	// 플레이어 정보 등록 (닉네임 + 캐릭터)
+	void RegisterPlayerInfo(const FString& Nickname, ECharacterType Type);
 
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	const FPlayerSelectInfo& GetSelectInfo() const;
+	// GI_BattleInstance.h
+	void UpdateCharacterType(const FString& Nickname, ECharacterType NewType);
 
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	void SetSelectInfo(const FPlayerSelectInfo& Info);
-
-	UFUNCTION(BlueprintCallable)
-	void ResetSelection();
+	// 닉네임으로 캐릭터 종류 조회
+	ECharacterType GetCharacterTypeByNickname(const FString& Nickname) const;
 
 private:
-	bool bHasCompletedLobbySetup = false;
-	FPlayerSelectInfo SelectInfo;
+	// 닉네임을 키로 한 플레이어 정보 맵
+	UPROPERTY()
+	TMap<FString, FPlayerInfo> PlayerInfoMap;
 };

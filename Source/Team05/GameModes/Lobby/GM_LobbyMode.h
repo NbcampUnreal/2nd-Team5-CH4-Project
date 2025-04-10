@@ -9,10 +9,10 @@
 
 // 전투 맵 종류를 Enum으로 정의(맵 추가하면됨)
 UENUM(BlueprintType)
-enum class EBattleMapType : uint8
+enum class EBattleMap : uint8
 {
-	Battlefield_01 UMETA(DisplayName = "TestMap"),
-	Battlefield_02 UMETA(DisplayName = "TestMap")
+	Battlefield_01 UMETA(DisplayName = "_MarioMap"),
+	Battlefield_02 UMETA(DisplayName = "_MarioMap")
 };
 
 /**
@@ -28,25 +28,40 @@ public:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
-	virtual void Tick(float DeltaSeconds) override;
 
 protected:
+	// 전투 시작 조건 확인
 	void TryStartBattle();
-	FString GetMapPathFromEnum(EBattleMapType MapType) const;
-	EBattleMapType GetRandomMapEnum() const;
+
+	// 카운트다운 처리 (타이머 기반)
+	void CountdownTick();
+
+	// 모든 유저 게임 레디 확인
+	void CheckReadyToStart();
+
+	// 실제 전투 맵으로 이동
 	void StartBattle();
-	void UpdateCountdown(float DeltaTime);
 
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Lobby")
-	int32 MinPlayersToStart = 2;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Lobby")
-	float BattleStartDelay = 10.0f;
+	// 맵 Enum을 맵 경로로 변환
+	FString GetBattleMapPath(EBattleMap Map) const;
 
 private:
-	bool bMatchStarted = false;
-	bool bStartCountdownStarted = false;
-	float CountdownRemaining = 0.0f;
+	// 게임 레디 확인
+	FTimerHandle CheckReadyTimerHandle;
+	// 카운트다운 관리
+	FTimerHandle CountdownTimerHandle;
+
+	// 준비 인원 확인 후 전투 시작까지 대기하는 시간
+	UPROPERTY(EditDefaultsOnly)
+	float BattleStartDelay = 10.0f;
+
+	// 최소 시작 인원 수
+	UPROPERTY(EditDefaultsOnly)
+	int32 MinPlayersToStart = 2;
+
+	// 상태 변수
+	bool bStartCountdownStarted;
+	bool bMatchStarted;
+	float CountdownRemaining;
 };
 

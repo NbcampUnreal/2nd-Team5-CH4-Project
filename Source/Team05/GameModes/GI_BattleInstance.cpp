@@ -3,28 +3,32 @@
 
 #include "GI_BattleInstance.h"
 
-bool UGI_BattleInstance::HasCompletedLobbySetup() const
+bool UGI_BattleInstance::IsNicknameTaken(const FString& Nickname) const
 {
-	return bHasCompletedLobbySetup;
+	return PlayerInfoMap.Contains(Nickname);
 }
 
-void UGI_BattleInstance::SetCompletedLobbySetup(bool bCompleted)
+void UGI_BattleInstance::RegisterPlayerInfo(const FString& Nickname, ECharacterType Type)
 {
-	bHasCompletedLobbySetup = bCompleted;
+	if (!Nickname.IsEmpty())
+	{
+		PlayerInfoMap.Add(Nickname, FPlayerInfo(Nickname, Type));
+	}
 }
 
-const FPlayerSelectInfo& UGI_BattleInstance::GetSelectInfo() const
+void UGI_BattleInstance::UpdateCharacterType(const FString& Nickname, ECharacterType NewType)
 {
-	return SelectInfo;
+	if (PlayerInfoMap.Contains(Nickname))
+	{
+		PlayerInfoMap[Nickname].CharacterType = NewType;
+	}
 }
 
-void UGI_BattleInstance::SetSelectInfo(const FPlayerSelectInfo& Info)
+ECharacterType UGI_BattleInstance::GetCharacterTypeByNickname(const FString& Nickname) const
 {
-	SelectInfo = Info;
-}
-
-void UGI_BattleInstance::ResetSelection()
-{
-	bHasCompletedLobbySetup = false;
-	SelectInfo = FPlayerSelectInfo();
+	if (const FPlayerInfo* Info = PlayerInfoMap.Find(Nickname))
+	{
+		return Info->CharacterType;
+	}
+	return ECharacterType::Knight; // 기본값: 등록되지 않은 경우
 }

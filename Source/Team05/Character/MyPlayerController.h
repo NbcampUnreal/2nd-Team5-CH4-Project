@@ -74,4 +74,25 @@ public:
 
 	// 복제 변수 등록
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+#pragma region UI
+
+protected:
+	// 닉네임 입력 UI 클래스 (블루프린트에서 할당 가능)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> NameInputUIClass;
+
+	// 생성된 위젯 인스턴스
+	UPROPERTY()
+	UUserWidget* NameInputUI;
+
+	// 닉네임 체크
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_CheckNickname(const FString& Nickname);
+	// 체크 결과 출력
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Client_NicknameCheckResult(bool bAvailable);
+
+#pragma endregion
+
 };

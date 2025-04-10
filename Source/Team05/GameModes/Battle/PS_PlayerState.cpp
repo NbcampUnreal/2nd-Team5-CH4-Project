@@ -3,20 +3,21 @@
 
 #include "PS_PlayerState.h"
 
+#include "GameModes/GI_BattleInstance.h"
 #include "Net/UnrealNetwork.h"
 
 APS_PlayerState::APS_PlayerState()
 {
 	// 기본 캐릭터는 Knight로 설정
-	CharacterType = ECharacterType::Knight;
+	CharacterType = ECharacterType2::Knight;
 }
 
-void APS_PlayerState::SetCharacterType(ECharacterType InType)
+void APS_PlayerState::SetCharacterType(ECharacterType2 InType)
 {
 	CharacterType = InType;
 }
 
-ECharacterType APS_PlayerState::GetCharacterType() const
+ECharacterType2 APS_PlayerState::GetCharacterType() const
 {
 	return CharacterType;
 }
