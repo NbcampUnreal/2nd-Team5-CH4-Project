@@ -21,6 +21,7 @@ ABaseCharacter::ABaseCharacter()
 	LastStartAttackTime(0.f),
 	AttackTimeDifference(0.f),
 	bInputEnabled(true),
+	MaxJumpCount(2),
 	GuardStamina(100),
 	MaxGuardStamina(100)
 {
@@ -37,7 +38,8 @@ ABaseCharacter::ABaseCharacter()
 	DefaultKnockBackZ = 200.f;
 	KnockBackCoefficientX = 10.f;
 	KnockBackCoefficientZ = 5.f;
-	
+
+	Super::JumpMaxCount = MaxJumpCount;
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

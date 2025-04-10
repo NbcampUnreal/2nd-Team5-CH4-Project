@@ -25,7 +25,8 @@ enum ECharacterState
     STATE_Idle,
 	STATE_Attack,
 	STATE_Guard,
-	STATE_OnAttacked
+	STATE_OnAttacked,
+	STATE_Jumping
 };
 
 
@@ -86,6 +87,9 @@ protected:
 	uint8 bInputEnabled : 1;
 	
 	ECharacterState CurrentState;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 MaxJumpCount;
 
 #pragma region Guard
 	uint8 bOnGuard : 1;
