@@ -48,17 +48,6 @@ void AMyPlayerController::PostInitializeComponents()
 void AMyPlayerController::PostNetInit()
 {
 	Super::PostNetInit();
-
-	// 클라이언트 확인 용도로 가장 적합한 위치
-	if (IsLocalPlayerController())
-	{
-		UNetDriver* NetDriver = GetNetDriver();
-		if (IsValid(NetDriver))
-		{
-			UNetConnection* ServerConnection = NetDriver->ServerConnection;
-			// 서버 커넥션 확인 가능
-		}
-	}
 }
 
 void AMyPlayerController::OnPossess(APawn* InPawn)
