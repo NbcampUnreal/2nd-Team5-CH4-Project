@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "GameModes/GI_BattleInstance.h"
 #include "PS_LobbyPlayer.generated.h"
 
 /**
@@ -17,35 +18,32 @@ class TEAM05_API APS_LobbyPlayer : public APlayerState
 public:
 	APS_LobbyPlayer();
 
-	// 준비 여부 확인
-	UFUNCTION(BlueprintCallable, Category = "Lobby")
-	bool IsReady() const;
-
-	// 준비 여부 설정
-	void SetReady(bool bReady);
-
-	// 닉네임 설정 및 반환
-	void SetNickname(const FString& InName);
+	// 닉네임
+	void SetNickname(const FString& NewNickname);
 	FString GetNickname() const;
 
-	// 캐릭터 타입 설정 및 반환
-	void SetCharacterType(const FName& InType);
-	FName GetCharacterType() const;
+	// 캐릭터 타입
+	void SetCharacterType(ECharacterType NewType);
+	ECharacterType GetCharacterType() const;
+
+	// Ready 상태
+	void SetReady(bool bNewReady);
+	bool IsReady() const;
 
 protected:
-	// Replicated 변수 설정을 위한 함수
+	// 복제 등록
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-	// 캐릭터 선택 완료 여부
-	UPROPERTY(Replicated)
-	bool bIsReady = false;
-
-	// 플레이어 닉네임
+	// 닉네임 (서버 → 클라이언트 동기화)
 	UPROPERTY(Replicated)
 	FString Nickname;
 
-	// 선택한 캐릭터 이름 또는 타입
+	// 캐릭터 타입 (서버 → 클라이언트 동기화)
 	UPROPERTY(Replicated)
-	FName CharacterType;
+	ECharacterType CharacterType;
+
+	// 준비 여부
+	UPROPERTY(Replicated)
+	bool bReady;
 };

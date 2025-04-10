@@ -7,9 +7,10 @@
 #include "PS_PlayerState.generated.h"
 
 UENUM(BlueprintType)
-enum class ECharacterType : uint8
+enum class ECharacterType2 : uint8
 {
-	Knight UMETA(DisplayName = "Knight")
+	Knight UMETA(DisplayName = "Knight"),
+	Knight_2 UMETA(DisplayName = "Knight")
 	// 캐릭 추가하면 확장
 };
 
@@ -24,13 +25,13 @@ class TEAM05_API APS_PlayerState : public APlayerState
 public:
 	APS_PlayerState();
 
-	void SetCharacterType(ECharacterType InType);
-	ECharacterType GetCharacterType() const;
+	void SetCharacterType(ECharacterType2 InType);
+	ECharacterType2 GetCharacterType() const;
 
 protected:
 	// 선택된 캐릭터 종류
 	UPROPERTY(Replicated)
-	ECharacterType CharacterType;
+	ECharacterType2 CharacterType;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
