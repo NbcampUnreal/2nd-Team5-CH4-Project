@@ -1,17 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//TitleGameMode.h
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
+#include "GameFramework/GameModeBase.h"
 #include "TitleGameMode.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
-class TEAM05_API ATitleGameMode : public AGameMode
+class TEAM05_API ATitleGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
 };
