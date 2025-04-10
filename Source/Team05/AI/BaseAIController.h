@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "../Character/BaseCharacter.h"
 #include "BaseAIController.generated.h"
 
 /**
@@ -13,4 +14,27 @@ UCLASS()
 class TEAM05_API ABaseAIController : public AAIController
 {
 	GENERATED_BODY()
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="AI|Status")
+	bool direction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
+	float emoRate;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
+	float atkRate;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
+	float defRate;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
+	float range;	
+public:
+	ABaseAIController();
+	UFUNCTION(BlueprintCallable)
+	void AIBaseAttack();
+	UFUNCTION(BlueprintCallable)
+	void AIDefense();
+	UFUNCTION(BlueprintCallable)
+	void AIEmote();
+	UFUNCTION(BlueprintCallable)
+	void AISkillAttack();
+	UFUNCTION(BlueprintCallable)
+	void FindTarget();
 };
