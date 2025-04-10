@@ -24,9 +24,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
 	float defRate;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
-	float range;
-	APawn* ctrlPawn;
-	ABaseCharacter* ctrlChr;
+	float range;	
 public:
 	ABaseAIController();
 	UFUNCTION(BlueprintCallable)

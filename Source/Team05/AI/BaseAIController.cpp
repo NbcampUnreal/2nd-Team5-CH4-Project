@@ -10,20 +10,22 @@ ABaseAIController::ABaseAIController()
 	atkRate = 1.0f;
 	defRate = 0.0f;
 	range = 0.0f;
-	ctrlPawn = GetPawn();
-	ctrlChr = nullptr;
-	if (ctrlPawn)
-	{
-		ctrlChr = Cast<ABaseCharacter>(ctrlPawn);		
-	}
+	
 }
 
 void ABaseAIController::AIBaseAttack()
 {
-	if (ctrlChr)
+	APawn* ctrlPawn= GetPawn();
+	if (ctrlPawn)
 	{
-		//ctrlChr->BaseAttack();
+		ABaseCharacter* ctrlChr;
+		ctrlChr = Cast<ABaseCharacter>(ctrlPawn);
+		if (ctrlChr)
+		{
+			ctrlChr->BaseAttack();
+		}
 	}
+	
 }
 
 void ABaseAIController::AISkillAttack()
