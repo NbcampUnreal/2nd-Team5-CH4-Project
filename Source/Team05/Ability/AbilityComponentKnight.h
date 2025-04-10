@@ -27,7 +27,15 @@ public:
 	virtual void SpecialLowerAttack() override;
 	virtual void SpecialFrontAttack() override;
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPCAttack(UAnimMontage* Montage, float LaunchXDistance = 0.f, float LaunchZDistance = 0.f);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCAttack(UAnimMontage* Montage, float LaunchXDistance = 0.f, float LaunchZDistance = 0.f);
+
 	void CheckAttackHit();
+
+	void LaunchCharacter(float LaunchXDistance, float LaunchZDistance);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

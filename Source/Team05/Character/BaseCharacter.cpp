@@ -21,6 +21,7 @@ ABaseCharacter::ABaseCharacter()
 	LastStartAttackTime(0.f),
 	AttackTimeDifference(0.f),
 	bInputEnabled(true),
+	MaxJumpCount(2),
 	GuardStamina(100),
 	MaxGuardStamina(100)
 {
@@ -37,14 +38,14 @@ ABaseCharacter::ABaseCharacter()
 	DefaultKnockBackZ = 200.f;
 	KnockBackCoefficientX = 10.f;
 	KnockBackCoefficientZ = 5.f;
-	
+
+	Super::JumpMaxCount = MaxJumpCount;
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ThisClass, bInputEnabled);
-	DOREPLIFETIME(ThisClass, bOnGuard);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -218,29 +219,17 @@ void ABaseCharacter::ServerRPCStartGuard_Implementation()
 	CurrentState = STATE_Guard;
 	bInputEnabled = false;
 	bOnGuard = true;
-	if (IsValid(GetWorld()) == true)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
-		{
-			GuardStamina = FMath::Clamp(GuardStamina - 1, 0, MaxGuardStamina);
-			if (GuardStamina <= 0)
-			{
-				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-				StopGuard();
-			}
-		}), 0.1f, true);
-	}
+	MulticastRPCChangeGuard(bOnGuard);
 }
 
 bool ABaseCharacter::ServerRPCStartGuard_Validate()
 {
-	if (GuardStamina > 10)
+	if (GuardStamina < 0)
 	{
-		return true;
+		return false;
 	}
-
-	return false;
+	
+	return true;
 }
 
 void ABaseCharacter::ServerRPCStopGuard_Implementation()
@@ -248,17 +237,48 @@ void ABaseCharacter::ServerRPCStopGuard_Implementation()
 	CurrentState = STATE_Idle;
 	bInputEnabled = true;
 	bOnGuard = false;
-	if (IsValid(GetWorld()) == true)
+	MulticastRPCChangeGuard(bOnGuard);
+}
+
+void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
+{
+	if (bGuardState == true)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		if (IsValid(GetWorld()) == true)
 		{
-			GuardStamina = FMath::Clamp(GuardStamina + 1, 0, MaxGuardStamina);
-			if (GuardStamina >= MaxGuardStamina)
+			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
 			{
-				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-			}
-		}), 0.1f, true);
+				GuardStamina = FMath::Clamp(GuardStamina - 2, 0, MaxGuardStamina);
+				if (GuardStamina <= 0)
+				{
+					StopGuard();
+				}
+			}), 0.2f, true);
+		}
+		
+		if (GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == GuardMontage)
+		{
+			return;
+		}
+		PlayMontage(GuardMontage);
+	}
+	else
+	{
+		if (IsValid(GetWorld()) == true)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+			{
+				GuardStamina = FMath::Clamp(GuardStamina + 2, 0, MaxGuardStamina);
+				if (GuardStamina >= MaxGuardStamina)
+				{
+					GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+				}
+			}), 0.2f, true);
+		}
+		
+		StopAnimMontage(GuardMontage);
 	}
 }
 
@@ -482,14 +502,20 @@ void ABaseCharacter::SpecialMove()
 
 void ABaseCharacter::StartGuard()
 {
-	ServerRPCStartGuard();
+	if (GuardStamina < 10)
+	{
+		return;
+	}
+
 	PlayMontage(GuardMontage);
+	ServerRPCStartGuard();
 }
 
 void ABaseCharacter::StopGuard()
 {
-	ServerRPCStopGuard();
 	StopAnimMontage(GuardMontage);
+	
+	ServerRPCStopGuard();
 }
 
 void ABaseCharacter::Emote()

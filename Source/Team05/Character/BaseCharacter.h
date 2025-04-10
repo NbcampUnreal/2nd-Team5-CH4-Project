@@ -25,7 +25,8 @@ enum ECharacterState
     STATE_Idle,
 	STATE_Attack,
 	STATE_Guard,
-	STATE_OnAttacked
+	STATE_OnAttacked,
+	STATE_Jumping
 };
 
 
@@ -87,8 +88,10 @@ protected:
 	
 	ECharacterState CurrentState;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 MaxJumpCount;
+
 #pragma region Guard
-	UPROPERTY(ReplicatedUsing = OnRep_GuardState)
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
@@ -102,6 +105,9 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPCStopGuard();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCChangeGuard(bool bGuardState);
 	
 #pragma endregion
 	
