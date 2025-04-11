@@ -10,7 +10,7 @@ ABaseAIController::ABaseAIController()
 	atkRate = 1.0f;
 	defRate = 0.0f;
 	range = 0.0f;
-	
+	guardTime = 0.0f;
 }
 
 void ABaseAIController::AIBaseAttack()
@@ -33,17 +33,46 @@ void ABaseAIController::AISkillAttack()
 
 }
 
-void ABaseAIController::AIDefense()
+void ABaseAIController::AIStartDefense()
 {
+	APawn* ctrlPawn = GetPawn();
+	FTimerHandle guardTimer;
+	if (ctrlPawn)
+	{
+		ABaseCharacter* ctrlChr;
+		ctrlChr = Cast<ABaseCharacter>(ctrlPawn);
+		if (ctrlChr)
+		{
+			ctrlChr->StartGuard();
+			GetWorld()->GetTimerManager().SetTimer(guardTimer, this, &ABaseAIController::AIStopDefense, guardTime, false);
+		}
+	}
+}
 
+void ABaseAIController::AIStopDefense()
+{
+	APawn* ctrlPawn = GetPawn();
+	if (ctrlPawn)
+	{
+		ABaseCharacter* ctrlChr;
+		ctrlChr = Cast<ABaseCharacter>(ctrlPawn);
+		if (ctrlChr)
+		{
+			ctrlChr->StopGuard();
+		}
+	}
 }
 
 void ABaseAIController::AIEmote()
 {
-
-}
-
-void ABaseAIController::FindTarget()
-{
-
+	APawn* ctrlPawn = GetPawn();
+	if (ctrlPawn)
+	{
+		ABaseCharacter* ctrlChr;
+		ctrlChr = Cast<ABaseCharacter>(ctrlPawn);
+		if (ctrlChr)
+		{
+			ctrlChr->Emote();
+		}
+	}
 }
