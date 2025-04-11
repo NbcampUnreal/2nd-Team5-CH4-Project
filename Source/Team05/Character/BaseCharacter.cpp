@@ -319,7 +319,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			{
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->JumpAction,
-					ETriggerEvent::Triggered,
+					ETriggerEvent::Started,
 					this,
 					&ABaseCharacter::Jump
 				);
