@@ -202,6 +202,12 @@ void ABaseCharacter::CheckAttackHit()
 	}
 }
 
+void ABaseCharacter::ReduceLife()
+{
+	Life = FMath::Clamp(Life - 1, 0, 3);
+	FatigueRate = 0;
+}
+
 void ABaseCharacter::OnRep_GuardState()
 {
 	if (bOnGuard)
