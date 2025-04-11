@@ -7,11 +7,7 @@
 #include "GameModes/GI_BattleInstance.h"
 #include "PS_PlayerState.generated.h"
 
-<<<<<<< HEAD
-/**
- * 
- */
-=======
+
 UENUM(BlueprintType)
 enum class ECharacterType2 : uint8
 {
@@ -20,8 +16,6 @@ enum class ECharacterType2 : uint8
 
 };
 
-
->>>>>>> feature/Spawn
 UCLASS()
 class TEAM05_API APS_PlayerState : public APlayerState
 {
@@ -41,12 +35,7 @@ public:
 	bool IsReady() const;
 
 protected:
-<<<<<<< HEAD
-=======
-	UPROPERTY(Replicated)
-	ECharacterType2 CharacterType;
 
->>>>>>> feature/Spawn
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
