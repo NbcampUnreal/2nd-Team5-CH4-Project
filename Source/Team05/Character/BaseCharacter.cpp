@@ -464,22 +464,22 @@ void ABaseCharacter::Move1D(const float Value)
 void ABaseCharacter::SetDirection(const FVector2D Value)
 {
 	// 키보드 입력을 구분하기 위한 각도 계산
-	// 위   90   (x = 0, y = 1)
-	// 아래 -90  (x = 0, y = 0)
-	// 앞   0    (x = 1, u = 0)
+	// 위   0   (x = 0, y = 1)
+	// 앞   90    (x = 1, u = 0)
+	// 아래 180  (x = 0, y = -1)
 	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
 	
-	if (AngleDegrees > 45.0f && AngleDegrees < 135.0f)
+	if (AngleDegrees > -45.0f && AngleDegrees <= 45.0f)
 	{
 		CurrentDirection = EDirectionEnum::EUp;
 	}
-	else if (AngleDegrees < -45.0f && AngleDegrees >= -135.0f) 
-	{
-		CurrentDirection = EDirectionEnum::EDown;
-	}
-	else if (AngleDegrees > 45.0f && AngleDegrees <= 45.0f)
+	else if (AngleDegrees > 45.0f && AngleDegrees <= 135.0f) 
 	{
 		CurrentDirection = EDirectionEnum::EForward;
+	}
+	else if (AngleDegrees >= 135.0f && AngleDegrees < 225.f)
+	{
+		CurrentDirection = EDirectionEnum::EDown;
 	}
 	else
 	{
@@ -505,7 +505,22 @@ void ABaseCharacter::SpecialAttack()
 {
 	if (bInputEnabled)
 	{
-		AbilityComponent->SpecialAttack();
+		if (CurrentDirection == EDirectionEnum::EUp)
+		{
+			AbilityComponent->SpecialUpperAttack();
+		}
+		else if (CurrentDirection == EDirectionEnum::EForward)
+		{
+			AbilityComponent->SpecialFrontAttack();
+		}
+		else if (CurrentDirection == EDirectionEnum::EDown)
+		{
+			AbilityComponent->SpecialLowerAttack();
+		}
+		else
+		{
+			AbilityComponent->SpecialAttack();
+		}		
 	}
 }
 
