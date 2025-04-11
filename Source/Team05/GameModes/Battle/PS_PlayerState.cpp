@@ -4,29 +4,67 @@
 #include "PS_PlayerState.h"
 
 #include "GameModes/GI_BattleInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 APS_PlayerState::APS_PlayerState()
 {
-	// 기본 캐릭터는 Knight로 설정
-	CharacterType = ECharacterType2::Knight;
+	bReplicates = true;
+
+	Nickname = TEXT("Player");
+	CharacterType = ECharacterType::Knight;
+	bReady = false;
 }
 
-void APS_PlayerState::SetCharacterType(ECharacterType2 InType)
+void APS_PlayerState::SetNickname(const FString& NewNickname)
 {
-	CharacterType = InType;
+	Nickname = NewNickname;
 }
 
-ECharacterType2 APS_PlayerState::GetCharacterType() const
+FString APS_PlayerState::GetNickname() const
+{
+	return Nickname;
+}
+
+void APS_PlayerState::SetCharacterType(ECharacterType NewType)
+{
+	CharacterType = NewType;
+}
+
+ECharacterType APS_PlayerState::GetCharacterType() const
 {
 	return CharacterType;
+}
+
+void APS_PlayerState::RegisterToGameInstance()
+{
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+	{
+		GI->UpdateCharacterType(Nickname, CharacterType);
+		UE_LOG(LogTemp, Log, TEXT("[PlayerState] Info Registered to GameInstance: %s, %s"),
+			*Nickname,
+			*UEnum::GetValueAsString(CharacterType));
+	}
+}
+
+
+void APS_PlayerState::SetReady(bool bNewReady)
+{
+	bReady = bNewReady;
+}
+
+bool APS_PlayerState::IsReady() const
+{
+	return bReady;
 }
 
 void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(APS_PlayerState, Nickname);
 	DOREPLIFETIME(APS_PlayerState, CharacterType);
+	DOREPLIFETIME(APS_PlayerState, bReady);
 }
 
 
