@@ -11,7 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Lobby/GM_LobbyMode.h"
-#include "GameModes/Lobby/PS_LobbyPlayer.h"
+#include "GameModes/Battle/PS_PlayerState.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -116,7 +116,7 @@ void AMyPlayerController::Server_CheckNickname_Implementation(const FString& Nic
 	{
 		bool bSuccess = GI->TryRegisterNickname(Nickname);
 
-		if (APS_LobbyPlayer* MyPS = GetPlayerState<APS_LobbyPlayer>())
+		if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
 		{
 			if (bSuccess)
 			{
@@ -134,7 +134,7 @@ void AMyPlayerController::Server_CheckNickname_Implementation(const FString& Nic
 
 void AMyPlayerController::Server_SelectCharacter_Implementation(ECharacterType SelectedType)
 {
-	if (APS_LobbyPlayer* MyPS = GetPlayerState<APS_LobbyPlayer>())
+	if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
 	{
 		MyPS->SetCharacterType(SelectedType);
 
@@ -167,7 +167,7 @@ void AMyPlayerController::Client_OpenCharacterSelectWidget_Implementation()
 
 void AMyPlayerController::Server_ConfirmSelection_Implementation()
 {
-	if (APS_LobbyPlayer* PS = GetPlayerState<APS_LobbyPlayer>())
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
 	{
 		PS->SetReady(true); // 준비 완료 처리
 
@@ -178,6 +178,14 @@ void AMyPlayerController::Server_ConfirmSelection_Implementation()
 				GM->SpawnPlayerInLobby(this);
 			}
 		}
+	}
+}
+
+void AMyPlayerController::ReturnToTitle_Implementation()
+{
+	if (!HasAuthority())
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("DevMenu")), true);
 	}
 }
 

@@ -3,18 +3,28 @@
 
 #include "GS_BattleState.h"
 
+#include "Net/UnrealNetwork.h"
+#include "GameModes/Battle/GM_BattleMode.h"
 //debug
 #include "Kismet/KismetSystemLibrary.h"
 
-// µğ¹ö±ë¿ë ¸Ş¼¼Áö È£Ãâ
 void AGS_BattleState::Multicast_PrintMessage_Implementation(const FString& Msg)
 {
 	UKismetSystemLibrary::PrintString(
 		this,
 		Msg,
-		true,   // È­¸é¿¡ Ãâ·Â
-		true,   // ·Î±×¿¡µµ Ãâ·Â
+		true,   
+		true,   
 		FLinearColor::Yellow,
-		10.0f    // Áö¼Ó ½Ã°£
+		10.0f
 	);
+}
+
+void AGS_BattleState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// í´ë¼ì´ì–¸íŠ¸ì™€ ë™ê¸°í™”í•  ë³€ìˆ˜ ì§€ì •
+	DOREPLIFETIME(ThisClass, AlivePlayerControllerCount);
+	DOREPLIFETIME(ThisClass, MatchState);
 }

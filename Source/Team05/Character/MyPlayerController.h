@@ -119,4 +119,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_ConfirmSelection();
 
+	// 타이틀 화면으로 복귀 (클라이언트 RPC)
+	UFUNCTION(Client, Reliable)
+	void ReturnToTitle();
+
 };

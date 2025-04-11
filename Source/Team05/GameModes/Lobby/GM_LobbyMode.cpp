@@ -4,7 +4,7 @@
 #include "GameModes/Lobby/GM_LobbyMode.h"
 
 #include "GameModes/GI_BattleInstance.h"
-#include "GameModes/Lobby/PS_LobbyPlayer.h"
+#include "GameModes/Battle/PS_PlayerState.h"
 #include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameStateBase.h"
@@ -19,6 +19,9 @@ AGM_LobbyMode::AGM_LobbyMode()
 	bStartCountdownStarted = false;
 	bMatchStarted = false;
 	CountdownRemaining = 0.0f;
+
+	// SeamlessTravel 활성화
+	bUseSeamlessTravel = true;
 }
 
 void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
@@ -41,7 +44,7 @@ void AGM_LobbyMode::TryStartBattle()
 
 	for (APlayerState* PS : GameState->PlayerArray)
 	{
-		if (const APS_LobbyPlayer* MyPS = Cast<APS_LobbyPlayer>(PS))
+		if (const APS_PlayerState* MyPS = Cast<APS_PlayerState>(PS))
 		{
 			if (MyPS->IsReady())
 			{
@@ -63,7 +66,7 @@ void AGM_LobbyMode::TryStartBattle()
 			GS->SetCountdownTime(CountdownRemaining);
 		}
 
-		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AGM_LobbyMode::CountdownTick, 10.0f, true);
+		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AGM_LobbyMode::CountdownTick, 1.0f, true);
 
 		UE_LOG(LogTemp, Log, TEXT("LobbyMode: Countdown Started (%f seconds)"), BattleStartDelay);
 	}
@@ -104,8 +107,14 @@ void AGM_LobbyMode::StartBattle()
 	FString MapPath = GetBattleMapPath(SelectedMap);
 
 	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Selected Map = %s"), *MapPath);
+	MapPath = "/Game/_Level/Levels/_MarioMap?Listen";
 
-	GetWorld()->ServerTravel(MapPath);
+	if (HasAuthority())
+	{
+		//UE_LOG(LogTemp, Log, TEXT("SeamLessTravel"));
+		GetWorld()->ServerTravel(MapPath,true);
+		//GetWorld()->SeamlessTravel(MapPath, true);
+	}
 }
 
 FString AGM_LobbyMode::GetBattleMapPath(EBattleMap Map) const
@@ -125,7 +134,7 @@ void AGM_LobbyMode::SpawnPlayerInLobby(APlayerController* PC)
 {
 	if (!IsValid(PC)) return;
 
-	APS_LobbyPlayer* PS = Cast<APS_LobbyPlayer>(PC->PlayerState);
+	APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState);
 	if (!PS) return;
 
 	ECharacterType SelectedType = PS->GetCharacterType();

@@ -7,6 +7,9 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Character/BaseCharacter.h"
+#include "Character/MyPlayerController.h"
+#include "GameModes/Battle/GM_BattleMode.h"
 
 // Sets default values
 AKillZone::AKillZone()
@@ -55,11 +58,29 @@ void AKillZone::OnCollisionBeginOverlap(
 	{
         UE_LOG(LogTemp, Warning, TEXT("KillZone 충돌: %s"), *OtherActor->GetName());
 
+        // 캐릭터 라이프 깎기
+        if (ABaseCharacter* bc = Cast<ABaseCharacter>(OtherActor))
+        {
+            bc->ReduceLife();
+            if (bc->GetLife() <= 0)
+            {
+                // 사망처리
+                if (AGM_BattleMode* gamemode = Cast<AGM_BattleMode>(GetWorld()->GetAuthGameMode()))
+                {
+                    AMyPlayerController* Controller = Cast<AMyPlayerController>(bc->GetController());
+                    gamemode->OnCharacterDead(Controller);
+                    OtherActor->Destroy();
+                }
+            }
+            else {
+                // 액터를 새로운 위치로 이동
+                OtherActor->SetActorLocation(TeleportLocation);
+            }
+        }
+        
         FVector Location = OtherActor->GetActorLocation();
         FRotator Rotation = GetActorRotation(); 
 
-        // 액터를 새로운 위치로 이동
-        OtherActor->SetActorLocation(TeleportLocation);
 
         // 사운드 재생
         if (KillZoneSound)
