@@ -24,17 +24,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
 	float defRate;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
-	float range;	
+	float range;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI|Status")
+	float guardTime;
 public:
 	ABaseAIController();
 	UFUNCTION(BlueprintCallable)
 	void AIBaseAttack();
 	UFUNCTION(BlueprintCallable)
-	void AIDefense();
+	void AIStartDefense();
+	void AIStopDefense();
 	UFUNCTION(BlueprintCallable)
 	void AIEmote();
 	UFUNCTION(BlueprintCallable)
 	void AISkillAttack();
-	UFUNCTION(BlueprintCallable)
-	void FindTarget();
 };
