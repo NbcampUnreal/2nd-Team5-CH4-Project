@@ -62,6 +62,7 @@ void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	GetWorldTimerManager().ClearTimer(GuardStaminaTimer);
+	GuardStaminaTimer.Invalidate();
 }
 
 void ABaseCharacter::OnRep_TakeDamage()
