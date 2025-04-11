@@ -74,4 +74,53 @@ public:
 
 	// 복제 변수 등록
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+#pragma region UI
+
+public:
+	// 닉네임 입력 UI 클래스 (블루프린트에서 할당 가능)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> NameInputUIClass;
+
+	// 생성된 위젯 인스턴스
+	UPROPERTY()
+	UUserWidget* NameInputUI;
+
+	// Name 중복 결과 표시 텍스트
+	UPROPERTY(ReplicatedUsing = OnRep_NameCheckText, BlueprintReadOnly, Category = "Nickname")
+	FText NameCheckText;
+
+	// 캐릭터 선택 위젯 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> CharacterSelectUIClass;
+
+	// 생성된 캐릭터 선택 UI 인스턴스
+	UPROPERTY()
+	UUserWidget* CharacterSelectUI;
+
+	UFUNCTION()
+	void OnRep_NameCheckText();
+
+	// 닉네임 체크 및 서버에 정보 등록
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_CheckNickname(const FString& Nickname);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SelectCharacter(ECharacterType SelectedType);
+
+	// 캐릭터 UI 열기(클라이언트)
+	UFUNCTION(Client, Reliable)
+	void Client_OpenCharacterSelectWidget();
+
+#pragma endregion
+
+public:
+	// 캐릭터 선택 완료 후 서버에 알림
+	UFUNCTION(Server, Reliable)
+	void Server_ConfirmSelection();
+
+	// 타이틀 화면으로 복귀 (클라이언트 RPC)
+	UFUNCTION(Client, Reliable)
+	void ReturnToTitle();
+
 };

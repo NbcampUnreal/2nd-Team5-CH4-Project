@@ -25,7 +25,8 @@ enum ECharacterState
     STATE_Idle,
 	STATE_Attack,
 	STATE_Guard,
-	STATE_OnAttacked
+	STATE_OnAttacked,
+	STATE_Jumping
 };
 
 
@@ -43,6 +44,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// 피로도 (높을 수록 멀리 타격됨, 매치마다 0으로 초기화)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
@@ -87,8 +90,10 @@ protected:
 	
 	ECharacterState CurrentState;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 MaxJumpCount;
+
 #pragma region Guard
-	UPROPERTY(ReplicatedUsing = OnRep_GuardState)
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
@@ -102,6 +107,9 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPCStopGuard();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCChangeGuard(bool bGuardState);
 	
 #pragma endregion
 	
@@ -135,6 +143,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	
 	void CheckAttackHit();
+
+	void ReduceLife();
+	int32 GetLife() const { return Life; }
 	
 	UFUNCTION()
 	void Move1D_Input(const FInputActionValue& Value);

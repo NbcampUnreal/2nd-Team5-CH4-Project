@@ -21,6 +21,7 @@ ABaseCharacter::ABaseCharacter()
 	LastStartAttackTime(0.f),
 	AttackTimeDifference(0.f),
 	bInputEnabled(true),
+	MaxJumpCount(2),
 	GuardStamina(100),
 	MaxGuardStamina(100)
 {
@@ -37,14 +38,14 @@ ABaseCharacter::ABaseCharacter()
 	DefaultKnockBackZ = 200.f;
 	KnockBackCoefficientX = 10.f;
 	KnockBackCoefficientZ = 5.f;
-	
+
+	Super::JumpMaxCount = MaxJumpCount;
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ThisClass, bInputEnabled);
-	DOREPLIFETIME(ThisClass, bOnGuard);
 }
 
 void ABaseCharacter::BeginPlay()
@@ -54,6 +55,14 @@ void ABaseCharacter::BeginPlay()
 	{
 		BaseAttackMontagePlayTime = BaseAttackMontage->GetPlayLength();	
 	}
+}
+
+void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	GetWorldTimerManager().ClearTimer(GuardStaminaTimer);
+	GuardStaminaTimer.Invalidate();
 }
 
 void ABaseCharacter::OnRep_TakeDamage()
@@ -201,6 +210,12 @@ void ABaseCharacter::CheckAttackHit()
 	}
 }
 
+void ABaseCharacter::ReduceLife()
+{
+	Life = FMath::Clamp(Life - 1, 0, 3);
+	FatigueRate = 0;
+}
+
 void ABaseCharacter::OnRep_GuardState()
 {
 	if (bOnGuard)
@@ -218,29 +233,17 @@ void ABaseCharacter::ServerRPCStartGuard_Implementation()
 	CurrentState = STATE_Guard;
 	bInputEnabled = false;
 	bOnGuard = true;
-	if (IsValid(GetWorld()) == true)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
-		{
-			GuardStamina = FMath::Clamp(GuardStamina - 1, 0, MaxGuardStamina);
-			if (GuardStamina <= 0)
-			{
-				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-				StopGuard();
-			}
-		}), 0.1f, true);
-	}
+	MulticastRPCChangeGuard(bOnGuard);
 }
 
 bool ABaseCharacter::ServerRPCStartGuard_Validate()
 {
-	if (GuardStamina > 10)
+	if (GuardStamina < 0)
 	{
-		return true;
+		return false;
 	}
-
-	return false;
+	
+	return true;
 }
 
 void ABaseCharacter::ServerRPCStopGuard_Implementation()
@@ -248,17 +251,48 @@ void ABaseCharacter::ServerRPCStopGuard_Implementation()
 	CurrentState = STATE_Idle;
 	bInputEnabled = true;
 	bOnGuard = false;
-	if (IsValid(GetWorld()) == true)
+	MulticastRPCChangeGuard(bOnGuard);
+}
+
+void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
+{
+	if (bGuardState == true)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		if (IsValid(GetWorld()) == true)
 		{
-			GuardStamina = FMath::Clamp(GuardStamina + 1, 0, MaxGuardStamina);
-			if (GuardStamina >= MaxGuardStamina)
+			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
 			{
-				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-			}
-		}), 0.1f, true);
+				GuardStamina = FMath::Clamp(GuardStamina - 2, 0, MaxGuardStamina);
+				if (GuardStamina <= 0)
+				{
+					StopGuard();
+				}
+			}), 0.2f, true);
+		}
+		
+		if (GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == GuardMontage)
+		{
+			return;
+		}
+		PlayMontage(GuardMontage);
+	}
+	else
+	{
+		if (IsValid(GetWorld()) == true)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+			{
+				GuardStamina = FMath::Clamp(GuardStamina + 2, 0, MaxGuardStamina);
+				if (GuardStamina >= MaxGuardStamina)
+				{
+					GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+				}
+			}), 0.2f, true);
+		}
+		
+		StopAnimMontage(GuardMontage);
 	}
 }
 
@@ -299,7 +333,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			{
 				EnhancedInputComponent->BindAction(
 					MyPlayerController->JumpAction,
-					ETriggerEvent::Triggered,
+					ETriggerEvent::Started,
 					this,
 					&ABaseCharacter::Jump
 				);
@@ -430,22 +464,26 @@ void ABaseCharacter::Move1D(const float Value)
 void ABaseCharacter::SetDirection(const FVector2D Value)
 {
 	// 키보드 입력을 구분하기 위한 각도 계산
-	// 위   90   (x = 0, y = 1)
-	// 아래 -90  (x = 0, y = 0)
-	// 앞   0    (x = 1, u = 0)
-	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
+	// 위   0   (x = 0, y = 1)
+	// 앞   90    (x = 1, u = 0)
+	// 아래 180  (x = 0, y = -1)
+	float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
+	if (AngleDegrees < 0.f) AngleDegrees += 360.f;
 	
-	if (AngleDegrees > 45.0f && AngleDegrees < 135.0f)
+	const float CurrentYaw = GetController()->GetControlRotation().Yaw;
+
+	if (AngleDegrees > -45.0f && AngleDegrees <= 45.0f)
 	{
 		CurrentDirection = EDirectionEnum::EUp;
 	}
-	else if (AngleDegrees < -45.0f && AngleDegrees >= -135.0f) 
-	{
-		CurrentDirection = EDirectionEnum::EDown;
-	}
-	else if (AngleDegrees > 45.0f && AngleDegrees <= 45.0f)
+	else if ((AngleDegrees > 45.0f && AngleDegrees <= 135.0f && FMath::IsNearlyEqual(CurrentYaw , 0.f))
+		|| (AngleDegrees > 225.0f && AngleDegrees <= 315.0f && FMath::IsNearlyEqual(CurrentYaw , 180.f))) 
 	{
 		CurrentDirection = EDirectionEnum::EForward;
+	}
+	else if (AngleDegrees >= 135.0f && AngleDegrees < 225.f)
+	{
+		CurrentDirection = EDirectionEnum::EDown;
 	}
 	else
 	{
@@ -471,7 +509,22 @@ void ABaseCharacter::SpecialAttack()
 {
 	if (bInputEnabled)
 	{
-		AbilityComponent->SpecialAttack();
+		if (CurrentDirection == EDirectionEnum::EUp)
+		{
+			AbilityComponent->SpecialUpperAttack();
+		}
+		else if (CurrentDirection == EDirectionEnum::EForward)
+		{
+			AbilityComponent->SpecialFrontAttack();
+		}
+		else if (CurrentDirection == EDirectionEnum::EDown)
+		{
+			AbilityComponent->SpecialLowerAttack();
+		}
+		else
+		{
+			AbilityComponent->SpecialAttack();
+		}		
 	}
 }
 
@@ -482,14 +535,20 @@ void ABaseCharacter::SpecialMove()
 
 void ABaseCharacter::StartGuard()
 {
-	ServerRPCStartGuard();
+	if (GuardStamina < 10)
+	{
+		return;
+	}
+
 	PlayMontage(GuardMontage);
+	ServerRPCStartGuard();
 }
 
 void ABaseCharacter::StopGuard()
 {
-	ServerRPCStopGuard();
 	StopAnimMontage(GuardMontage);
+	
+	ServerRPCStopGuard();
 }
 
 void ABaseCharacter::Emote()

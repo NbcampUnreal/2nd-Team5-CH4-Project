@@ -5,6 +5,13 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "Net/UnrealNetwork.h"
+#include "Blueprint/UserWidget.h"
+#include "UObject/ScriptMacros.h"
+#include "UObject/UnrealType.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameModes/GI_BattleInstance.h"
+#include "GameModes/Lobby/GM_LobbyMode.h"
+#include "GameModes/Battle/PS_PlayerState.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -23,11 +30,6 @@ void AMyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// °ÔÀÓ Àü¿ë ÀÔ·Â ¸ğµå ¼³Á¤
-	FInputModeGameOnly Mode;
-	SetInputMode(Mode);
-	bShowMouseCursor = false;
-
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
@@ -35,6 +37,31 @@ void AMyPlayerController::BeginPlay()
 			if (InputMappingContext)
 			{
 				Subsystem->AddMappingContext(InputMappingContext, 0);
+			}
+		}
+	}
+
+	// ë¡œë¹„ìš© UI
+	if (IsLocalController())
+	{
+		// í˜„ì¬ ë ˆë²¨ ì´ë¦„ ê°€ì ¸ì˜¤ê¸°
+		FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
+
+		// "Lobby"ë¼ëŠ” ë‹¨ì–´ê°€ í¬í•¨ë˜ì–´ ìˆëŠ”ì§€ ê²€ì‚¬
+		if (CurrentLevelName.Contains(TEXT("Lobby")))
+		{
+			if (NameInputUIClass)
+			{
+				NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
+
+				// UI í¬ì¸í„° ì €ì¥
+				Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
+
+				if (NameInputUI)
+				{
+					NameInputUI->AddToViewport();
+					UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+				}
 			}
 		}
 	}
@@ -53,11 +80,113 @@ void AMyPlayerController::PostNetInit()
 void AMyPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	// Å¬¶óÀÌ¾ğÆ®¿¡¼­´Â OnPossess°¡ È£ÃâµÇÁö ¾ÊÀ½
-	// ´ë½Å OnRep_Owner()°¡ È£ÃâµÇ¾î ¼ÒÀ¯ÀÚ ÃÊ±âÈ­
 }
 
 void AMyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMyPlayerController, NameCheckText);
 }
+
+void AMyPlayerController::OnRep_NameCheckText()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep] NameCheckText = %s"), *NameCheckText.ToString());
+
+	if (NameInputUI)
+	{
+		FName FuncName = "UpdateWarningTextFromVar"; 
+		if (NameInputUI->FindFunction(FuncName))
+		{
+			struct FWarningParam { FText Text; };
+			FWarningParam Param{ NameCheckText };
+
+			NameInputUI->ProcessEvent(NameInputUI->FindFunction(FuncName), &Param);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("UI No Function"));
+		}
+	}
+}
+
+void AMyPlayerController::Server_CheckNickname_Implementation(const FString& Nickname)
+{
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+	{
+		bool bSuccess = GI->TryRegisterNickname(Nickname);
+
+		if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
+		{
+			if (bSuccess)
+			{
+				MyPS->SetNickname(Nickname); // PlayerStateì— ì €ì¥
+				Client_OpenCharacterSelectWidget(); // UI ì „í™˜
+			}
+			else
+			{
+				NameCheckText = FText::FromString(TEXT("ì¤‘ë³µëœ ë‹‰ë„¤ì„ì…ë‹ˆë‹¤."));
+				OnRep_NameCheckText();
+			}
+		}
+	}
+}
+
+void AMyPlayerController::Server_SelectCharacter_Implementation(ECharacterType SelectedType)
+{
+	if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
+	{
+		MyPS->SetCharacterType(SelectedType);
+
+		MyPS->RegisterToGameInstance();
+
+		// ìºë¦­í„° ì„ íƒ ì™„ë£Œ í›„ ì„œë²„ì— ì•Œë¦¼
+		Server_ConfirmSelection();
+	}
+}
+
+void AMyPlayerController::Client_OpenCharacterSelectWidget_Implementation()
+{
+	if (NameInputUI)
+	{
+		NameInputUI->RemoveFromParent();
+		NameInputUI = nullptr;
+	}
+
+	if (CharacterSelectUIClass)
+	{
+		CharacterSelectUI = CreateWidget<UUserWidget>(this, CharacterSelectUIClass);
+		if (CharacterSelectUI)
+		{
+			CharacterSelectUI->AddToViewport();
+
+			UE_LOG(LogTemp, Log, TEXT("CharacterSelect UI Opened"));
+		}
+	}
+}
+
+void AMyPlayerController::Server_ConfirmSelection_Implementation()
+{
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+	{
+		PS->SetReady(true); // ì¤€ë¹„ ì™„ë£Œ ì²˜ë¦¬
+
+		if (!GetPawn()) // ì•„ì§ ìŠ¤í° ì•ˆ ëìœ¼ë©´
+		{
+			if (AGM_LobbyMode* GM = GetWorld()->GetAuthGameMode<AGM_LobbyMode>())
+			{
+				GM->SpawnPlayerInLobby(this);
+			}
+		}
+	}
+}
+
+void AMyPlayerController::ReturnToTitle_Implementation()
+{
+	if (!HasAuthority())
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("DevMenu")), true);
+	}
+}
+
+

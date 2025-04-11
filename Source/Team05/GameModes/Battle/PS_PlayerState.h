@@ -4,14 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "GameModes/GI_BattleInstance.h"
 #include "PS_PlayerState.generated.h"
-
-UENUM(BlueprintType)
-enum class ECharacterType : uint8
-{
-	Knight UMETA(DisplayName = "Knight")
-	// 캐릭 추가하면 확장
-};
 
 /**
  * 
@@ -24,13 +18,26 @@ class TEAM05_API APS_PlayerState : public APlayerState
 public:
 	APS_PlayerState();
 
-	void SetCharacterType(ECharacterType InType);
+	void SetNickname(const FString& NewNickname);
+	FString GetNickname() const;
+
+	void SetCharacterType(ECharacterType NewType);
 	ECharacterType GetCharacterType() const;
+	void RegisterToGameInstance();
+
+	void SetReady(bool bNewReady);
+	bool IsReady() const;
 
 protected:
-	// 선택된 캐릭터 종류
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+private:
+	UPROPERTY(Replicated)
+	FString Nickname;
+
 	UPROPERTY(Replicated)
 	ECharacterType CharacterType;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	UPROPERTY(Replicated)
+	bool bReady;
 };

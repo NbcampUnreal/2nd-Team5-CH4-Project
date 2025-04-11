@@ -8,8 +8,8 @@
 AGS_LobbyState::AGS_LobbyState()
 {
 	bReplicates = true;
-	CountdownTime = 0.0f;
 	LobbyState = ELobbyState::Waiting;
+	CountdownTime = 0.0f;
 }
 
 void AGS_LobbyState::SetLobbyState(ELobbyState NewState)
@@ -17,16 +17,25 @@ void AGS_LobbyState::SetLobbyState(ELobbyState NewState)
 	LobbyState = NewState;
 }
 
-void AGS_LobbyState::SetCountdownTime(float Time)
+ELobbyState AGS_LobbyState::GetLobbyState() const
 {
-	CountdownTime = Time;
+	return LobbyState;
+}
+
+void AGS_LobbyState::SetCountdownTime(float NewTime)
+{
+	CountdownTime = NewTime;
+}
+
+float AGS_LobbyState::GetCountdownTime() const
+{
+	return CountdownTime;
 }
 
 void AGS_LobbyState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AGS_LobbyState, CountdownTime);
 	DOREPLIFETIME(AGS_LobbyState, LobbyState);
+	DOREPLIFETIME(AGS_LobbyState, CountdownTime);
 }
-

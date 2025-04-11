@@ -6,17 +6,33 @@
 #include "Engine/GameInstance.h"
 #include "GI_BattleInstance.generated.h"
 
-// ĳ���� ���� ���� ����ü
+UENUM(BlueprintType)
+enum class ECharacterType : uint8
+{
+	Knight	UMETA(DisplayName = "Knight"),
+	Mage	UMETA(DisplayName = "Mage")
+};
+
 USTRUCT(BlueprintType)
-struct FPlayerSelectInfo
+struct FPlayerInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY()
 	FString Nickname;
 
-	UPROPERTY(BlueprintReadWrite)
-	FName CharacterType;
+	UPROPERTY()
+	ECharacterType CharacterType;
+
+	FPlayerInfo()
+		: Nickname(TEXT("")), CharacterType(ECharacterType::Knight)
+	{
+	}
+
+	FPlayerInfo(const FString& InNickname, ECharacterType InType)
+		: Nickname(InNickname), CharacterType(InType)
+	{
+	}
 };
 
 /**
@@ -28,22 +44,24 @@ class TEAM05_API UGI_BattleInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	bool HasCompletedLobbySetup() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	void SetCompletedLobbySetup(bool bCompleted);
+	// 중복 확인과 동시에 등록 (Atomic)
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	bool TryRegisterNickname(const FString& Nickname);
 
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	const FPlayerSelectInfo& GetSelectInfo() const;
+	// 캐릭터 선택 시 정보 업데이트
+	void UpdateCharacterType(const FString& Nickname, ECharacterType NewType);
 
-	UFUNCTION(BlueprintCallable, Category = "Player Info")
-	void SetSelectInfo(const FPlayerSelectInfo& Info);
+	// 선택된 캐릭터 확인
+	ECharacterType GetCharacterTypeByNickname(const FString& Nickname) const;
 
-	UFUNCTION(BlueprintCallable)
-	void ResetSelection();
+public:
+	UPROPERTY(EditAnywhere, Category = "Character")
+	TMap<ECharacterType, TSubclassOf<APawn>> CharacterClassMap;
 
 private:
-	bool bHasCompletedLobbySetup = false;
-	FPlayerSelectInfo SelectInfo;
+
+	UPROPERTY()
+	TMap<FString, FPlayerInfo> PlayerInfoMap;
+
 };

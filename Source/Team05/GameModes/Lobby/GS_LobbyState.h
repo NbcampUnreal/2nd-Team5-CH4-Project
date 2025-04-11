@@ -6,13 +6,12 @@
 #include "GameFramework/GameStateBase.h"
 #include "GS_LobbyState.generated.h"
 
-// 로비의 상태를 정의하는 Enum
 UENUM(BlueprintType)
 enum class ELobbyState : uint8
 {
-	Waiting,
-	Countdown,
-	Transitioning
+	Waiting UMETA(DisplayName = "Waiting"),
+	Countdown UMETA(DisplayName = "Countdown"),
+	Started UMETA(DisplayName = "Started")
 };
 
 /**
@@ -26,28 +25,21 @@ class TEAM05_API AGS_LobbyState : public AGameStateBase
 public:
 	AGS_LobbyState();
 
-	// 남은 카운트다운 시간 반환
-	UFUNCTION(BlueprintCallable, Category = "Lobby")
-	float GetCountdownTime() const { return CountdownTime; }
-
-	// 로비 상태 반환
-	UFUNCTION(BlueprintCallable, Category = "Lobby")
-	ELobbyState GetLobbyState() const { return LobbyState; }
-
-	// 로비 상태 설정
 	void SetLobbyState(ELobbyState NewState);
-	void SetCountdownTime(float Time);
+	ELobbyState GetLobbyState() const;
+
+	void SetCountdownTime(float NewTime);
+	float GetCountdownTime() const;
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-	// 전투 시작까지 남은 시간 (클라이언트 UI 표시용)
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Lobby", meta = (AllowPrivateAccess = "true"))
-	float CountdownTime;
 
-	// 로비의 현재 상태
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Lobby", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated)
 	ELobbyState LobbyState;
+
+	UPROPERTY(Replicated)
+	float CountdownTime;
 };
 

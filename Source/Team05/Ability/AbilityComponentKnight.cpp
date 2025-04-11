@@ -37,55 +37,38 @@ void UAbilityComponentKnight::SpecialAttack()
 	if (IsValid(OwnerCharacter) == true)
 	{
 		bCanAttack = false;
-		UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-		if (IsValid(AnimInstance) == true)
-		{
-			float MontagePlayTime = SpecialAttackAnimMontage->GetPlayLength();
-			OwnerCharacter->PlayMontage(SpecialAttackAnimMontage);
-			
-			FTimerHandle TimerHandle;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+		float MontagePlayTime = SpecialAttackAnimMontage->GetPlayLength();
+
+		ServerRPCAttack(SpecialAttackAnimMontage, 500.f, 0.f);
+		
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
 		{
 			bCanAttack = true;
 		}), MontagePlayTime, false, -1.f);
-		}
 	}
-
-	/*TArray<FHitResult> HitResults;
-	TSet<ACharacter*> DamagedCharacters;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(OwnerCharacter);
-
-	const float AttackDamage = 10.f;
-	const float AttackRange = 150.f;
-	const float AttackRadius = 100.f;
-	const FVector Forward = GetOwner()->GetActorForwardVector();
-	const FVector Start = GetOwner()->GetActorLocation() + Forward * OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius() * 2.f;
-	const FVector End = Start + Forward * AttackRange;
-
-	bool bIsHitDetected = GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(AttackRadius), QueryParams);
-	if (bIsHitDetected == true)
-	{
-		for (auto const& HitResult : HitResults)
-		{
-			ABaseCharacter* DamagedCharacter = Cast<ABaseCharacter>(HitResult.GetActor());
-			if (IsValid(DamagedCharacter) == true)
-			{
-				DamagedCharacters.Add(DamagedCharacter);
-			}
-		}
-
-		FDamageEvent DamageEvent;
-		for (auto const& DamagedCharacter : DamagedCharacters)
-		{
-			UGameplayStatics::ApplyDamage(DamagedCharacter, AttackDamage, OwnerCharacter->GetController(), OwnerCharacter, UDamageType::StaticClass());
-		}
-	}*/
 }
 
 void UAbilityComponentKnight::SpecialUpperAttack()
 {
-	
+	if (bCanAttack == false)
+	{
+		return;
+	}
+
+	if (IsValid(OwnerCharacter) == true)
+	{
+		bCanAttack = false;
+		float MontagePlayTime = SpecialUpperAttackAnimMontage->GetPlayLength();
+
+		ServerRPCAttack(SpecialUpperAttackAnimMontage, 0.f, 1000.f);
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			bCanAttack = true;
+		}), MontagePlayTime, false, -1.f);
+	}
 }
 
 void UAbilityComponentKnight::SpecialLowerAttack()
@@ -95,10 +78,59 @@ void UAbilityComponentKnight::SpecialLowerAttack()
 
 void UAbilityComponentKnight::SpecialFrontAttack()
 {
+	if (bCanAttack == false)
+	{
+		return;
+	}
+
+	if (IsValid(OwnerCharacter) == true)
+	{
+		bCanAttack = false;
+		float MontagePlayTime = SpecialFrontAttackAnimMontage->GetPlayLength();
+
+		ServerRPCAttack(SpecialFrontAttackAnimMontage, 1000.f, 0.f);
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			bCanAttack = true;
+		}), MontagePlayTime, false, -1.f);
+	}
+}
+
+void UAbilityComponentKnight::ServerRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
+	float LaunchZDistance)
+{
+	LaunchCharacter(LaunchXDistance, LaunchZDistance);
+	MulticastRPCAttack(Montage, LaunchXDistance, LaunchZDistance);
+}
+
+void UAbilityComponentKnight::MulticastRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
+                                                                float LaunchZDistance)
+{
+	if (OwnerCharacter->GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == Montage)
+	{
+		return;
+	}
 	
+	OwnerCharacter->PlayMontage(Montage);
 }
 
 void UAbilityComponentKnight::CheckAttackHit()
 {
+	OwnerCharacter->CheckAttackHit();
+}
+
+void UAbilityComponentKnight::LaunchCharacter(float LaunchXDistance, float LaunchZDistance)
+{
+	if (IsValid(OwnerCharacter) == false)
+	{
+		return;
+	}
+
+	float XDirection = OwnerCharacter->GetActorForwardVector().X;
+	XDirection = (XDirection >= 0.f) ? 1.f : -1.f;
+	const FVector LaunchVelocity = FVector(XDirection * LaunchXDistance, 0.f, 200.f + LaunchZDistance);
+	OwnerCharacter->LaunchCharacter(LaunchVelocity, true, true);
 }
 

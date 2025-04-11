@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameModes/Battle/GM_BattleMode.h"
 #include "GS_BattleState.generated.h"
 
 /**
@@ -15,7 +16,20 @@ class TEAM05_API AGS_BattleState : public AGameStateBase
 	GENERATED_BODY()
 	
 public:
-	// µğ¹ö±ë¿ë ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ ¸Ş½ÃÁö¸¦ ¶ç¿ì´Â ÇÔ¼ö
+
+	// ë³µì œ ëŒ€ìƒ ë“±ë¡
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	// ë””ë²„ê¹…ìš© ë©”ì„¸ì§€ ë¿Œë¦¬ê¸°
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PrintMessage(const FString& Msg);
+
+public:
+	// ìƒì¡´í•œ í”Œë ˆì´ì–´ ì»¨íŠ¸ë¡¤ëŸ¬ ìˆ˜
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	int32 AlivePlayerControllerCount = 0;
+
+	// í˜„ì¬ ë§¤ì¹˜ ìƒíƒœ (ëŒ€ê¸°/í”Œë ˆì´/ì¢…ë£Œ ë“±)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	EMatchState MatchState = EMatchState::Waiting;
 };

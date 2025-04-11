@@ -7,12 +7,11 @@
 #include "GS_LobbyState.h"
 #include "GM_LobbyMode.generated.h"
 
-// ¿¸≈ı ∏  ¡æ∑˘∏¶ Enum¿∏∑Œ ¡§¿«(∏  √ﬂ∞°«œ∏Èµ )
 UENUM(BlueprintType)
-enum class EBattleMapType : uint8
+enum class EBattleMap : uint8
 {
-	Battlefield_01 UMETA(DisplayName = "TestMap"),
-	Battlefield_02 UMETA(DisplayName = "TestMap")
+	Battlefield_01 UMETA(DisplayName = "_MarioMap"),
+	Battlefield_02 UMETA(DisplayName = "_MarioMap")
 };
 
 /**
@@ -28,25 +27,37 @@ public:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
-	virtual void Tick(float DeltaSeconds) override;
+
+	// ÌîåÎ†àÏù¥Ïñ¥ Ï∫êÎ¶≠ÌÑ∞ Ïä§Ìè∞ Ìï®Ïàò
+	UFUNCTION()
+	void SpawnPlayerInLobby(APlayerController* PC);
 
 protected:
+	
 	void TryStartBattle();
-	FString GetMapPathFromEnum(EBattleMapType MapType) const;
-	EBattleMapType GetRandomMapEnum() const;
+
+	void CountdownTick();
+
+	void CheckReadyToStart();
+
 	void StartBattle();
-	void UpdateCountdown(float DeltaTime);
 
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Lobby")
-	int32 MinPlayersToStart = 2;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Lobby")
-	float BattleStartDelay = 10.0f;
+	FString GetBattleMapPath(EBattleMap Map) const;
 
 private:
-	bool bMatchStarted = false;
-	bool bStartCountdownStarted = false;
-	float CountdownRemaining = 0.0f;
+	
+	FTimerHandle CheckReadyTimerHandle;
+	
+	FTimerHandle CountdownTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly)
+	float BattleStartDelay = 10.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 MinPlayersToStart = 2;
+
+	bool bStartCountdownStarted;
+	bool bMatchStarted;
+	float CountdownRemaining;
 };
 
