@@ -3,16 +3,17 @@
 
 #include "GameModes/Lobby/GM_LobbyMode.h"
 
+#include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Lobby/PS_LobbyPlayer.h"
 #include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameStateBase.h"
+#include "Kismet/GameplayStatics.h"
 
 AGM_LobbyMode::AGM_LobbyMode()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	// √ ±‚ ªÛ≈¬∞™ º≥¡§
 	BattleStartDelay = 10.0f;
 	MinPlayersToStart = 2;
 	bStartCountdownStarted = false;
@@ -24,7 +25,6 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	// 1√  ∞£∞›¿∏∑Œ Ω√¿€ ¡∂∞« √º≈©
 	GetWorldTimerManager().SetTimer(CheckReadyTimerHandle, this, &AGM_LobbyMode::CheckReadyToStart, 1.0f, true);
 }
 
@@ -52,7 +52,6 @@ void AGM_LobbyMode::TryStartBattle()
 
 	UE_LOG(LogTemp, Log, TEXT("LobbyMode: ReadyCount = %d / Total = %d"), ReadyCount, GameState->PlayerArray.Num());
 
-	// ∏µÁ «√∑π¿ÃæÓ∞° Ready ªÛ≈¬∏È ƒ´øÓ∆Æ¥ŸøÓ Ω√¿€
 	if (ReadyCount >= MinPlayersToStart && ReadyCount == GameState->PlayerArray.Num())
 	{
 		bStartCountdownStarted = true;
@@ -64,8 +63,7 @@ void AGM_LobbyMode::TryStartBattle()
 			GS->SetCountdownTime(CountdownRemaining);
 		}
 
-		// ≈∏¿Ã∏” Ω√¿€ (1√  ∞£∞›)
-		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AGM_LobbyMode::CountdownTick, 1.0f, true);
+		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AGM_LobbyMode::CountdownTick, 10.0f, true);
 
 		UE_LOG(LogTemp, Log, TEXT("LobbyMode: Countdown Started (%f seconds)"), BattleStartDelay);
 	}
@@ -101,14 +99,12 @@ void AGM_LobbyMode::StartBattle()
 
 	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Starting Battle..."));
 
-	// ∑£¥˝ ∏  º±≈√
-	int32 MapIndex = FMath::RandRange(0, 1);  // Enum ∞™ π¸¿ß ∏  ¥√æÓ≥™∏È ºˆ¡§ (0~1)
+	int32 MapIndex = FMath::RandRange(0, 1);
 	EBattleMap SelectedMap = static_cast<EBattleMap>(MapIndex);
 	FString MapPath = GetBattleMapPath(SelectedMap);
 
 	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Selected Map = %s"), *MapPath);
 
-	// ¿¸≈ı ∏ ¿∏∑Œ ¿¸»Ø
 	GetWorld()->ServerTravel(MapPath);
 }
 
@@ -122,5 +118,57 @@ FString AGM_LobbyMode::GetBattleMapPath(EBattleMap Map) const
 		return TEXT("_MarioMap");
 	default:
 		return TEXT("_MarioMap");
+	}
+}
+
+void AGM_LobbyMode::SpawnPlayerInLobby(APlayerController* PC)
+{
+	if (!IsValid(PC)) return;
+
+	APS_LobbyPlayer* PS = Cast<APS_LobbyPlayer>(PC->PlayerState);
+	if (!PS) return;
+
+	ECharacterType SelectedType = PS->GetCharacterType();
+
+	// GameInstanceÏóêÏÑú Ï∫êÎ¶≠ÌÑ∞ ÌÅ¥ÎûòÏä§ Îßµ Ï∞∏Ï°∞
+	UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] GameInstance is invalid."));
+		return;
+	}
+
+	if (!GI->CharacterClassMap.Contains(SelectedType))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] No class found in GI for character type: %s"),
+			*UEnum::GetValueAsString(SelectedType));
+		return;
+	}
+
+	TSubclassOf<APawn> CharacterClass = GI->CharacterClassMap[SelectedType];
+
+	// PlayerStart ÏúÑÏπò ÏÇ¨Ïö©
+	AActor* StartSpot = FindPlayerStart(PC);
+	FVector SpawnLocation = StartSpot ? StartSpot->GetActorLocation() : FVector(0, 0, 300);
+	FRotator SpawnRotation = StartSpot ? StartSpot->GetActorRotation() : FRotator::ZeroRotator;
+
+	// Ï∫êÎ¶≠ÌÑ∞ Ïä§Ìè∞
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = PC;
+	SpawnParams.Instigator = PC->GetPawn();
+
+	APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(CharacterClass, SpawnLocation, SpawnRotation, SpawnParams);
+	if (IsValid(SpawnedPawn))
+	{
+		PC->Possess(SpawnedPawn);
+
+		UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Spawned and Possessed: %s for Player: %s"),
+			*CharacterClass->GetName(),
+			*PS->GetPlayerName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] Failed to spawn pawn for: %s"),
+			*UEnum::GetValueAsString(SelectedType));
 	}
 }

@@ -77,7 +77,7 @@ public:
 
 #pragma region UI
 
-protected:
+public:
 	// 닉네임 입력 UI 클래스 (블루프린트에서 할당 가능)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UUserWidget> NameInputUIClass;
@@ -86,13 +86,37 @@ protected:
 	UPROPERTY()
 	UUserWidget* NameInputUI;
 
-	// 닉네임 체크
+	// Name 중복 결과 표시 텍스트
+	UPROPERTY(ReplicatedUsing = OnRep_NameCheckText, BlueprintReadOnly, Category = "Nickname")
+	FText NameCheckText;
+
+	// 캐릭터 선택 위젯 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> CharacterSelectUIClass;
+
+	// 생성된 캐릭터 선택 UI 인스턴스
+	UPROPERTY()
+	UUserWidget* CharacterSelectUI;
+
+	UFUNCTION()
+	void OnRep_NameCheckText();
+
+	// 닉네임 체크 및 서버에 정보 등록
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_CheckNickname(const FString& Nickname);
-	// 체크 결과 출력
+
 	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void Client_NicknameCheckResult(bool bAvailable);
+	void Server_SelectCharacter(ECharacterType SelectedType);
+
+	// 캐릭터 UI 열기(클라이언트)
+	UFUNCTION(Client, Reliable)
+	void Client_OpenCharacterSelectWidget();
 
 #pragma endregion
+
+public:
+	// 캐릭터 선택 완료 후 서버에 알림
+	UFUNCTION(Server, Reliable)
+	void Server_ConfirmSelection();
 
 };

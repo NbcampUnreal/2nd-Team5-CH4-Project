@@ -4,6 +4,7 @@
 #include "GameModes/Lobby/PS_LobbyPlayer.h"
 
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
 
 APS_LobbyPlayer::APS_LobbyPlayer()
 {
@@ -33,6 +34,18 @@ ECharacterType APS_LobbyPlayer::GetCharacterType() const
 {
 	return CharacterType;
 }
+
+void APS_LobbyPlayer::RegisterToGameInstance()
+{
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+	{
+		GI->UpdateCharacterType(Nickname, CharacterType);
+		UE_LOG(LogTemp, Log, TEXT("[PlayerState] Info Registered to GameInstance: %s, %s"),
+			*Nickname,
+			*UEnum::GetValueAsString(CharacterType));
+	}
+}
+
 
 void APS_LobbyPlayer::SetReady(bool bNewReady)
 {
