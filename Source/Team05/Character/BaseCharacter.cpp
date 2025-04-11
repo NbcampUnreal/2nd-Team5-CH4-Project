@@ -467,13 +467,17 @@ void ABaseCharacter::SetDirection(const FVector2D Value)
 	// 위   0   (x = 0, y = 1)
 	// 앞   90    (x = 1, u = 0)
 	// 아래 180  (x = 0, y = -1)
-	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
+	float AngleDegrees = FMath::RadiansToDegrees(FMath::Atan2(Value.X, Value.Y));
+	if (AngleDegrees < 0.f) AngleDegrees += 360.f;
 	
+	const float CurrentYaw = GetController()->GetControlRotation().Yaw;
+
 	if (AngleDegrees > -45.0f && AngleDegrees <= 45.0f)
 	{
 		CurrentDirection = EDirectionEnum::EUp;
 	}
-	else if (AngleDegrees > 45.0f && AngleDegrees <= 135.0f) 
+	else if ((AngleDegrees > 45.0f && AngleDegrees <= 135.0f && FMath::IsNearlyEqual(CurrentYaw , 0.f))
+		|| (AngleDegrees > 225.0f && AngleDegrees <= 315.0f && FMath::IsNearlyEqual(CurrentYaw , 180.f))) 
 	{
 		CurrentDirection = EDirectionEnum::EForward;
 	}
