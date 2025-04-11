@@ -45,6 +45,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	// 피로도 (높을 수록 멀리 타격됨, 매치마다 0으로 초기화)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
 	int32 FatigueRate;

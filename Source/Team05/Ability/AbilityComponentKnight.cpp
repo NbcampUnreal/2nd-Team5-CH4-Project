@@ -39,7 +39,7 @@ void UAbilityComponentKnight::SpecialAttack()
 		bCanAttack = false;
 		float MontagePlayTime = SpecialAttackAnimMontage->GetPlayLength();
 
-		ServerRPCAttack(SpecialAttackAnimMontage, 1000.f, 0.f);
+		ServerRPCAttack(SpecialAttackAnimMontage, 500.f, 0.f);
 		
 		FTimerHandle TimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
@@ -51,7 +51,24 @@ void UAbilityComponentKnight::SpecialAttack()
 
 void UAbilityComponentKnight::SpecialUpperAttack()
 {
-	
+	if (bCanAttack == false)
+	{
+		return;
+	}
+
+	if (IsValid(OwnerCharacter) == true)
+	{
+		bCanAttack = false;
+		float MontagePlayTime = SpecialUpperAttackAnimMontage->GetPlayLength();
+
+		ServerRPCAttack(SpecialUpperAttackAnimMontage, 0.f, 1000.f);
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			bCanAttack = true;
+		}), MontagePlayTime, false, -1.f);
+	}
 }
 
 void UAbilityComponentKnight::SpecialLowerAttack()
@@ -61,7 +78,24 @@ void UAbilityComponentKnight::SpecialLowerAttack()
 
 void UAbilityComponentKnight::SpecialFrontAttack()
 {
-	
+	if (bCanAttack == false)
+	{
+		return;
+	}
+
+	if (IsValid(OwnerCharacter) == true)
+	{
+		bCanAttack = false;
+		float MontagePlayTime = SpecialFrontAttackAnimMontage->GetPlayLength();
+
+		ServerRPCAttack(SpecialFrontAttackAnimMontage, 1000.f, 0.f);
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			bCanAttack = true;
+		}), MontagePlayTime, false, -1.f);
+	}
 }
 
 void UAbilityComponentKnight::ServerRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
