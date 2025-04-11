@@ -6,16 +6,13 @@
 #include "Engine/GameInstance.h"
 #include "GI_BattleInstance.generated.h"
 
-// Ä³¸¯ÅÍ Á¾·ù¸¦ ³ªÅ¸³»´Â ¿­°ÅÇü
 UENUM(BlueprintType)
 enum class ECharacterType : uint8
 {
-	//ÀÏ´Ü ³ªÀÌÆ® ÃßÈÄ Ãß°¡ÇÏ¸é µÊ
-	Knight UMETA(DisplayName = "Knight"),
-	Knight_2 UMETA(DisplayName = "Knight")
+	Knight	UMETA(DisplayName = "Knight"),
+	Mage	UMETA(DisplayName = "Mage")
 };
 
-// ÇÑ ¸íÀÇ ÇÃ·¹ÀÌ¾î Á¤º¸¸¦ ÀúÀåÇÒ ±¸Á¶Ã¼ (´Ğ³×ÀÓ + Ä³¸¯ÅÍ Á¾·ù)
 USTRUCT(BlueprintType)
 struct FPlayerInfo
 {
@@ -47,20 +44,24 @@ class TEAM05_API UGI_BattleInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
-	// ´Ğ³×ÀÓ Áßº¹ È®ÀÎ
-	bool IsNicknameTaken(const FString& Nickname) const;
 
-	// ÇÃ·¹ÀÌ¾î Á¤º¸ µî·Ï (´Ğ³×ÀÓ + Ä³¸¯ÅÍ)
-	void RegisterPlayerInfo(const FString& Nickname, ECharacterType Type);
+	// ì¤‘ë³µ í™•ì¸ê³¼ ë™ì‹œì— ë“±ë¡ (Atomic)
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	bool TryRegisterNickname(const FString& Nickname);
 
-	// GI_BattleInstance.h
+	// ìºë¦­í„° ì„ íƒ ì‹œ ì •ë³´ ì—…ë°ì´íŠ¸
 	void UpdateCharacterType(const FString& Nickname, ECharacterType NewType);
 
-	// ´Ğ³×ÀÓÀ¸·Î Ä³¸¯ÅÍ Á¾·ù Á¶È¸
+	// ì„ íƒëœ ìºë¦­í„° í™•ì¸
 	ECharacterType GetCharacterTypeByNickname(const FString& Nickname) const;
 
+public:
+	UPROPERTY(EditAnywhere, Category = "Character")
+	TMap<ECharacterType, TSubclassOf<APawn>> CharacterClassMap;
+
 private:
-	// ´Ğ³×ÀÓÀ» Å°·Î ÇÑ ÇÃ·¹ÀÌ¾î Á¤º¸ ¸Ê
+
 	UPROPERTY()
 	TMap<FString, FPlayerInfo> PlayerInfoMap;
+
 };

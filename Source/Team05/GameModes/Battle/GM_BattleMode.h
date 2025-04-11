@@ -24,7 +24,7 @@ public:
 	virtual void Logout(AController* Exiting) override;
 
 protected:
-	//테스트용 나이트 고정
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character")
 	TSubclassOf<APawn> KnightCharacterClass;
 

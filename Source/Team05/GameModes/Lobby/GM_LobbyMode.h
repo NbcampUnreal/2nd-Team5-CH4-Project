@@ -7,7 +7,6 @@
 #include "GS_LobbyState.h"
 #include "GM_LobbyMode.generated.h"
 
-// ÀüÅõ ¸Ê Á¾·ù¸¦ EnumÀ¸·Î Á¤ÀÇ(¸Ê Ãß°¡ÇÏ¸éµÊ)
 UENUM(BlueprintType)
 enum class EBattleMap : uint8
 {
@@ -29,37 +28,34 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 
+	// í”Œë ˆì´ì–´ ìºë¦­í„° ìŠ¤í° í•¨ìˆ˜
+	UFUNCTION()
+	void SpawnPlayerInLobby(APlayerController* PC);
+
 protected:
-	// ÀüÅõ ½ÃÀÛ Á¶°Ç È®ÀÎ
+	
 	void TryStartBattle();
 
-	// Ä«¿îÆ®´Ù¿î Ã³¸® (Å¸ÀÌ¸Ó ±â¹İ)
 	void CountdownTick();
 
-	// ¸ğµç À¯Àú °ÔÀÓ ·¹µğ È®ÀÎ
 	void CheckReadyToStart();
 
-	// ½ÇÁ¦ ÀüÅõ ¸ÊÀ¸·Î ÀÌµ¿
 	void StartBattle();
 
-	// ¸Ê EnumÀ» ¸Ê °æ·Î·Î º¯È¯
 	FString GetBattleMapPath(EBattleMap Map) const;
 
 private:
-	// °ÔÀÓ ·¹µğ È®ÀÎ
+	
 	FTimerHandle CheckReadyTimerHandle;
-	// Ä«¿îÆ®´Ù¿î °ü¸®
+	
 	FTimerHandle CountdownTimerHandle;
 
-	// ÁØºñ ÀÎ¿ø È®ÀÎ ÈÄ ÀüÅõ ½ÃÀÛ±îÁö ´ë±âÇÏ´Â ½Ã°£
 	UPROPERTY(EditDefaultsOnly)
 	float BattleStartDelay = 10.0f;
 
-	// ÃÖ¼Ò ½ÃÀÛ ÀÎ¿ø ¼ö
 	UPROPERTY(EditDefaultsOnly)
 	int32 MinPlayersToStart = 2;
 
-	// »óÅÂ º¯¼ö
 	bool bStartCountdownStarted;
 	bool bMatchStarted;
 	float CountdownRemaining;
