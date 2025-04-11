@@ -24,6 +24,12 @@ struct FPlayerInfo
 	UPROPERTY()
 	ECharacterType CharacterType;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 PlayerNum;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APawn> CharacterClass;
+
 	FPlayerInfo()
 		: Nickname(TEXT("")), CharacterType(ECharacterType::Knight)
 	{
@@ -35,9 +41,7 @@ struct FPlayerInfo
 	}
 };
 
-/**
- * 
- */
+
 UCLASS()
 class TEAM05_API UGI_BattleInstance : public UGameInstance
 {
@@ -59,9 +63,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Character")
 	TMap<ECharacterType, TSubclassOf<APawn>> CharacterClassMap;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
+	TArray<FPlayerInfo> CachedSpawnList;
+
+	UFUNCTION(BlueprintCallable)
+	void AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> CharacterClass);
+
 private:
 
 	UPROPERTY()
 	TMap<FString, FPlayerInfo> PlayerInfoMap;
 
+	
 };

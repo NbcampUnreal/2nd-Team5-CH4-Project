@@ -9,8 +9,8 @@
 
 APS_PlayerState::APS_PlayerState()
 {
-	bReplicates = true;
 
+	bReplicates = true;
 	Nickname = TEXT("Player");
 	CharacterType = ECharacterType::Knight;
 	bReady = false;
