@@ -11,12 +11,10 @@ enum class ECharacterType2 : uint8
 {
 	Knight UMETA(DisplayName = "Knight"),
 	Knight_2 UMETA(DisplayName = "Knight")
-	// 캐릭 추가하면 확장
+
 };
 
-/**
- * 
- */
+
 UCLASS()
 class TEAM05_API APS_PlayerState : public APlayerState
 {
@@ -29,7 +27,6 @@ public:
 	ECharacterType2 GetCharacterType() const;
 
 protected:
-	// 선택된 캐릭터 종류
 	UPROPERTY(Replicated)
 	ECharacterType2 CharacterType;
 

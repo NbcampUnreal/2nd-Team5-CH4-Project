@@ -14,9 +14,7 @@ enum class EBattleMap : uint8
 	Battlefield_02 UMETA(DisplayName = "_MarioMap")
 };
 
-/**
- * 
- */
+
 UCLASS()
 class TEAM05_API AGM_LobbyMode : public AGameModeBase
 {

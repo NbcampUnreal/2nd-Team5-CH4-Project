@@ -8,7 +8,6 @@
 
 APS_PlayerState::APS_PlayerState()
 {
-	// 기본 캐릭터는 Knight로 설정
 	CharacterType = ECharacterType2::Knight;
 }
 
