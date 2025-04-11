@@ -41,3 +41,11 @@ ECharacterType UGI_BattleInstance::GetCharacterTypeByNickname(const FString& Nic
 	}
 	return ECharacterType::Knight;
 }
+
+void UGI_BattleInstance::AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> CharacterClass)
+{
+	FPlayerInfo NewInfo;
+	NewInfo.PlayerNum = PlayerNum;
+	NewInfo.CharacterClass = CharacterClass;
+	CachedSpawnList.Add(NewInfo);
+}

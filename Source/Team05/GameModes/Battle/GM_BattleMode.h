@@ -18,10 +18,8 @@ enum class EMatchState : uint8
 };
 
 class AMyPlayerController;
+struct FPlayerInfo;
 
-/**
- * 
- */
 UCLASS()
 class TEAM05_API AGM_BattleMode : public AGameModeBase
 {
@@ -29,6 +27,8 @@ class TEAM05_API AGM_BattleMode : public AGameModeBase
 	
 public:
 	AGM_BattleMode();
+
+	virtual void BeginPlay() override;
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
@@ -61,5 +61,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<AMyPlayerController>> DeadPlayerControllers;
+
+private:
+	TArray<FPlayerInfo> PlayerSpawnList;
 
 };

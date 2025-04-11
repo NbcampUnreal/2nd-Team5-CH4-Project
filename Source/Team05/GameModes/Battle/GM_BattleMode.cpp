@@ -6,7 +6,10 @@
 #include "GameModes/Battle/GS_BattleState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "Character/MyPlayerController.h"
+#include "GameModes/GI_BattleInstance.h"
+#include "Level/Spawn.h"
 #include "Kismet/GameplayStatics.h"
+
 
 
 AGM_BattleMode::AGM_BattleMode()
@@ -47,6 +50,7 @@ void AGM_BattleMode::Logout(AController* Exiting)
 		DeadPlayerControllers.Add(ExitingPlayerController);
 	}
 }
+
 
 void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 {
@@ -111,4 +115,45 @@ void AGM_BattleMode::OnMainTimerElapsed()
 	default:
 		break;
 	}
+}
+
+void AGM_BattleMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+    if (!HasAuthority()) return;
+
+    // GameInstance에서 캐릭터 정보 받아오기
+    if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+    {
+        TArray<FPlayerInfo> temp = GI->CachedSpawnList;
+        PlayerSpawnList = GI->CachedSpawnList;
+    }
+
+    // 캐릭터 스폰
+    TArray<AActor*> FoundPoints;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawn::StaticClass(), FoundPoints);
+
+    for (const FPlayerInfo& Info : PlayerSpawnList)
+    {
+        for (AActor* Actor : FoundPoints)
+        {
+            ASpawn* Point = Cast<ASpawn>(Actor);
+            if (Point && Point->GetPlayerNum() == Info.PlayerNum)
+            {
+                FActorSpawnParameters Params;
+                Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+                GetWorld()->SpawnActor<APawn>(
+                    Info.CharacterClass,
+                    Point->GetActorLocation(),
+                    Point->GetActorRotation(),
+                    Params
+                );
+
+                break;
+            }
+        }
+    }
+	
 }
