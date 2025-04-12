@@ -4,15 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameModes/Lobby/GM_LobbyMode.h"
 #include "GS_LobbyState.generated.h"
-
-UENUM(BlueprintType)
-enum class ELobbyState : uint8
-{
-	Waiting UMETA(DisplayName = "Waiting"),
-	Countdown UMETA(DisplayName = "Countdown"),
-	Started UMETA(DisplayName = "Started")
-};
 
 /**
  * 
@@ -34,10 +27,13 @@ public:
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-private:
+public:
 
-	UPROPERTY(Replicated)
-	ELobbyState LobbyState;
+	// 현재 매치 상태 (대기/플레이/종료 등)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	ELobbyState LobbyState = ELobbyState::Waiting;
+
+private:
 
 	UPROPERTY(Replicated)
 	float CountdownTime;

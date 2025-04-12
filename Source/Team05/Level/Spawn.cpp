@@ -29,8 +29,15 @@ void ASpawn::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
 
-    FString Text = FString::Printf(TEXT("%d"), PlayerNum);
-    TextRender->SetText(FText::FromString(Text));
+    if (TextRender)
+    {
+        FString Text = FString::Printf(TEXT("%d"), PlayerNum);
+        TextRender->SetText(FText::FromString(Text));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[Spawn] TextRender is null in OnConstruction (Server? %s)"), GIsServer ? TEXT("Yes") : TEXT("No"));
+    }
 }
 #endif
 

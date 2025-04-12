@@ -36,6 +36,6 @@ void AGS_LobbyState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AGS_LobbyState, LobbyState);
-	DOREPLIFETIME(AGS_LobbyState, CountdownTime);
+	DOREPLIFETIME(ThisClass, LobbyState);
+	DOREPLIFETIME(ThisClass, CountdownTime);
 }
