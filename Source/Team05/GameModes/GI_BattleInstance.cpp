@@ -3,43 +3,64 @@
 
 #include "GI_BattleInstance.h"
 
-bool UGI_BattleInstance::TryRegisterNickname(const FString& Nickname)
+bool UGI_BattleInstance::RegisterPlayerID(const FString& ID, FString& OutNickname, int32& OutPlayerNum)
 {
-	if (Nickname.IsEmpty())
-	{
-		return false;
-	}
+	// 새로운 플레이어 번호 부여
+	int32 NewPlayerNum = PlayerInfoMap.Num() + 1;
 
-	// 중복 확인 + 등록을 원자적으로 처리
-	if (PlayerInfoMap.Contains(Nickname))
-	{
-		return false; // 이미 사용 중
-	}
+	FPlayerInfo NewInfo;
+	NewInfo.ID = ID;
+	NewInfo.PlayerNum = NewPlayerNum;
+	NewInfo.Nickname = TEXT(""); // 닉네임은 나중에 등록
+	NewInfo.CharacterClass = nullptr;
 
-	// 캐릭터는 나중에 등록되므로 기본값 설정
-	FPlayerInfo Info;
-	Info.Nickname = Nickname;
-	Info.CharacterType = ECharacterType::Knight; // 기본값 또는 None 등
+	PlayerInfoMap.Add(ID, NewInfo);
 
-	PlayerInfoMap.Add(Nickname, Info);
+	OutNickname = NewInfo.Nickname;
+	OutPlayerNum = NewPlayerNum;
+
 	return true;
 }
 
-void UGI_BattleInstance::UpdateCharacterType(const FString& Nickname, ECharacterType NewType)
+bool UGI_BattleInstance::RegisterNickname(const FString& ID, const FString& Nickname)
 {
-	if (PlayerInfoMap.Contains(Nickname))
+	// 닉네임 중복 체크
+	for (const auto& Pair : PlayerInfoMap)
 	{
-		PlayerInfoMap[Nickname].CharacterType = NewType;
+		if (Pair.Value.Nickname == Nickname)
+		{
+			return false;
+		}
 	}
+
+	// ID 기반으로 닉네임 등록
+	if (FPlayerInfo* Info = PlayerInfoMap.Find(ID))
+	{
+		Info->Nickname = Nickname;
+		return true;
+	}
+
+	return false;
 }
 
-ECharacterType UGI_BattleInstance::GetCharacterTypeByNickname(const FString& Nickname) const
+bool UGI_BattleInstance::RegisterCharacterClass(const FString& ID, TSubclassOf<APawn> CharacterClass)
 {
-	if (const FPlayerInfo* Info = PlayerInfoMap.Find(Nickname))
+	if (FPlayerInfo* Info = PlayerInfoMap.Find(ID))
 	{
-		return Info->CharacterType;
+		Info->CharacterClass = CharacterClass;
+		return true;
 	}
-	return ECharacterType::Knight;
+	return false;
+}
+
+TSubclassOf<APawn> UGI_BattleInstance::GetCharacterClass(const FString& ID) const
+{
+	if (const FPlayerInfo* Info = PlayerInfoMap.Find(ID))
+	{
+		return Info->CharacterClass;
+	}
+
+	return nullptr;
 }
 
 void UGI_BattleInstance::AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> CharacterClass)
@@ -47,5 +68,7 @@ void UGI_BattleInstance::AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> 
 	FPlayerInfo NewInfo;
 	NewInfo.PlayerNum = PlayerNum;
 	NewInfo.CharacterClass = CharacterClass;
+
 	CachedSpawnList.Add(NewInfo);
 }
+

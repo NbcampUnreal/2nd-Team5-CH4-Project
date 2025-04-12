@@ -6,6 +6,7 @@
 #include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "GameModes/Lobby/GS_LobbyState.h"
+#include "Character/MyPlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,19 +17,74 @@ AGM_LobbyMode::AGM_LobbyMode()
 
 	BattleStartDelay = 10.0f;
 	MinPlayersToStart = 2;
+
 	bStartCountdownStarted = false;
 	bMatchStarted = false;
-	CountdownRemaining = 0.0f;
+	CountdownRemaining = 10.0f;
+
+	// 전투 맵 이름 등록
+	BattleMapNames.Add(EGameMapType::MarioMap, TEXT("_MarioMap"));
+
+	// 기본 맵 설정
+	SelectedBattleMap = EGameMapType::MarioMap;
 
 	// SeamlessTravel 활성화
-	bUseSeamlessTravel = true;
+	bUseSeamlessTravel = false;
 }
 
 void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	GetWorldTimerManager().SetTimer(CheckReadyTimerHandle, this, &AGM_LobbyMode::CheckReadyToStart, 1.0f, true);
+	/*AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
+	if (IsValid(GS) == false)
+	{
+		return;
+	}
+
+	if (GS->LobbyState != ELobbyState::Waiting)
+	{
+		NewPlayer->SetLifeSpan(0.1f);
+		UE_LOG(LogTemp, Log, TEXT("[Spawn] Return"));
+		return;
+	}*/
+
+	// 유저 고유 ID 기반으로 GameInstance에 PlayerNum 등록
+	if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPlayer->PlayerState))
+	{
+		if (AMyPlayerController* MPC = Cast<AMyPlayerController>(NewPlayer))
+		{
+			FString ID = MPC->GetPlayerUniqueID();
+
+			if (!ID.IsEmpty())
+			{
+				// GameInstance 등록
+				if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(UGameplayStatics::GetGameInstance(this)))
+				{
+					FString OutNickname;
+					int32 OutPlayerNum = 0;
+
+					if (GI->RegisterPlayerID(ID, OutNickname, OutPlayerNum))
+					{
+						PS->SetPlayerNum(OutPlayerNum);
+						UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Assigned PlayerNum: %d to ID: %s"), OutPlayerNum, *ID);
+					}
+				}
+				else {
+					UE_LOG(LogTemp, Log, TEXT("[LobbyMode] GameInstance Casting Failed"));
+				}
+			}
+			else {
+				UE_LOG(LogTemp, Log, TEXT("[LobbyMode] ID Empty"));
+			}
+		}
+		else {
+			UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Controller CastingFailed"));
+		}
+	}
+	else {
+		UE_LOG(LogTemp, Log, TEXT("[LobbyMode] PlayerState CastingFailed"));
+	}
 }
 
 void AGM_LobbyMode::Logout(AController* Exiting)
@@ -36,12 +92,20 @@ void AGM_LobbyMode::Logout(AController* Exiting)
 	Super::Logout(Exiting);
 }
 
+void AGM_LobbyMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 1초 간격으로 로비 상태 확인
+	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
+}
+
+// 모든 플레이어가 준비되었는지 확인하고, 카운트다운 시작 조건 체크
 void AGM_LobbyMode::TryStartBattle()
 {
 	if (bMatchStarted || bStartCountdownStarted) return;
 
 	int32 ReadyCount = 0;
-
 	for (APlayerState* PS : GameState->PlayerArray)
 	{
 		if (const APS_PlayerState* MyPS = Cast<APS_PlayerState>(PS))
@@ -52,8 +116,6 @@ void AGM_LobbyMode::TryStartBattle()
 			}
 		}
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("LobbyMode: ReadyCount = %d / Total = %d"), ReadyCount, GameState->PlayerArray.Num());
 
 	if (ReadyCount >= MinPlayersToStart && ReadyCount == GameState->PlayerArray.Num())
 	{
@@ -66,15 +128,16 @@ void AGM_LobbyMode::TryStartBattle()
 			GS->SetCountdownTime(CountdownRemaining);
 		}
 
-		GetWorldTimerManager().SetTimer(CountdownTimerHandle, this, &AGM_LobbyMode::CountdownTick, 1.0f, true);
-
-		UE_LOG(LogTemp, Log, TEXT("LobbyMode: Countdown Started (%f seconds)"), BattleStartDelay);
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] All players ready. Countdown started."));
 	}
 }
 
-void AGM_LobbyMode::CountdownTick()
+// 카운트다운 진행 및 시간 종료 시 게임 시작
+void AGM_LobbyMode::UpdateCountdown(float Time)
 {
-	CountdownRemaining -= 1.0f;
+	if (!bStartCountdownStarted || bMatchStarted) return;
+
+	CountdownRemaining -= Time;
 
 	if (AGS_LobbyState* GS = GetGameState<AGS_LobbyState>())
 	{
@@ -83,101 +146,93 @@ void AGM_LobbyMode::CountdownTick()
 
 	if (CountdownRemaining <= 0.0f)
 	{
-		GetWorldTimerManager().ClearTimer(CountdownTimerHandle);
-		StartBattle();
+		StartGame();
 	}
 }
 
-void AGM_LobbyMode::CheckReadyToStart()
-{
-	if (!bMatchStarted && !bStartCountdownStarted)
-	{
-		TryStartBattle();
-	}
-}
-
-void AGM_LobbyMode::StartBattle()
+// 게임 시작 및 ServerTravel 실행
+void AGM_LobbyMode::StartGame()
 {
 	bMatchStarted = true;
 
-	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Starting Battle..."));
-
-	int32 MapIndex = FMath::RandRange(0, 1);
-	EBattleMap SelectedMap = static_cast<EBattleMap>(MapIndex);
-	FString MapPath = GetBattleMapPath(SelectedMap);
-
-	UE_LOG(LogTemp, Log, TEXT("LobbyMode: Selected Map = %s"), *MapPath);
-	MapPath = "/Game/_Level/Levels/_MarioMap?Listen";
-
-	if (HasAuthority())
+	if (AGS_LobbyState* GS = GetGameState<AGS_LobbyState>())
 	{
-		//UE_LOG(LogTemp, Log, TEXT("SeamLessTravel"));
-		GetWorld()->ServerTravel(MapPath,true);
-		//GetWorld()->SeamlessTravel(MapPath, true);
+		GS->SetLobbyState(ELobbyState::Started);
+		GS->SetCountdownTime(0.0f);
+	}
+
+	// 선택된 맵 이름으로 ServerTravel
+	if (BattleMapNames.Contains(SelectedBattleMap))
+	{
+		const FString& MapName = BattleMapNames[SelectedBattleMap];
+		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Starting battle. ServerTravel to map: %s"), *MapName);
+
+		GetWorld()->ServerTravel(MapName + TEXT("?listen"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] Invalid map type selected."));
 	}
 }
 
-FString AGM_LobbyMode::GetBattleMapPath(EBattleMap Map) const
+void AGM_LobbyMode::CheckLobbyState()
 {
-	switch (Map)
+	AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
+	if (!IsValid(GS)) return;
+
+	switch (GS->GetLobbyState())
 	{
-	case EBattleMap::Battlefield_01:
-		return TEXT("_MarioMap");
-	case EBattleMap::Battlefield_02:
-		return TEXT("_MarioMap");
+	case ELobbyState::Waiting:
+		UE_LOG(LogTemp, Log, TEXT("[LobbyState] Waiting 상태입니다."));
+		TryStartBattle();
+		break;
+
+	case ELobbyState::Countdown:
+		UE_LOG(LogTemp, Log, TEXT("[LobbyState] Countdown 중입니다."));
+		UpdateCountdown(1.0f); // Tick과 달리 고정된 주기 사용
+		break;
+
+	case ELobbyState::Started:
+		UE_LOG(LogTemp, Log, TEXT("[LobbyState] 이미 게임이 시작됨."));
+		break;
+
 	default:
-		return TEXT("_MarioMap");
+		break;
 	}
 }
 
+// 캐릭터 선택 완료 후 호출되어 실제 캐릭터 스폰
 void AGM_LobbyMode::SpawnPlayerInLobby(APlayerController* PC)
 {
 	if (!IsValid(PC)) return;
 
-	APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState);
-	if (!PS) return;
-
-	ECharacterType SelectedType = PS->GetCharacterType();
-
-	// GameInstance에서 캐릭터 클래스 맵 참조
-	UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(UGameplayStatics::GetGameInstance(this));
-	if (!GI)
+	if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] GameInstance is invalid."));
-		return;
-	}
+		if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
+		{
+			FString ID = MPC->GetPlayerUniqueID();
 
-	if (!GI->CharacterClassMap.Contains(SelectedType))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] No class found in GI for character type: %s"),
-			*UEnum::GetValueAsString(SelectedType));
-		return;
-	}
+			if (!ID.IsEmpty())
+			{
+				if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(UGameplayStatics::GetGameInstance(this)))
+				{
+					TSubclassOf<APawn> CharacterClass = GI->GetCharacterClass(ID);
 
-	TSubclassOf<APawn> CharacterClass = GI->CharacterClassMap[SelectedType];
+					if (CharacterClass)
+					{
+						AActor* StartSpot = FindPlayerStart(PC);
+						FTransform SpawnTransform = StartSpot ? StartSpot->GetActorTransform() : FTransform();
 
-	// PlayerStart 위치 사용
-	AActor* StartSpot = FindPlayerStart(PC);
-	FVector SpawnLocation = StartSpot ? StartSpot->GetActorLocation() : FVector(0, 0, 300);
-	FRotator SpawnRotation = StartSpot ? StartSpot->GetActorRotation() : FRotator::ZeroRotator;
-
-	// 캐릭터 스폰
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = PC;
-	SpawnParams.Instigator = PC->GetPawn();
-
-	APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(CharacterClass, SpawnLocation, SpawnRotation, SpawnParams);
-	if (IsValid(SpawnedPawn))
-	{
-		PC->Possess(SpawnedPawn);
-
-		UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Spawned and Possessed: %s for Player: %s"),
-			*CharacterClass->GetName(),
-			*PS->GetPlayerName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] Failed to spawn pawn for: %s"),
-			*UEnum::GetValueAsString(SelectedType));
+						APawn* NewPawn = GetWorld()->SpawnActor<APawn>(CharacterClass, SpawnTransform);
+						if (IsValid(NewPawn))
+						{
+							PC->Possess(NewPawn);
+							UE_LOG(LogTemp, Log, TEXT("[LobbyMode] %s spawned character %s"), *PS->GetPlayerName(), *CharacterClass->GetName());
+						}
+					}
+				}
+			}
+		}
 	}
 }
+

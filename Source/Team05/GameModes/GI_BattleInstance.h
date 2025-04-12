@@ -6,23 +6,16 @@
 #include "Engine/GameInstance.h"
 #include "GI_BattleInstance.generated.h"
 
-UENUM(BlueprintType)
-enum class ECharacterType : uint8
-{
-	Knight	UMETA(DisplayName = "Knight"),
-	Mage	UMETA(DisplayName = "Mage")
-};
-
 USTRUCT(BlueprintType)
 struct FPlayerInfo
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString Nickname;
+	FString ID;
 
 	UPROPERTY()
-	ECharacterType CharacterType;
+	FString Nickname;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 PlayerNum;
@@ -30,13 +23,15 @@ struct FPlayerInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APawn> CharacterClass;
 
+	// 기본 생성자
 	FPlayerInfo()
-		: Nickname(TEXT("")), CharacterType(ECharacterType::Knight)
+		: ID(TEXT("")), Nickname(TEXT("")), PlayerNum(0), CharacterClass(nullptr)
 	{
 	}
 
-	FPlayerInfo(const FString& InNickname, ECharacterType InType)
-		: Nickname(InNickname), CharacterType(InType)
+	// 닉네임 + 캐릭터 클래스 생성자
+	FPlayerInfo(const FString& InID, const FString& InNickname, int32 InPlayerNum, TSubclassOf<APawn> InClass)
+		: ID(InID), Nickname(InNickname), PlayerNum(InPlayerNum), CharacterClass(InClass)
 	{
 	}
 };
@@ -49,19 +44,20 @@ class TEAM05_API UGI_BattleInstance : public UGameInstance
 	
 public:
 
-	// 중복 확인과 동시에 등록 (Atomic)
 	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
-	bool TryRegisterNickname(const FString& Nickname);
+	bool RegisterPlayerID(const FString& ID, FString& OutNickname, int32& OutPlayerNum);
 
-	// 캐릭터 선택 시 정보 업데이트
-	void UpdateCharacterType(const FString& Nickname, ECharacterType NewType);
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	bool RegisterNickname(const FString& ID, const FString& Nickname);
 
-	// 선택된 캐릭터 확인
-	ECharacterType GetCharacterTypeByNickname(const FString& Nickname) const;
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	bool RegisterCharacterClass(const FString& Nickname, TSubclassOf<APawn> CharacterClass);
+
+	// 고유 ID를 통해 선택된 캐릭터 클래스를 반환
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	TSubclassOf<APawn> GetCharacterClass(const FString& ID) const;
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Character")
-	TMap<ECharacterType, TSubclassOf<APawn>> CharacterClassMap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
 	TArray<FPlayerInfo> CachedSpawnList;
@@ -69,7 +65,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> CharacterClass);
 
-private:
+public:
 
 	UPROPERTY()
 	TMap<FString, FPlayerInfo> PlayerInfoMap;

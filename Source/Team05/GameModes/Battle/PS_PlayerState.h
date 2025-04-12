@@ -4,17 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "GameModes/GI_BattleInstance.h"
 #include "PS_PlayerState.generated.h"
 
-
-UENUM(BlueprintType)
-enum class ECharacterType2 : uint8
-{
-	Knight UMETA(DisplayName = "Knight"),
-	Knight_2 UMETA(DisplayName = "Knight")
-
-};
 
 UCLASS()
 class TEAM05_API APS_PlayerState : public APlayerState
@@ -22,29 +13,38 @@ class TEAM05_API APS_PlayerState : public APlayerState
 	GENERATED_BODY()
 	
 public:
+
 	APS_PlayerState();
-
-	void SetNickname(const FString& NewNickname);
-	FString GetNickname() const;
-
-	void SetCharacterType(ECharacterType NewType);
-	ECharacterType GetCharacterType() const;
-	void RegisterToGameInstance();
-
-	void SetReady(bool bNewReady);
-	bool IsReady() const;
-
-protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-private:
+	// 플레이어 번호
+	UPROPERTY(Replicated)
+	int32 PlayerNum;
+
+	// 닉네임
 	UPROPERTY(Replicated)
 	FString Nickname;
 
+	// 선택된 캐릭터 클래스
 	UPROPERTY(Replicated)
-	ECharacterType CharacterType;
+	TSubclassOf<APawn> CharacterClass;
 
+	// 준비 여부
 	UPROPERTY(Replicated)
 	bool bReady;
+
+	// Getter / Setter
+	void SetReady(bool bInReady);
+	bool IsReady() const;
+
+	// Getter / Setter
+	void SetPlayerNum(int32 InNum);
+	int32 GetPlayerNum() const;
+
+	void SetPlayerNickName(FString InNickname);
+	FString GetPlayerNickName() const;
+
+	void SetCharacterClass(TSubclassOf<APawn> InClass);
+	TSubclassOf<APawn> GetCharacterClass() const;
 };

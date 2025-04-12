@@ -9,6 +9,8 @@
 #include "UObject/ScriptMacros.h"
 #include "UObject/UnrealType.h"
 #include "Kismet/GameplayStatics.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineIdentityInterface.h"
 #include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Lobby/GM_LobbyMode.h"
 #include "GameModes/Battle/PS_PlayerState.h"
@@ -95,18 +97,27 @@ void AMyPlayerController::OnRep_NameCheckText()
 
 	if (NameInputUI)
 	{
-		FName FuncName = "UpdateWarningTextFromVar"; 
+		FName FuncName = "UpdateWarningTextFromVar";
 		if (NameInputUI->FindFunction(FuncName))
 		{
 			struct FWarningParam { FText Text; };
 			FWarningParam Param{ NameCheckText };
-
 			NameInputUI->ProcessEvent(NameInputUI->FindFunction(FuncName), &Param);
 		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("UI No Function"));
-		}
+	}
+}
+
+FString AMyPlayerController::GetPlayerUniqueID() const
+{
+	if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
+	{
+		FString ID = MyPS->GetUniqueId().GetUniqueNetId().IsValid() ?
+			GetPlayerState<APlayerState>()->GetUniqueId().GetUniqueNetId()->ToString() :
+			FString("Invalid");
+		return ID;
+	}
+	else {
+		return "Error";
 	}
 }
 
@@ -114,14 +125,17 @@ void AMyPlayerController::Server_CheckNickname_Implementation(const FString& Nic
 {
 	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 	{
-		bool bSuccess = GI->TryRegisterNickname(Nickname);
-
 		if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
 		{
+			FString ID = MyPS->GetUniqueId().GetUniqueNetId().IsValid() ?
+				GetPlayerState<APlayerState>()->GetUniqueId().GetUniqueNetId()->ToString() :
+				FString("Invalid");
+			// 닉네임 중복 확인
+			bool bSuccess = GI->RegisterNickname(ID, Nickname);
 			if (bSuccess)
 			{
-				MyPS->SetNickname(Nickname); // PlayerState에 저장
-				Client_OpenCharacterSelectWidget(); // UI 전환
+				MyPS->SetPlayerNickName(Nickname); // PlayerState에도 저장
+				Client_OpenCharacterSelectWidget(); // 캐릭터 선택 UI 오픈
 			}
 			else
 			{
@@ -132,16 +146,22 @@ void AMyPlayerController::Server_CheckNickname_Implementation(const FString& Nic
 	}
 }
 
-void AMyPlayerController::Server_SelectCharacter_Implementation(ECharacterType SelectedType)
+void AMyPlayerController::Server_SelectCharacter_Implementation(TSubclassOf<APawn> SelectedClass)
 {
-	if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 	{
-		MyPS->SetCharacterType(SelectedType);
+		if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
+		{
+			FString ID = MyPS->GetUniqueId().GetUniqueNetId().IsValid() ?
+				GetPlayerState<APlayerState>()->GetUniqueId().GetUniqueNetId()->ToString() :
+				FString("Invalid");
+			MyPS->SetCharacterClass(SelectedClass);
 
-		MyPS->RegisterToGameInstance();
+			GI->RegisterCharacterClass(ID, SelectedClass);
 
-		// 캐릭터 선택 완료 후 서버에 알림
-		Server_ConfirmSelection();
+			// 캐릭터 선택 완료 후 서버에 알림
+			Server_ConfirmSelection();
+		}
 	}
 }
 
@@ -159,7 +179,6 @@ void AMyPlayerController::Client_OpenCharacterSelectWidget_Implementation()
 		if (CharacterSelectUI)
 		{
 			CharacterSelectUI->AddToViewport();
-
 			UE_LOG(LogTemp, Log, TEXT("CharacterSelect UI Opened"));
 		}
 	}
@@ -169,9 +188,9 @@ void AMyPlayerController::Server_ConfirmSelection_Implementation()
 {
 	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
 	{
-		PS->SetReady(true); // 준비 완료 처리
+		PS->SetReady(true);
 
-		if (!GetPawn()) // 아직 스폰 안 됐으면
+		if (!GetPawn()) // 아직 Pawn 없으면 스폰
 		{
 			if (AGM_LobbyMode* GM = GetWorld()->GetAuthGameMode<AGM_LobbyMode>())
 			{
