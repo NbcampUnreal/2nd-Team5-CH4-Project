@@ -111,22 +111,20 @@ void ABaseCharacter::MulticastRPCAttack_Implementation()
 	}
 }
 
-void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
+void ABaseCharacter::ServerRPCAttack_Implementation(float InStartAttackTime)
 {
 	AttackTimeDifference = GetWorld()->GetTimeSeconds() - InStartAttackTime;
 	AttackTimeDifference = FMath::Clamp(AttackTimeDifference, 0.f, BaseAttackMontagePlayTime);
-
+	
 	if (FMath::IsNearlyEqual(AttackTimeDifference ,AttackTimeDifference))
 	{
-		bInputEnabled = false;
-		// OnRep_InputEnabled();
+	bInputEnabled = false;
 
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
-		{
-			bInputEnabled = true;
-			// OnRep_InputEnabled();
-		}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
+	{
+		bInputEnabled = true;
+	}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
 	}
 
 	LastStartAttackTime = InStartAttackTime;
@@ -135,17 +133,7 @@ void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
 	MulticastRPCAttack();
 }
 
-bool ABaseCharacter::ServerAttack_Validate(float InStartAttackTime)
-{
-	if (LastStartAttackTime == 0.0f)
-	{
-		// 최초 공격은 일단 통과.
-		return true;
-	}
-	return (BaseAttackMontagePlayTime - 0.1f) < (InStartAttackTime - LastStartAttackTime);
-}
-
-void ABaseCharacter::ServerRotateCharacter_Implementation(const float YawValue)
+void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValue)
 {
 	
 	SetActorRotation(FRotator(0.f, YawValue, 0.f));
@@ -165,7 +153,7 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	// 넉백 처리
 	KnockBack(DamageCauser);
 	
-	ClientHit();
+	MulticastRPCHit();
 
 	FatigueRate += DamageAmountInt;
 	return DamageAmount;
@@ -236,16 +224,6 @@ void ABaseCharacter::ServerRPCStartGuard_Implementation()
 	MulticastRPCChangeGuard(bOnGuard);
 }
 
-bool ABaseCharacter::ServerRPCStartGuard_Validate()
-{
-	if (GuardStamina < 0)
-	{
-		return false;
-	}
-	
-	return true;
-}
-
 void ABaseCharacter::ServerRPCStopGuard_Implementation()
 {
 	CurrentState = STATE_Idle;
@@ -296,7 +274,7 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 	}
 }
 
-void ABaseCharacter::ClientHit_Implementation()
+void ABaseCharacter::MulticastRPCHit_Implementation()
 {
 	PlayMontage(HitMontage);
 }
@@ -500,7 +478,7 @@ void ABaseCharacter::BaseAttack()
 {
 	if (bInputEnabled)
 	{
-		ServerAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
+		ServerRPCAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
 		PlayMontage(BaseAttackMontage);
 	}
 }
