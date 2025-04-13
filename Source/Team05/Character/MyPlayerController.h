@@ -112,6 +112,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_OpenCharacterSelectWidget();
 
+	// 서버 퇴장시키기(클라이언트)
+	UFUNCTION(Client, Reliable)
+	void Client_KickWithMessage(const FString& Message);
+
 #pragma endregion
 
 public:

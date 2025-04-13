@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "GM_LobbyMode.generated.h"
 
+class AMyPlayerController;
+
 // 사용할 전투 맵 종류 정의
 UENUM(BlueprintType)
 enum class EGameMapType : uint8
@@ -84,6 +86,10 @@ protected:
 	/** 현재 선택된 전투 맵 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Battle")
 	EGameMapType SelectedBattleMap;
+
+	// 접속한 플레이어
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TObjectPtr<AMyPlayerController>> ConnectPlayerControllers;
 
 	// 상태 체크 주기용 타이머 핸들
 	FTimerHandle LobbyStateTimerHandle;

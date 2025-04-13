@@ -34,8 +34,12 @@ public:
 
 	virtual void Logout(AController* Exiting) override;
 
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+
 	// 캐릭터 사망 처리 (컨트롤러 기준)
 	void OnCharacterDead(AMyPlayerController* InController);
+
+	void SpawnPlayerInBattle(APlayerController* Player);
 
 private:
 	// 1초 간격으로 호출되는 메인 타이머 콜백
@@ -45,6 +49,11 @@ private:
 public:
 	// 타이머 핸들
 	FTimerHandle MainTimerHandle;
+
+	// 대기 시간 및 남은 시간
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 WaitingTime = 15;
+	int32 RemainWaitingTimeForPlaying = 15;
 
 	// 게임 종료 대기 시간 및 남은 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -64,5 +73,8 @@ protected:
 
 private:
 	TArray<FPlayerInfo> PlayerSpawnList;
+
+	// 최소 시작 인원
+	int32 MinimumPlayerCountForPlaying = 4;
 
 };

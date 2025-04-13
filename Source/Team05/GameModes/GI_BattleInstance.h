@@ -57,6 +57,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
 	TSubclassOf<APawn> GetCharacterClass(const FString& ID) const;
 
+	// 로그아웃용 
+	bool RemovePlayerInfo(const FString& ID);
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")

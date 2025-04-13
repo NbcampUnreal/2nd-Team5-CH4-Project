@@ -16,7 +16,8 @@ AGM_LobbyMode::AGM_LobbyMode()
 	PrimaryActorTick.bCanEverTick = false;
 
 	BattleStartDelay = 10.0f;
-	MinPlayersToStart = 2;
+	//최소인원
+	MinPlayersToStart = 4;
 
 	bStartCountdownStarted = false;
 	bMatchStarted = false;
@@ -29,14 +30,14 @@ AGM_LobbyMode::AGM_LobbyMode()
 	SelectedBattleMap = EGameMapType::MarioMap;
 
 	// SeamlessTravel 활성화
-	bUseSeamlessTravel = false;
+	bUseSeamlessTravel = true;
 }
 
 void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	/*AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
+	AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
 	if (IsValid(GS) == false)
 	{
 		return;
@@ -44,10 +45,20 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 
 	if (GS->LobbyState != ELobbyState::Waiting)
 	{
-		NewPlayer->SetLifeSpan(0.1f);
-		UE_LOG(LogTemp, Log, TEXT("[Spawn] Return"));
+		AMyPlayerController* PC = Cast<AMyPlayerController>(NewPlayer);
+		PC->Client_KickWithMessage(TEXT("게임이 진행중이라 입장이 불가능합니다."));
 		return;
-	}*/
+	}
+
+	// 최대 인원 초과 시 퇴장 처리 (예: 4명 제한)
+	if (ConnectPlayerControllers.Num() >= 4) // 또는 별도 변수 사용 가능
+	{
+		if (AMyPlayerController* PC = Cast<AMyPlayerController>(NewPlayer))
+		{
+			PC->Client_KickWithMessage(TEXT("최대 인원이 초과되어 입장이 제한됩니다."));
+		}
+		return;
+	}
 
 	// 유저 고유 ID 기반으로 GameInstance에 PlayerNum 등록
 	if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPlayer->PlayerState))
@@ -67,6 +78,17 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 					if (GI->RegisterPlayerID(ID, OutNickname, OutPlayerNum))
 					{
 						PS->SetPlayerNum(OutPlayerNum);
+						// 플레이어 카운팅용
+						FString PlayerName = NewPlayer->GetName();
+						if (IsValid(GS))
+						{
+							const FString Msg = FString::Printf(TEXT("%s Welcome!"), *PlayerName);
+							AMyPlayerController* NewPC = Cast<AMyPlayerController>(NewPlayer);
+							if (IsValid(NewPC))
+							{
+								ConnectPlayerControllers.Add(NewPC);
+							}
+						}
 						UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Assigned PlayerNum: %d to ID: %s"), OutPlayerNum, *ID);
 					}
 				}
@@ -90,6 +112,28 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 void AGM_LobbyMode::Logout(AController* Exiting)
 {
 	Super::Logout(Exiting);
+
+	AMyPlayerController* ExitingPlayerController = Cast<AMyPlayerController>(Exiting);
+	if (IsValid(ExitingPlayerController) == true && ConnectPlayerControllers.Find(ExitingPlayerController) != INDEX_NONE)
+	{
+		ConnectPlayerControllers.Remove(ExitingPlayerController);
+
+		// ID 가져오기
+		FString ID = ExitingPlayerController->GetPlayerUniqueID();
+
+		// GameInstance에서 정보 삭제
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+		{
+			if (GI->PlayerInfoMap.Remove(ID) > 0)
+			{
+				UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[Logout] ID not found in PlayerInfoMap: %s"), *ID);
+			}
+		}
+	}
 }
 
 void AGM_LobbyMode::BeginPlay()
@@ -167,7 +211,7 @@ void AGM_LobbyMode::StartGame()
 		const FString& MapName = BattleMapNames[SelectedBattleMap];
 		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Starting battle. ServerTravel to map: %s"), *MapName);
 
-		GetWorld()->ServerTravel(MapName + TEXT("?listen"));
+		GetWorld()->ServerTravel(MapName + TEXT("?listen"), true);
 	}
 	else
 	{

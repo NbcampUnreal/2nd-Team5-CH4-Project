@@ -107,6 +107,12 @@ void AMyPlayerController::OnRep_NameCheckText()
 	}
 }
 
+void AMyPlayerController::Client_KickWithMessage_Implementation(const FString& Message)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Kick] %s"), *Message);
+	ClientTravel(TEXT("/Game/_Dev/Min/DevMenu"), ETravelType::TRAVEL_Absolute);
+}
+
 FString AMyPlayerController::GetPlayerUniqueID() const
 {
 	if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
