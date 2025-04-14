@@ -151,22 +151,20 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 }
 
 
-void ABaseCharacter::CheckAttackHit()
+void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, float AttackStartDistance = 1.f)
 {
 	if (HasAuthority())
 	{
 		TArray<FHitResult> OutHitResults;
 		TSet<ACharacter*> DamagedCharacters;
 		FCollisionQueryParams Params(NAME_None, false, this);
-
-		const float MeleeAttackRange = 50.f;
-		const float MeleeAttackRadius = 50.f;
-		//const float MeleeAttackDamage = 10.f;
+		
+		const float AttackRadius = 50.f;
 		const FVector Forward = GetActorForwardVector();
-		const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
-		const FVector End = Start + GetActorForwardVector() * MeleeAttackRange;
+		const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius() * AttackStartDistance;
+		const FVector End = Start + Forward * AttackRange;
 
-		bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(MeleeAttackRadius), Params);
+		bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(AttackRadius), Params);
 		if (bIsHitDetected == true)
 		{
 			for (auto const& OutHitResult : OutHitResults)
@@ -180,7 +178,7 @@ void ABaseCharacter::CheckAttackHit()
 
 			for (auto const& DamagedCharacter : DamagedCharacters)
 			{
-				UGameplayStatics::ApplyDamage(DamagedCharacter, 5.0f, GetController(), this, UDamageType::StaticClass());
+				UGameplayStatics::ApplyDamage(DamagedCharacter, AttackDamage, GetController(), this, UDamageType::StaticClass());
 			}
 
 			FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
