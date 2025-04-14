@@ -99,9 +99,6 @@ protected:
 	int32 MaxGuardStamina;
 	FTimerHandle GuardStaminaTimer;
 
-	UFUNCTION()
-	void OnRep_GuardState();
-
 	UFUNCTION(Server, Reliable)
 	void ServerRPCStartGuard();
 	
