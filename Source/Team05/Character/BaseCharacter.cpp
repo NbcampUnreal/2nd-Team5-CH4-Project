@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//BaseCharacter.cpp
 
 #include "BaseCharacter.h"
 
@@ -10,6 +9,9 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
+#include "Components/WidgetComponent.h"
+#include "UI/Widgets/NameTagWidget.h"
+#include "GameModes/Battle/PS_PlayerState.h"
 #include "Team05/Ability/AbilityComponentKnight.h"
 
 
@@ -48,6 +50,13 @@ ABaseCharacter::ABaseCharacter()
 	GuardSphere->SetVisibility(false);
 	
 	CurrentGuardScale = FVector(1.0f);
+
+	//UI-NameTag
+	NameTagComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("NameTagComponent"));
+	NameTagComponent->SetupAttachment(RootComponent);
+	NameTagComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	NameTagComponent->SetDrawAtDesiredSize(true);
+	NameTagComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f)); 
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -582,4 +591,16 @@ void ABaseCharacter::OnRep_Owner()
 void ABaseCharacter::PostNetInit()
 {
 	Super::PostNetInit();
+}
+
+//UI-NameTag
+void ABaseCharacter::UpdateNameTagUI(const FString& NewNickname)
+{
+	if (NameTagComponent && NameTagComponent->GetUserWidgetObject())
+	{
+		if (UNameTagWidget* Widget = Cast<UNameTagWidget>(NameTagComponent->GetUserWidgetObject()))
+		{
+			Widget->SetNickname(NewNickname);
+		}
+	}
 }
