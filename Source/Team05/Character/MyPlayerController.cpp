@@ -13,6 +13,7 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Lobby/GM_LobbyMode.h"
+#include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 
 AMyPlayerController::AMyPlayerController()
@@ -52,17 +53,25 @@ void AMyPlayerController::BeginPlay()
 		// "Lobby"라는 단어가 포함되어 있는지 검사
 		if (CurrentLevelName.Contains(TEXT("Lobby")))
 		{
-			if (NameInputUIClass)
+			if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 			{
-				NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
-
-				// UI 포인터 저장
-				Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
-
-				if (NameInputUI)
+				// 게임 플레이 여부 확인
+				if (!GI->HasInitializedLobby())
 				{
-					NameInputUI->AddToViewport();
-					UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+					if (NameInputUIClass)
+					{
+						NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
+
+						// UI 포인터 저장
+						Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
+
+						if (NameInputUI)
+						{
+							NameInputUI->AddToViewport();
+							GI->SetInitializedLobby(true); // 첫 진입 플래그 설정
+							UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+						}
+					}
 				}
 			}
 		}
@@ -105,6 +114,12 @@ void AMyPlayerController::OnRep_NameCheckText()
 			NameInputUI->ProcessEvent(NameInputUI->FindFunction(FuncName), &Param);
 		}
 	}
+}
+
+void AMyPlayerController::Client_KickWithMessage_Implementation(const FString& Message)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Kick] %s"), *Message);
+	ClientTravel(TEXT("/Game/_Dev/Min/DevMenu"), ETravelType::TRAVEL_Absolute);
 }
 
 FString AMyPlayerController::GetPlayerUniqueID() const

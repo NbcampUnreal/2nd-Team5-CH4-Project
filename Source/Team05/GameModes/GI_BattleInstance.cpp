@@ -63,6 +63,11 @@ TSubclassOf<APawn> UGI_BattleInstance::GetCharacterClass(const FString& ID) cons
 	return nullptr;
 }
 
+bool UGI_BattleInstance::RemovePlayerInfo(const FString& ID)
+{
+	return PlayerInfoMap.Remove(ID) > 0;
+}
+
 void UGI_BattleInstance::AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> CharacterClass)
 {
 	FPlayerInfo NewInfo;

@@ -57,6 +57,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
 	TSubclassOf<APawn> GetCharacterClass(const FString& ID) const;
 
+	// 로그아웃용 
+	bool RemovePlayerInfo(const FString& ID);
+
+	// 게임 시작여부 확인용
+	bool HasInitializedLobby() const { return bHasInitializedLobby; }
+	void SetInitializedLobby(bool bInit) { bHasInitializedLobby = bInit; }
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
@@ -70,5 +77,5 @@ public:
 	UPROPERTY()
 	TMap<FString, FPlayerInfo> PlayerInfoMap;
 
-	
+	bool bHasInitializedLobby = false;
 };
