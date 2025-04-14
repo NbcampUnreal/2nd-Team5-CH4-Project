@@ -44,7 +44,7 @@ void ABaseAIController::AIStartDefense()
 		if (ctrlChr)
 		{
 			ctrlChr->StartGuard();
-			GetWorld()->GetTimerManager().SetTimer(guardTimer, this, &ABaseAIController::AIStopDefense, guardTime, false);
+//			GetWorld()->GetTimerManager().SetTimer(guardTimer, this, &ABaseAIController::AIStopDefense, guardTime, false);
 		}
 	}
 }
