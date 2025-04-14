@@ -40,6 +40,14 @@ ABaseCharacter::ABaseCharacter()
 	KnockBackCoefficientZ = 5.f;
 
 	Super::JumpMaxCount = MaxJumpCount;
+
+	// 가드 스피어 초기화
+	GuardSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuardSphere"));
+	GuardSphere->SetupAttachment(RootComponent);
+	GuardSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GuardSphere->SetVisibility(false);
+	
+	CurrentGuardScale = FVector(1.0f);
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -65,30 +73,13 @@ void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GuardStaminaTimer.Invalidate();
 }
 
-void ABaseCharacter::OnRep_TakeDamage()
+void ABaseCharacter::MulticastRPCApplyGuardSphereSize_Implementation(float DeltaTime)
 {
-	// 피격 애니메이션 실행
+	float GuardRatio = static_cast<float>(GuardStamina) / static_cast<float>(MaxGuardStamina);
+	FVector TargetScale = FVector(GuardRatio);
 
-	// 피격 이펙트 실행
-
-	//피격 사운드 실행
-
-	if (CurrentState == STATE_Guard)
-	{
-		GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,                  
-		FColor::Blue,
-		FString::Printf(TEXT("피격되었지만 방어함 피로도: %d"), FatigueRate));
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,                  
-		FColor::Blue,
-		FString::Printf(TEXT("피격됨 피로도: %d"), FatigueRate));
-	}
+	CurrentGuardScale = FMath::VInterpTo(CurrentGuardScale, TargetScale, DeltaTime, 5.0f);
+	GuardSphere->SetRelativeScale3D(CurrentGuardScale);
 }
 
 void ABaseCharacter::OnRep_InputEnabled()
@@ -118,13 +109,13 @@ void ABaseCharacter::ServerRPCAttack_Implementation(float InStartAttackTime)
 	
 	if (FMath::IsNearlyEqual(AttackTimeDifference ,AttackTimeDifference))
 	{
-	bInputEnabled = false;
+		bInputEnabled = false;
 
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
-	{
-		bInputEnabled = true;
-	}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
+		{
+			bInputEnabled = true;
+		}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
 	}
 
 	LastStartAttackTime = InStartAttackTime;
@@ -217,7 +208,7 @@ void ABaseCharacter::OnRep_GuardState()
 }
 
 void ABaseCharacter::ServerRPCStartGuard_Implementation()
-{
+{	
 	CurrentState = STATE_Guard;
 	bInputEnabled = false;
 	bOnGuard = true;
@@ -234,6 +225,8 @@ void ABaseCharacter::ServerRPCStopGuard_Implementation()
 
 void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 {
+	GuardSphere->SetVisibility(bGuardState);
+	
 	if (bGuardState == true)
 	{
 		if (IsValid(GetWorld()) == true)
@@ -283,7 +276,11 @@ void ABaseCharacter::MulticastRPCHit_Implementation()
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	// 가드 크기 변화
+	if (bOnGuard)
+	{
+		MulticastRPCApplyGuardSphereSize(DeltaTime);
+	}
 }
 
 // Called to bind functionality to input
@@ -518,12 +515,18 @@ void ABaseCharacter::StartGuard()
 		return;
 	}
 
+	// 가드 스피어 활성화
+	GuardSphere->SetVisibility(true);
+	
 	PlayMontage(GuardMontage);
 	ServerRPCStartGuard();
 }
 
 void ABaseCharacter::StopGuard()
 {
+	// 가드 스피어 비활성화
+	GuardSphere->SetVisibility(false);
+	
 	StopAnimMontage(GuardMontage);
 	
 	ServerRPCStopGuard();

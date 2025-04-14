@@ -97,8 +97,12 @@ protected:
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
+	FVector CurrentGuardScale;
 	FTimerHandle GuardStaminaTimer;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* GuardSphere;
+	
 	UFUNCTION()
 	void OnRep_GuardState();
 
@@ -110,11 +114,12 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCChangeGuard(bool bGuardState);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCApplyGuardSphereSize(float DeltaTime);
 	
 #pragma endregion
 	
-	UFUNCTION()
-	void OnRep_TakeDamage();
 	UFUNCTION()
 	void OnRep_InputEnabled();
 
