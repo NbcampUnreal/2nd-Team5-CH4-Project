@@ -156,35 +156,28 @@ void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
 
 	if (APlayerController* PC = Cast<APlayerController>(C))
 	{
-		// 연결 보장
 		if (!ConnectPlayerControllers.Contains(PC))
 		{
-			AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
-			if (IsValid(NewPC))
+			if (AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC))
 			{
 				ConnectPlayerControllers.Add(NewPC);
-				if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPC->PlayerState))
-				{
-					//전투 종료 후 돌아왔으니 미리 레디 시켜주기
-					PS->SetReady(true);
-				}
 			}
-			// 레디 상태 유지
-			if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
-			{
-				PS->SetReady(true);
-			}
-
-			SpawnPlayerInLobby(PC);
 		}
 
-		// 레디 상태 유지
 		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
 		{
 			PS->SetReady(true);
-		}
 
-		SpawnPlayerInLobby(PC);
+			// 체력이 0 이상일 때만 캐릭터를 스폰
+			if (PS->GetMatchHealth() > 0)
+			{
+				SpawnPlayerInLobby(PC);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Player %s has 0 HP. No lobby spawn."), *PC->GetName());
+			}
+		}
 	}
 
 	// 1초 간격으로 로비 상태 확인

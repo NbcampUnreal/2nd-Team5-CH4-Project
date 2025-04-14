@@ -23,9 +23,12 @@ struct FPlayerInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APawn> CharacterClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MatchHealth = 100;
+
 	// 기본 생성자
 	FPlayerInfo()
-		: ID(TEXT("")), Nickname(TEXT("")), PlayerNum(0), CharacterClass(nullptr)
+		: ID(TEXT("")), Nickname(TEXT("")), PlayerNum(0), CharacterClass(nullptr), MatchHealth(100)
 	{
 	}
 

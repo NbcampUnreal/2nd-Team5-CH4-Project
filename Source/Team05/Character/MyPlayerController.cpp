@@ -136,6 +136,23 @@ FString AMyPlayerController::GetPlayerUniqueID() const
 	}
 }
 
+void AMyPlayerController::Client_ShowMatchResultUI_Implementation()
+{
+	if (ResultUIClass && !ResultUI)
+	{
+		ResultUI = CreateWidget<UUserWidget>(this, ResultUIClass);
+		if (ResultUI)
+		{
+			ResultUI->AddToViewport();
+			// UI 전용 입력 모드로 변경
+			FInputModeUIOnly Mode;
+			Mode.SetWidgetToFocus(ResultUI->GetCachedWidget());  // 포커스 지정
+			SetInputMode(Mode);
+			UE_LOG(LogTemp, Log, TEXT("[Client] MatchResult UI shown."));
+		}
+	}
+}
+
 void AMyPlayerController::Server_CheckNickname_Implementation(const FString& Nickname)
 {
 	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))

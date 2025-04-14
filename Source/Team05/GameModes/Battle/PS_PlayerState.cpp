@@ -55,6 +55,16 @@ TSubclassOf<APawn> APS_PlayerState::GetCharacterClass() const
 	return CharacterClass;
 }
 
+void APS_PlayerState::SetMatchHealth(int32 NewHealth)
+{
+	MatchHealth = NewHealth;
+}
+
+int32 APS_PlayerState::GetMatchHealth() const
+{
+	return MatchHealth;
+}
+
 void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -62,6 +72,7 @@ void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(APS_PlayerState, PlayerNum);
 	DOREPLIFETIME(APS_PlayerState, Nickname);
 	DOREPLIFETIME(APS_PlayerState, CharacterClass);
+	DOREPLIFETIME(APS_PlayerState, MatchHealth);
 	DOREPLIFETIME(APS_PlayerState, bReady);
 }
 
