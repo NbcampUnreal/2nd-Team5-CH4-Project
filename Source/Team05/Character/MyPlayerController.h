@@ -106,7 +106,7 @@ public:
 	void Server_CheckNickname(const FString& Nickname);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void Server_SelectCharacter(ECharacterType SelectedType);
+	void Server_SelectCharacter(TSubclassOf<APawn> SelectedClass);
 
 	// 캐릭터 UI 열기(클라이언트)
 	UFUNCTION(Client, Reliable)
@@ -122,5 +122,9 @@ public:
 	// 타이틀 화면으로 복귀 (클라이언트 RPC)
 	UFUNCTION(Client, Reliable)
 	void ReturnToTitle();
+
+	// 유저 고유 ID 문자열을 반환하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	FString GetPlayerUniqueID() const;
 
 };

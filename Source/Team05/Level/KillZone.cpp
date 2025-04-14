@@ -37,7 +37,6 @@ AKillZone::AKillZone()
         Collision->SetStaticMesh(CubeMesh.Object);
     }
 
-    // 콜리전 세팅 (필요에 따라)
     Collision->SetGenerateOverlapEvents(true);
     Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     Collision->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);

@@ -102,7 +102,7 @@ protected:
 	UFUNCTION()
 	void OnRep_GuardState();
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void ServerRPCStartGuard();
 	
 	UFUNCTION(Server, Reliable)
@@ -121,14 +121,14 @@ protected:
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastRPCAttack();
 	
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerAttack(float InStartAttackTime);
+	UFUNCTION(Server, Reliable)
+	void ServerRPCAttack(float InStartAttackTime);
 
 	UFUNCTION(Server, Reliable)
-	void ServerRotateCharacter(float YawValue);
+	void ServerRPCRotateCharacter(float YawValue);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void ClientHit();
+	void MulticastRPCHit();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAbilityComponentKnight> AbilityComponent;
