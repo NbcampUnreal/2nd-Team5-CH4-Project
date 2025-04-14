@@ -48,13 +48,3 @@ void UTeam05AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bShouldMove = ((OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero()) == false) && (GroundSpeed > 3.f);
 	}
 }
-
-void UTeam05AnimInstance::AnimNotify_CheckAttackHit()
-{
-	ABaseCharacter* OwnerPlayerCharacter = Cast<ABaseCharacter>(OwnerCharacter);
-	if (IsValid(OwnerPlayerCharacter))
-	{
-		OwnerPlayerCharacter->CheckAttackHit();
-	}
-}
-
