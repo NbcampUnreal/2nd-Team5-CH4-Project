@@ -107,7 +107,7 @@ void ABaseCharacter::ServerRPCAttack_Implementation(float InStartAttackTime)
 	AttackTimeDifference = GetWorld()->GetTimeSeconds() - InStartAttackTime;
 	AttackTimeDifference = FMath::Clamp(AttackTimeDifference, 0.f, BaseAttackMontagePlayTime);
 	
-	if (FMath::IsNearlyEqual(AttackTimeDifference ,AttackTimeDifference))
+	if (FMath::IsNearlyEqual(BaseAttackMontagePlayTime ,AttackTimeDifference))
 	{
 		bInputEnabled = false;
 
