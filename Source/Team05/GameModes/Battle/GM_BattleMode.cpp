@@ -48,22 +48,6 @@ void AGM_BattleMode::PostLogin(APlayerController* NewPlayer)
 	{
 		FString PlayerName = NewPlayer->GetName();
 
-		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
-		{
-			if (AMyPlayerController* PC = Cast<AMyPlayerController>(NewPlayer))
-			{
-				FString ID = PC->GetPlayerUniqueID(); // Controller에서 고유 ID 얻는 함수
-
-				if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(ID))
-				{
-					if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
-					{
-						PS->SetMatchHealth(Info->MatchHealth);
-					}
-				}
-			}
-		}
-
 		if (IsValid(GS))
 		{
 			const FString Msg = FString::Printf(TEXT("%s Welcome!"), *PlayerName);
@@ -118,78 +102,12 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 
 	AlivePlayerControllers.Remove(InController);
 	DeadPlayerControllers.Add(InController);
-	// 관전자 처리
-	InController->ChangeState(NAME_Spectating);
-	InController->UnPossess();
-
-	// 사망 순서에 따른 데미지 계산
-	int32 DeathOrder = DeadPlayerControllers.Num(); // 1이면 첫 번째 사망자
-	int32 Damage = 0;
-
-	switch (DeathOrder)
-	{
-	case 1: Damage = 20;	break;
-	case 2: Damage = 15;	break;
-	case 3: Damage = 10;	break;
-	default: break;
-	}
-
-	// GameInstance에서 체력 갱신
-	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
-	{
-		FString PlayerID = InController->GetPlayerUniqueID(); // 미리 만들어둔 ID 가져오는 함수
-
-		if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
-		{
-			Info->MatchHealth = FMath::Clamp(Info->MatchHealth - Damage, 0, 100);
-			if (APS_PlayerState* ps = Cast<APS_PlayerState>(InController->PlayerState))
-			{
-				ps->SetMatchHealth(Info->MatchHealth);
-			}
-			UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Player %s died (order %d), HP now %d"), *PlayerID, DeathOrder, Info->MatchHealth);
-		}
-
-		// 생존자 수 확인
-		int32 AliveCount = 0;
-
-		for (auto& Elem : GI->PlayerInfoMap)
-		{
-			if (Elem.Value.MatchHealth > 0)
-			{
-				++AliveCount;
-			}
-		}
-
-		if (AliveCount == 1)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Only one player left with HP > 0. Showing result UI"));
-
-			// 모든 플레이어에게 결과 UI 전송
-			for (AMyPlayerController* MyPC : AlivePlayerControllers)
-			{
-				if (IsValid(MyPC))
-				{
-					MyPC->Client_ShowMatchResultUI();
-				}
-			}
-
-			for (AMyPlayerController* MyPC : DeadPlayerControllers)
-			{
-				if (IsValid(MyPC))
-				{
-					MyPC->Client_ShowMatchResultUI();
-				}
-			}
-
-			//타이머 정지
-			GetWorldTimerManager().ClearTimer(MainTimerHandle);
-		}
-	}
 }
 
 void AGM_BattleMode::SpawnPlayerInBattle(APlayerController* Player)
 {
-	// GameInstance에서 캐릭터 정보 받아오기
+	// 여기부터 스폰로직
+		// GameInstance에서 캐릭터 정보 받아오기
 	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 	{
 		PlayerSpawnList = GI->CachedSpawnList;
@@ -279,40 +197,15 @@ void AGM_BattleMode::HandleSeamlessTravelPlayer(AController*& C)
 
 	if (APlayerController* PC = Cast<APlayerController>(C))
 	{
-		// 플레이어 고유 ID 얻기 (컨트롤러에서 제공한다고 가정)
-		FString PlayerID = TEXT("Unknown");
-		if (AMyPlayerController* MyPC = Cast<AMyPlayerController>(PC))
-		{
-			PlayerID = MyPC->GetPlayerUniqueID();
-		}
+		SpawnPlayerInBattle(PC); // 스폰 함수 호출
 
-		// GameInstance에서 체력 정보 가져오기
-		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
-		{
-			if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
-			{
-				if (Info->MatchHealth <= 0)
-				{
-					// 체력이 0이하인 경우 → 관전자 처리
-					PC->UnPossess();
-					PC->ChangeState(NAME_Spectating);
-					MinimumPlayerCountForPlaying--;
-					DeadPlayerControllers.Add(Cast<AMyPlayerController>(PC));
-					UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Player %s is eliminated and entered as spectator."), *PlayerID);
-					return;
-				}
-			}
-		}
-
-		// 체력이 남아 있는 경우 → 일반 스폰
-		SpawnPlayerInBattle(PC);
-
-		if (AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC))
+		AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
+		if (IsValid(NewPC))
 		{
 			AlivePlayerControllers.Add(NewPC);
 		}
 
-		// 1초 간격으로 메인 로직 실행
+		// 1초 간격으로 로비 상태 확인
 		GetWorldTimerManager().SetTimer(MainTimerHandle, this, &AGM_BattleMode::OnMainTimerElapsed, 1.0f, true);
 	}
 }
@@ -366,6 +259,12 @@ void AGM_BattleMode::OnMainTimerElapsed()
 
 		if (RemainWaitingTimeForEnding <= 0)
 		{
+			// 모든 플레이어 타이틀로 복귀
+			/*UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 전투 종료 - 플레이어 타이틀로 이동"));
+
+			for (auto PC : AlivePlayerControllers) PC->ReturnToTitle();
+			for (auto PC : DeadPlayerControllers) PC->ReturnToTitle();*/
+
 			MainTimerHandle.Invalidate();
 
 			// 레벨 리셋 (Dedicated 서버용)

@@ -98,14 +98,6 @@ public:
 	UPROPERTY()
 	UUserWidget* CharacterSelectUI;
 
-	// 게임 결과 위젯 클래스
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<UUserWidget> ResultUIClass;
-
-	// 게임 결과 UI 인스턴스
-	UPROPERTY()
-	UUserWidget* ResultUI;
-
 	UFUNCTION()
 	void OnRep_NameCheckText();
 
@@ -132,16 +124,11 @@ public:
 	void Server_ConfirmSelection();
 
 	// 타이틀 화면으로 복귀 (클라이언트 RPC)
-	UFUNCTION(Client, Reliable, BlueprintCallable)
+	UFUNCTION(Client, Reliable)
 	void ReturnToTitle();
 
 	// 유저 고유 ID 문자열을 반환하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetPlayerUniqueID() const;
-
-	// 게임 종료 위젯 띄워주기
-	UFUNCTION(Client, Reliable)
-	void Client_ShowMatchResultUI();
-	void Client_ShowMatchResultUI_Implementation();
 
 };
