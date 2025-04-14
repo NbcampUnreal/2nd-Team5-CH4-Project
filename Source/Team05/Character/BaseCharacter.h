@@ -97,12 +97,13 @@ protected:
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
+	FVector CurrentGuardScale;
 	FTimerHandle GuardStaminaTimer;
 
-	UFUNCTION()
-	void OnRep_GuardState();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* GuardSphere;
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void ServerRPCStartGuard();
 	
 	UFUNCTION(Server, Reliable)
@@ -110,25 +111,26 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCChangeGuard(bool bGuardState);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCApplyGuardSphereSize(float DeltaTime);
 	
 #pragma endregion
 	
-	UFUNCTION()
-	void OnRep_TakeDamage();
 	UFUNCTION()
 	void OnRep_InputEnabled();
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastRPCAttack();
 	
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerAttack(float InStartAttackTime);
+	UFUNCTION(Server, Reliable)
+	void ServerRPCAttack(float InStartAttackTime);
 
 	UFUNCTION(Server, Reliable)
-	void ServerRotateCharacter(float YawValue);
+	void ServerRPCRotateCharacter(float YawValue);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void ClientHit();
+	void MulticastRPCHit();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAbilityComponentKnight> AbilityComponent;

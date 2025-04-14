@@ -40,6 +40,14 @@ ABaseCharacter::ABaseCharacter()
 	KnockBackCoefficientZ = 5.f;
 
 	Super::JumpMaxCount = MaxJumpCount;
+
+	// 가드 스피어 초기화
+	GuardSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuardSphere"));
+	GuardSphere->SetupAttachment(RootComponent);
+	GuardSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GuardSphere->SetVisibility(false);
+	
+	CurrentGuardScale = FVector(1.0f);
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -65,30 +73,13 @@ void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GuardStaminaTimer.Invalidate();
 }
 
-void ABaseCharacter::OnRep_TakeDamage()
+void ABaseCharacter::MulticastRPCApplyGuardSphereSize_Implementation(float DeltaTime)
 {
-	// 피격 애니메이션 실행
+	float GuardRatio = static_cast<float>(GuardStamina) / static_cast<float>(MaxGuardStamina);
+	FVector TargetScale = FVector(GuardRatio);
 
-	// 피격 이펙트 실행
-
-	//피격 사운드 실행
-
-	if (CurrentState == STATE_Guard)
-	{
-		GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,                  
-		FColor::Blue,
-		FString::Printf(TEXT("피격되었지만 방어함 피로도: %d"), FatigueRate));
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(
-		-1,
-		5.0f,                  
-		FColor::Blue,
-		FString::Printf(TEXT("피격됨 피로도: %d"), FatigueRate));
-	}
+	CurrentGuardScale = FMath::VInterpTo(CurrentGuardScale, TargetScale, DeltaTime, 5.0f);
+	GuardSphere->SetRelativeScale3D(CurrentGuardScale);
 }
 
 void ABaseCharacter::OnRep_InputEnabled()
@@ -111,21 +102,19 @@ void ABaseCharacter::MulticastRPCAttack_Implementation()
 	}
 }
 
-void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
+void ABaseCharacter::ServerRPCAttack_Implementation(float InStartAttackTime)
 {
 	AttackTimeDifference = GetWorld()->GetTimeSeconds() - InStartAttackTime;
 	AttackTimeDifference = FMath::Clamp(AttackTimeDifference, 0.f, BaseAttackMontagePlayTime);
-
-	if (FMath::IsNearlyEqual(AttackTimeDifference ,AttackTimeDifference))
+	
+	if (FMath::IsNearlyEqual(BaseAttackMontagePlayTime ,AttackTimeDifference))
 	{
 		bInputEnabled = false;
-		// OnRep_InputEnabled();
 
 		FTimerHandle TimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
 		{
 			bInputEnabled = true;
-			// OnRep_InputEnabled();
 		}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
 	}
 
@@ -135,17 +124,7 @@ void ABaseCharacter::ServerAttack_Implementation(float InStartAttackTime)
 	MulticastRPCAttack();
 }
 
-bool ABaseCharacter::ServerAttack_Validate(float InStartAttackTime)
-{
-	if (LastStartAttackTime == 0.0f)
-	{
-		// 최초 공격은 일단 통과.
-		return true;
-	}
-	return (BaseAttackMontagePlayTime - 0.1f) < (InStartAttackTime - LastStartAttackTime);
-}
-
-void ABaseCharacter::ServerRotateCharacter_Implementation(const float YawValue)
+void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValue)
 {
 	
 	SetActorRotation(FRotator(0.f, YawValue, 0.f));
@@ -165,7 +144,7 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	// 넉백 처리
 	KnockBack(DamageCauser);
 	
-	ClientHit();
+	MulticastRPCHit();
 
 	FatigueRate += DamageAmountInt;
 	return DamageAmount;
@@ -216,34 +195,26 @@ void ABaseCharacter::ReduceLife()
 	FatigueRate = 0;
 }
 
-void ABaseCharacter::OnRep_GuardState()
-{
-	if (bOnGuard)
-	{
-		PlayMontage(GuardMontage);
-	}
-	else
-	{
-		StopAnimMontage(GuardMontage);
-	}
-}
-
 void ABaseCharacter::ServerRPCStartGuard_Implementation()
-{
+{	
 	CurrentState = STATE_Guard;
 	bInputEnabled = false;
 	bOnGuard = true;
-	MulticastRPCChangeGuard(bOnGuard);
-}
 
-bool ABaseCharacter::ServerRPCStartGuard_Validate()
-{
-	if (GuardStamina < 0)
+	if (IsValid(GetWorld()) == true)
 	{
-		return false;
+		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			GuardStamina = FMath::Clamp(GuardStamina - 2, 0, MaxGuardStamina);
+			if (GuardStamina <= 0)
+			{
+				StopGuard();
+			}
+		}), 0.2f, true);
 	}
 	
-	return true;
+	MulticastRPCChangeGuard(bOnGuard);
 }
 
 void ABaseCharacter::ServerRPCStopGuard_Implementation()
@@ -251,26 +222,31 @@ void ABaseCharacter::ServerRPCStopGuard_Implementation()
 	CurrentState = STATE_Idle;
 	bInputEnabled = true;
 	bOnGuard = false;
+
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			GuardStamina = FMath::Clamp(GuardStamina + 2, 0, MaxGuardStamina);
+			if (GuardStamina >= MaxGuardStamina)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			}
+		}), 0.2f, true);
+	}
 	MulticastRPCChangeGuard(bOnGuard);
 }
 
 void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 {
+	if (HasAuthority() == true)
+	{
+		return;
+	}
+
 	if (bGuardState == true)
 	{
-		if (IsValid(GetWorld()) == true)
-		{
-			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
-			{
-				GuardStamina = FMath::Clamp(GuardStamina - 2, 0, MaxGuardStamina);
-				if (GuardStamina <= 0)
-				{
-					StopGuard();
-				}
-			}), 0.2f, true);
-		}
-		
 		if (GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == GuardMontage)
 		{
 			return;
@@ -279,24 +255,11 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 	}
 	else
 	{
-		if (IsValid(GetWorld()) == true)
-		{
-			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
-			{
-				GuardStamina = FMath::Clamp(GuardStamina + 2, 0, MaxGuardStamina);
-				if (GuardStamina >= MaxGuardStamina)
-				{
-					GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-				}
-			}), 0.2f, true);
-		}
-		
 		StopAnimMontage(GuardMontage);
 	}
 }
 
-void ABaseCharacter::ClientHit_Implementation()
+void ABaseCharacter::MulticastRPCHit_Implementation()
 {
 	PlayMontage(HitMontage);
 }
@@ -305,7 +268,11 @@ void ABaseCharacter::ClientHit_Implementation()
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	// 가드 크기 변화
+	if (bOnGuard)
+	{
+		MulticastRPCApplyGuardSphereSize(DeltaTime);
+	}
 }
 
 // Called to bind functionality to input
@@ -500,7 +467,7 @@ void ABaseCharacter::BaseAttack()
 {
 	if (bInputEnabled)
 	{
-		ServerAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
+		ServerRPCAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
 		PlayMontage(BaseAttackMontage);
 	}
 }
@@ -540,12 +507,18 @@ void ABaseCharacter::StartGuard()
 		return;
 	}
 
+	// 가드 스피어 활성화
+	GuardSphere->SetVisibility(true);
+	
 	PlayMontage(GuardMontage);
 	ServerRPCStartGuard();
 }
 
 void ABaseCharacter::StopGuard()
 {
+	// 가드 스피어 비활성화
+	GuardSphere->SetVisibility(false);
+	
 	StopAnimMontage(GuardMontage);
 	
 	ServerRPCStopGuard();
