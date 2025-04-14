@@ -102,9 +102,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* GuardSphere;
-	
-	UFUNCTION()
-	void OnRep_GuardState();
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPCStartGuard();

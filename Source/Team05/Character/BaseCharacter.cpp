@@ -195,23 +195,25 @@ void ABaseCharacter::ReduceLife()
 	FatigueRate = 0;
 }
 
-void ABaseCharacter::OnRep_GuardState()
-{
-	if (bOnGuard)
-	{
-		PlayMontage(GuardMontage);
-	}
-	else
-	{
-		StopAnimMontage(GuardMontage);
-	}
-}
-
 void ABaseCharacter::ServerRPCStartGuard_Implementation()
 {	
 	CurrentState = STATE_Guard;
 	bInputEnabled = false;
 	bOnGuard = true;
+
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			GuardStamina = FMath::Clamp(GuardStamina - 2, 0, MaxGuardStamina);
+			if (GuardStamina <= 0)
+			{
+				StopGuard();
+			}
+		}), 0.2f, true);
+	}
+	
 	MulticastRPCChangeGuard(bOnGuard);
 }
 
@@ -220,28 +222,31 @@ void ABaseCharacter::ServerRPCStopGuard_Implementation()
 	CurrentState = STATE_Idle;
 	bInputEnabled = true;
 	bOnGuard = false;
+
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+		GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
+		{
+			GuardStamina = FMath::Clamp(GuardStamina + 2, 0, MaxGuardStamina);
+			if (GuardStamina >= MaxGuardStamina)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
+			}
+		}), 0.2f, true);
+	}
 	MulticastRPCChangeGuard(bOnGuard);
 }
 
 void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 {
-	GuardSphere->SetVisibility(bGuardState);
-	
+	if (HasAuthority() == true)
+	{
+		return;
+	}
+
 	if (bGuardState == true)
 	{
-		if (IsValid(GetWorld()) == true)
-		{
-			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
-			{
-				GuardStamina = FMath::Clamp(GuardStamina - 2, 0, MaxGuardStamina);
-				if (GuardStamina <= 0)
-				{
-					StopGuard();
-				}
-			}), 0.2f, true);
-		}
-		
 		if (GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == GuardMontage)
 		{
 			return;
@@ -250,19 +255,6 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 	}
 	else
 	{
-		if (IsValid(GetWorld()) == true)
-		{
-			GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-			GetWorld()->GetTimerManager().SetTimer(GuardStaminaTimer, FTimerDelegate::CreateLambda([&]() -> void
-			{
-				GuardStamina = FMath::Clamp(GuardStamina + 2, 0, MaxGuardStamina);
-				if (GuardStamina >= MaxGuardStamina)
-				{
-					GetWorld()->GetTimerManager().ClearTimer(GuardStaminaTimer);
-				}
-			}), 0.2f, true);
-		}
-		
 		StopAnimMontage(GuardMontage);
 	}
 }
