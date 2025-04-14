@@ -11,7 +11,6 @@
 #include "Kismet/GameplayStatics.h"
 
 
-
 AGM_BattleMode::AGM_BattleMode()
 {
 	// SeamlessTravel 활성화
@@ -80,13 +79,16 @@ void AGM_BattleMode::Logout(AController* Exiting)
 		// GameInstance에서 정보 삭제
 		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 		{
-			if (GI->PlayerInfoMap.Remove(ID) > 0)
+			if (!(GetWorld() && GetWorld()->IsInSeamlessTravel()))
 			{
-				UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+				if (GI->PlayerInfoMap.Remove(ID) > 0)
+				{
+					UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+				}
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("[Logout] ID not found in PlayerInfoMap: %s"), *ID);
+				UE_LOG(LogTemp, Warning, TEXT("[Logout] Skipped removing player info during travel. ID: %s"), *ID);
 			}
 		}
 	}
@@ -258,16 +260,16 @@ void AGM_BattleMode::OnMainTimerElapsed()
 		if (RemainWaitingTimeForEnding <= 0)
 		{
 			// 모든 플레이어 타이틀로 복귀
-			UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 전투 종료 - 플레이어 타이틀로 이동"));
+			/*UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 전투 종료 - 플레이어 타이틀로 이동"));
 
 			for (auto PC : AlivePlayerControllers) PC->ReturnToTitle();
-			for (auto PC : DeadPlayerControllers) PC->ReturnToTitle();
+			for (auto PC : DeadPlayerControllers) PC->ReturnToTitle();*/
 
 			MainTimerHandle.Invalidate();
 
 			// 레벨 리셋 (Dedicated 서버용)
-			FName LevelName = FName("DevLobby");
-			UGameplayStatics::OpenLevel(this, LevelName, true, TEXT("listen"));
+			FString LevelName = "DevLobby";
+			GetWorld()->ServerTravel(LevelName + TEXT("?listen"), true);
 
 			UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 레벨 초기화 및 DevLobby로 이동"), true);
 		}

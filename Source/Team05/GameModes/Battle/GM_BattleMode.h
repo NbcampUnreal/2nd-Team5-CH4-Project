@@ -33,7 +33,7 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	virtual void Logout(AController* Exiting) override;
-
+	// SeamlessTravel
 	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
 
 	// 캐릭터 사망 처리 (컨트롤러 기준)

@@ -41,6 +41,9 @@ public:
 	// 매 틱마다 TryStartBattle 및 Countdown 갱신
 	virtual void BeginPlay() override;
 
+	// SeamlessTravel
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+
 	// 캐릭터 스폰
 	void SpawnPlayerInLobby(APlayerController* PC);
 

@@ -124,13 +124,16 @@ void AGM_LobbyMode::Logout(AController* Exiting)
 		// GameInstance에서 정보 삭제
 		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 		{
-			if (GI->PlayerInfoMap.Remove(ID) > 0)
+			if (!(GetWorld() && GetWorld()->IsInSeamlessTravel()))
 			{
-				UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+				if (GI->PlayerInfoMap.Remove(ID) > 0)
+				{
+					UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+				}
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("[Logout] ID not found in PlayerInfoMap: %s"), *ID);
+				UE_LOG(LogTemp, Warning, TEXT("[Logout] Skipped removing player info during travel. ID: %s"), *ID);
 			}
 		}
 	}
@@ -139,6 +142,50 @@ void AGM_LobbyMode::Logout(AController* Exiting)
 void AGM_LobbyMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 1초 간격으로 로비 상태 확인
+	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
+}
+
+void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
+{
+	Super::HandleSeamlessTravelPlayer(C);
+
+	//전투 대기시간 30초
+	CountdownRemaining = 30;
+
+	if (APlayerController* PC = Cast<APlayerController>(C))
+	{
+		// 연결 보장
+		if (!ConnectPlayerControllers.Contains(PC))
+		{
+			AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
+			if (IsValid(NewPC))
+			{
+				ConnectPlayerControllers.Add(NewPC);
+				if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPC->PlayerState))
+				{
+					//전투 종료 후 돌아왔으니 미리 레디 시켜주기
+					PS->SetReady(true);
+				}
+			}
+			// 레디 상태 유지
+			if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+			{
+				PS->SetReady(true);
+			}
+
+			SpawnPlayerInLobby(PC);
+		}
+
+		// 레디 상태 유지
+		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+		{
+			PS->SetReady(true);
+		}
+
+		SpawnPlayerInLobby(PC);
+	}
 
 	// 1초 간격으로 로비 상태 확인
 	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
@@ -190,6 +237,7 @@ void AGM_LobbyMode::UpdateCountdown(float Time)
 
 	if (CountdownRemaining <= 0.0f)
 	{
+		LobbyStateTimerHandle.Invalidate();
 		StartGame();
 	}
 }
