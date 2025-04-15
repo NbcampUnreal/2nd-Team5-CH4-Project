@@ -61,7 +61,7 @@ void UAbilityComponentKnight::SpecialUpperAttack()
 		bCanAttack = false;
 		float MontagePlayTime = SpecialUpperAttackAnimMontage->GetPlayLength();
 
-		ServerRPCAttack(SpecialUpperAttackAnimMontage, 0.f, 1000.f);
+		ServerRPCAttack(SpecialUpperAttackAnimMontage, 0.f, 700.f);
 
 		FTimerHandle TimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
