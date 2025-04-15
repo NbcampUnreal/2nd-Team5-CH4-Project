@@ -146,7 +146,7 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	
-	void CheckAttackHit(float Damage, float AttackRange, float AttackStartDistance);
+	void CheckAttackHit(float Damage, float AttackRange, bool bAttackFromOrigin);
 
 	void ReduceLife();
 	int32 GetLife() const { return Life; }

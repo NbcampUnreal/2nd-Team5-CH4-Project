@@ -160,7 +160,7 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 }
 
 
-void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, float AttackStartDistance = 1.f)
+void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, bool bAttackFromOrigin)
 {
 	if (HasAuthority())
 	{
@@ -170,8 +170,17 @@ void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, float
 		
 		const float AttackRadius = 50.f;
 		const FVector Forward = GetActorForwardVector();
-		const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius() * AttackStartDistance;
-		const FVector End = Start + Forward * AttackRange;
+		FVector Start, End;
+		if (bAttackFromOrigin == true)
+		{
+			Start = GetActorLocation() - Forward * AttackRange;
+			End = GetActorLocation() + Forward * AttackRange;
+		}
+		else
+		{
+			Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
+			End = Start + Forward * AttackRange;
+		}
 
 		bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(AttackRadius), Params);
 		if (bIsHitDetected == true)
