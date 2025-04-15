@@ -91,7 +91,8 @@ void AKillZone::OnCollisionBeginOverlap(
                 {
                     AMyPlayerController* Controller = Cast<AMyPlayerController>(bc->GetController());
                     gamemode->OnCharacterDead(Controller);
-                    OtherActor->Destroy();
+                    //OtherActor->SetActorHiddenInGame(true);
+					OtherActor->SetActorLocation(DeadLocation);
                 }
             }
             else {

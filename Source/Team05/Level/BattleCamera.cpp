@@ -16,31 +16,32 @@ void ABattleCamera::BeginPlay()
     // 타이머로 카메라 업데이트
     GetWorldTimerManager().SetTimerForNextTick([this]()
         {
-            GetWorldTimerManager().SetTimer(UpdateTimerHandle, this, &ABattleCamera::UpdateCamera, 0.05f, true, 1.0f);
+            GetWorldTimerManager().SetTimer(UpdateTimerHandle, this, &ABattleCamera::UpdateCamera, 0.01f, true, 1.0f);
         });
 
 }
 
 void ABattleCamera::UpdateCamera()
 {
-    TrackedActors.RemoveAll([](AActor* Actor) { return !IsValid(Actor); });
+    TrackedActors.RemoveAll([](ABaseCharacter* Actor) { return !IsValid(Actor) || Actor->GetLife() <=0; });
 
     if (TrackedActors.Num() == 0)
-    {
+    {   
         // 다시 찾기 시도
         TArray<AActor*> FoundActors;
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseCharacter::StaticClass(), FoundActors);
 
         for (AActor* Actor : FoundActors)
         {
-            if (IsValid(Actor))
+            ABaseCharacter* BaseChar = Cast<ABaseCharacter>(Actor);
+            if (IsValid(BaseChar) && BaseChar->GetLife() > 0)
             {
-                TrackedActors.Add(Actor);
+                TrackedActors.Add(BaseChar);
             }
         }
 
         if (TrackedActors.Num() == 0)
-        {
+        {   
             return;
         }
     }
@@ -48,7 +49,7 @@ void ABattleCamera::UpdateCamera()
     FVector Min(FLT_MAX);
     FVector Max(-FLT_MAX);
 
-    for (AActor* Actor : TrackedActors)
+    for (ABaseCharacter* Actor : TrackedActors)
     {
         FVector Loc = Actor->GetActorLocation();
         Min.X = FMath::Min(Min.X, Loc.X);
