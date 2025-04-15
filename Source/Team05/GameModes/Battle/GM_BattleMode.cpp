@@ -355,7 +355,7 @@ void AGM_BattleMode::HandleSeamlessTravelPlayer(AController*& C)
 							if (!StoredNickname.IsEmpty())
 							{
 								PS->SetPlayerNickName(StoredNickname);
-								UE_LOG(LogTemp, Log, TEXT("[SeamlessTravel] Restored nickname: %s for player ID: %s"), *StoredNickname, *ID);
+								UE_LOG(LogTemp, Log, TEXT("[SeamlessTravel] Restored nickname: %s for player ID: %s"), *StoredNickname, *PlayerID);
 							}
 						}
 					}
