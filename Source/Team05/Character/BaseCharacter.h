@@ -1,9 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//BaseCharacter.h
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/WidgetComponent.h"
+#include "UI/Widgets/NameTagWidget.h"    
 #include "BaseCharacter.generated.h"
 
 class UInputAction;
@@ -191,4 +193,18 @@ public:
 
 	// 네트워크 초기화 이후 호출됩니다. (PostReplication 관련)
 	virtual void PostNetInit() override;
+
+
+	// UI
+	// NameTag 위젯
+public:
+	UFUNCTION()
+	void UpdateNameTagUI(const FString& NewNickname);
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	TObjectPtr<UWidgetComponent> NameTagComponent;
+
+private:
+	bool bNameTagBound = false;
 };

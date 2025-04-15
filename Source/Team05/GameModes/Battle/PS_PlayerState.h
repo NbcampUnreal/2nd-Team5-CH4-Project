@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//PS_PlayerState.h
 
 #pragma once
 
@@ -22,8 +22,8 @@ public:
 	UPROPERTY(Replicated)
 	int32 PlayerNum;
 
-	// 닉네임
-	UPROPERTY(Replicated)
+	// 기존 닉네임 선언을 수정
+	UPROPERTY(ReplicatedUsing = OnRep_Nickname)
 	FString Nickname;
 
 	// 선택된 캐릭터 클래스
@@ -47,4 +47,9 @@ public:
 
 	void SetCharacterClass(TSubclassOf<APawn> InClass);
 	TSubclassOf<APawn> GetCharacterClass() const;
+
+//UI NameTag
+protected:
+	UFUNCTION()
+	void OnRep_Nickname();
 };

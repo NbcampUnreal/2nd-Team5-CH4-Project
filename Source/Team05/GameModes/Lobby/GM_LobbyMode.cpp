@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GM_LobbyMode.cpp
 
 #include "GameModes/Lobby/GM_LobbyMode.h"
 
@@ -78,6 +77,18 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 					if (GI->RegisterPlayerID(ID, OutNickname, OutPlayerNum))
 					{
 						PS->SetPlayerNum(OutPlayerNum);
+
+						// GameInstance에 저장된 닉네임이 있으면 PlayerState에 복사
+						if (GI->PlayerInfoMap.Contains(ID))
+						{
+							FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+							if (!StoredNickname.IsEmpty())
+							{
+								PS->SetPlayerNickName(StoredNickname);
+								UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Set nickname: %s for player ID: %s"), *StoredNickname, *ID);
+							}
+						}
+
 						// 플레이어 카운팅용
 						FString PlayerName = NewPlayer->GetName();
 						if (IsValid(GS))
@@ -147,6 +158,7 @@ void AGM_LobbyMode::BeginPlay()
 	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
 }
 
+//plus NameTag UI Nickname 
 void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
 {
 	Super::HandleSeamlessTravelPlayer(C);
@@ -156,6 +168,32 @@ void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
 
 	if (APlayerController* PC = Cast<APlayerController>(C))
 	{
+		// 닉네임 정보 복원 로직 추가
+		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+		{
+			if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
+			{
+				FString ID = MPC->GetPlayerUniqueID();
+
+				if (!ID.IsEmpty())
+				{
+					if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+					{
+						if (GI->PlayerInfoMap.Contains(ID))
+						{
+							// 닉네임 유지
+							FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+							if (!StoredNickname.IsEmpty())
+							{
+								PS->SetPlayerNickName(StoredNickname);
+								UE_LOG(LogTemp, Log, TEXT("[LobbyMode][SeamlessTravel] Restored nickname: %s for player ID: %s"), *StoredNickname, *ID);
+							}
+						}
+					}
+				}
+			}
+		}
+
 		// 연결 보장
 		if (!ConnectPlayerControllers.Contains(PC))
 		{
@@ -174,16 +212,13 @@ void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
 			{
 				PS->SetReady(true);
 			}
-
 			SpawnPlayerInLobby(PC);
 		}
-
 		// 레디 상태 유지
 		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
 		{
 			PS->SetReady(true);
 		}
-
 		SpawnPlayerInLobby(PC);
 	}
 
@@ -327,4 +362,3 @@ void AGM_LobbyMode::SpawnPlayerInLobby(APlayerController* PC)
 		}
 	}
 }
-
