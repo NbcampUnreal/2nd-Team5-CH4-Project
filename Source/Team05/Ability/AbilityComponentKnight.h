@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilityComponentBase.h"
 #include "SpecialAttack.h"
 #include "Components/SceneComponent.h"
 #include "AbilityComponentKnight.generated.h"
@@ -8,7 +9,7 @@
 class ABaseCharacter;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class TEAM05_API UAbilityComponentKnight : public USceneComponent, public ISpecialAttack
+class TEAM05_API UAbilityComponentKnight : public UAbilityComponentBase
 {
 	GENERATED_BODY()
 
