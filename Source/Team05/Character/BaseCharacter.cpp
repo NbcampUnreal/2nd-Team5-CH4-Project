@@ -60,11 +60,13 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ThisClass, bInputEnabled);
+	DOREPLIFETIME(ABaseCharacter, GuardStamina);
 }
 
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
 void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -79,6 +81,7 @@ void ABaseCharacter::MulticastRPCApplyGuardSphereSize_Implementation(float Delta
 {
 	float GuardRatio = static_cast<float>(GuardStamina) / static_cast<float>(MaxGuardStamina);
 	FVector TargetScale = FVector(GuardRatio);
+	UE_LOG(LogTemp, Warning, TEXT("%s: %f"), *GetName(),GuardRatio);
 
 	CurrentGuardScale = FMath::VInterpTo(CurrentGuardScale, TargetScale, DeltaTime, 5.0f);
 	GuardSphere->SetRelativeScale3D(CurrentGuardScale);
@@ -262,6 +265,7 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 
 	if (bGuardState == true)
 	{
+		GuardSphere->SetVisibility(true);
 		if (GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == GuardMontage)
 		{
 			return;
@@ -270,6 +274,7 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 	}
 	else
 	{
+		GuardSphere->SetVisibility(false);
 		StopAnimMontage(GuardMontage);
 	}
 }

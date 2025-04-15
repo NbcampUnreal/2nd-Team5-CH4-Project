@@ -100,12 +100,13 @@ protected:
 
 #pragma region Guard
 	uint8 bOnGuard : 1;
+	UPROPERTY(Replicated)
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
 	FVector CurrentGuardScale;
 	FTimerHandle GuardStaminaTimer;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guard")
 	UStaticMeshComponent* GuardSphere;
 
 	UFUNCTION(Server, Reliable)
