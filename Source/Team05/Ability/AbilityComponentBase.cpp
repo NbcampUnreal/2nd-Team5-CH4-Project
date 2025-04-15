@@ -35,5 +35,21 @@ void UAbilityComponentBase::FrontAttack()
 {
 }
 
+void UAbilityComponentBase::SpecialAttack()
+{
+}
+
+void UAbilityComponentBase::SpecialUpperAttack()
+{
+}
+
+void UAbilityComponentBase::SpecialLowerAttack()
+{
+}
+
+void UAbilityComponentBase::SpecialFrontAttack()
+{
+}
+
 
 

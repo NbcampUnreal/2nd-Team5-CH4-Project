@@ -23,4 +23,9 @@ protected:
 	void UpperAttack();
 	void LowerAttack();
 	void FrontAttack();
+
+	virtual void SpecialAttack() override;
+	virtual void SpecialUpperAttack() override;
+	virtual void SpecialLowerAttack() override;
+	virtual void SpecialFrontAttack() override;
 };
