@@ -48,6 +48,7 @@ public:
 	void SetCharacterClass(TSubclassOf<APawn> InClass);
 	TSubclassOf<APawn> GetCharacterClass() const;
 
+//UI NameTag
 protected:
 	UFUNCTION()
 	void OnRep_Nickname();
