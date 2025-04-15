@@ -30,7 +30,20 @@ void ABaseAIController::AIBaseAttack()
 
 void ABaseAIController::AISkillAttack()
 {
-
+	APawn* ctrlPawn = GetPawn();
+	FVector2D dir;
+	if (ctrlPawn)
+	{
+		ABaseCharacter* ctrlChr;
+		ctrlChr = Cast<ABaseCharacter>(ctrlPawn);
+		if (ctrlChr)
+		{
+			dir.X = FMath::FRandRange(0.0f, 1.0f);
+			dir.Y = FMath::FRandRange(-1.0f, 1.0f);
+			ctrlChr->SetDirection(dir);
+			ctrlChr->SpecialAttack();
+		}
+	}
 }
 
 void ABaseAIController::AIStartDefense()
