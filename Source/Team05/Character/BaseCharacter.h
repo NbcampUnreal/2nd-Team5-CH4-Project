@@ -9,7 +9,6 @@
 #include "BaseCharacter.generated.h"
 
 class UInputAction;
-class UAbilityComponentKnight;
 struct FInputActionValue;
 
 UENUM()
@@ -27,8 +26,8 @@ enum ECharacterState
     STATE_Idle,
 	STATE_Attack,
 	STATE_Guard,
-	STATE_OnAttacked,
-	STATE_Jumping
+	State_Hit,
+	STATE_Respawn
 };
 
 
@@ -43,6 +42,22 @@ public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// 몽타주 리스트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> BaseAttackMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> BaseUpperAttackAnimMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> BaseLowerAttackAnimMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> BaseFrontAttackAnimMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> HitMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> GuardMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> EmoteMontage;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -55,6 +70,8 @@ protected:
 	// 생명 (매치마다 3개로 초기화)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
 	int32 Life;
+	// 부활 시 무적 시간
+	float RespawnImmunityTime;
 	// 현재 키보드 입력 방향
 	EDirectionEnum CurrentDirection;
 
@@ -67,20 +84,6 @@ protected:
 	float KnockBackCoefficientX;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KnockBack")
 	float KnockBackCoefficientZ;
-
-	float BaseAttackMontagePlayTime;
-	float LastStartAttackTime;
-	float AttackTimeDifference;
-
-	// 몽타주 리스트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> BaseAttackMontage;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> HitMontage;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> GuardMontage;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> EmoteMontage;
 
 	// 서버
 
@@ -123,19 +126,20 @@ protected:
 	void OnRep_InputEnabled();
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastRPCAttack();
+	void MulticastRPCAttack(UAnimMontage* AnimMontage);
 	
 	UFUNCTION(Server, Reliable)
-	void ServerRPCAttack(float InStartAttackTime);
+	void ServerRPCAttack(UAnimMontage* AnimMontage);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPCRotateCharacter(float YawValue);
 
+	// 캐릭터 대시
+	UFUNCTION(Server, Reliable)
+	void Launch(const float LaunchXDistance, const float LaunchZDistance);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCHit();
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAbilityComponentKnight> AbilityComponent;
 
 public:	
 	// Called every frame
@@ -150,6 +154,8 @@ public:
 
 	void ReduceLife();
 	int32 GetLife() const { return Life; }
+	// 부활 후 무적 처리
+	void RespawnImmunity();
 	
 	UFUNCTION()
 	void Move1D_Input(const FInputActionValue& Value);
@@ -167,8 +173,6 @@ public:
 	UFUNCTION()
 	void BaseAttack();
 	UFUNCTION()
-	virtual void SpecialAttack();
-	UFUNCTION()
 	virtual void SpecialMove();
 	UFUNCTION()
 	void StartGuard();
@@ -179,6 +183,8 @@ public:
 	// 캐릭터 행동 끝
 
 	void KnockBack(const AActor* DamageCauser);
+
+	void HitImmunity();
 	
 	void PlayMontage(const TObjectPtr<UAnimMontage>& Montage);
 

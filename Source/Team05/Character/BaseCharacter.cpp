@@ -12,16 +12,12 @@
 #include "Components/WidgetComponent.h"
 #include "UI/Widgets/NameTagWidget.h"
 #include "GameModes/Battle/PS_PlayerState.h"
-#include "Team05/Ability/AbilityComponentKnight.h"
-
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
 	: 
 	FatigueRate(0),
 	Life(3),
-	LastStartAttackTime(0.f),
-	AttackTimeDifference(0.f),
 	bInputEnabled(true),
 	MaxJumpCount(2),
 	GuardStamina(100),
@@ -33,7 +29,8 @@ ABaseCharacter::ABaseCharacter()
 	FatigueRate = 0;
 	Life = 3;
 
-	AbilityComponent = CreateDefaultSubobject<UAbilityComponentKnight>("Ability Component");
+	// 리스폰 무적 시간 초기화
+	RespawnImmunityTime = 1.f;
 
 	// 넉백 초기화
 	DefaultKnockBackX = 100.f;
@@ -68,10 +65,6 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (IsValid(BaseAttackMontage))
-	{
-		BaseAttackMontagePlayTime = BaseAttackMontage->GetPlayLength();	
-	}
 }
 
 void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -103,34 +96,26 @@ void ABaseCharacter::OnRep_InputEnabled()
 	}
 }
 
-void ABaseCharacter::MulticastRPCAttack_Implementation()
+void ABaseCharacter::ServerRPCAttack_Implementation(UAnimMontage* AnimMontage)
+{
+	float MontagePlayTime = AnimMontage->GetPlayLength();
+	bInputEnabled = false;
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
+	{
+		bInputEnabled = true;
+	}), MontagePlayTime, false, -1.f);
+	PlayMontage(AnimMontage);
+	MulticastRPCAttack(AnimMontage);
+}
+
+void ABaseCharacter::MulticastRPCAttack_Implementation(UAnimMontage* AnimMontage)
 {
 	if (!HasAuthority() && !IsLocallyControlled())
 	{
-		PlayMontage(BaseAttackMontage);
+		PlayMontage(AnimMontage);
 	}
-}
-
-void ABaseCharacter::ServerRPCAttack_Implementation(float InStartAttackTime)
-{
-	AttackTimeDifference = GetWorld()->GetTimeSeconds() - InStartAttackTime;
-	AttackTimeDifference = FMath::Clamp(AttackTimeDifference, 0.f, BaseAttackMontagePlayTime);
-	
-	if (FMath::IsNearlyEqual(BaseAttackMontagePlayTime ,AttackTimeDifference))
-	{
-		bInputEnabled = false;
-
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
-		{
-			bInputEnabled = true;
-		}), BaseAttackMontagePlayTime - AttackTimeDifference, false, -1.f);
-	}
-
-	LastStartAttackTime = InStartAttackTime;
-	PlayMontage(BaseAttackMontage);
-
-	MulticastRPCAttack();
 }
 
 void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValue)
@@ -142,14 +127,15 @@ void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValu
 
 float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (!HasAuthority() || CurrentState == STATE_Guard)
+	if (!HasAuthority() || CurrentState == STATE_Guard || CurrentState == State_Hit || CurrentState == STATE_Respawn)
 	{
 		return 0.f;
 	}
-
+	
 	const int DamageAmountInt = static_cast<int32>(DamageAmount);
 	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
-
+	// 피격 후 면역 처리
+	HitImmunity();
 	// 넉백 처리
 	KnockBack(DamageCauser);
 	
@@ -210,6 +196,19 @@ void ABaseCharacter::ReduceLife()
 	Life = FMath::Clamp(Life - 1, 0, 3);
 	FatigueRate = 0;
 }
+
+void ABaseCharacter::RespawnImmunity()
+{
+	// 리스폰 이펙트 실행
+	
+	CurrentState = STATE_Respawn;
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
+	{
+		CurrentState = STATE_Idle;
+	}), RespawnImmunityTime, false, -1.f);
+}
+
 
 void ABaseCharacter::ServerRPCStartGuard_Implementation()
 {	
@@ -371,17 +370,6 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 				);
 			}
 	
-			// 캐릭터 특수 공격 바인딩
-			if (MyPlayerController->SpecialAttackAction)
-			{
-				EnhancedInputComponent->BindAction(
-					MyPlayerController->SpecialAttackAction,
-					ETriggerEvent::Started,
-					this,
-					&ABaseCharacter::SpecialAttack
-				);
-			}
-	
 			// 캐릭터 특수 이동 바인딩
 			if (MyPlayerController->SpecialMoveAction)
 			{
@@ -496,31 +484,8 @@ void ABaseCharacter::BaseAttack()
 {
 	if (bInputEnabled)
 	{
-		ServerRPCAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
+		ServerRPCAttack(BaseAttackMontage);
 		PlayMontage(BaseAttackMontage);
-	}
-}
-
-void ABaseCharacter::SpecialAttack()
-{
-	if (bInputEnabled)
-	{
-		if (CurrentDirection == EDirectionEnum::EUp)
-		{
-			AbilityComponent->SpecialUpperAttack();
-		}
-		else if (CurrentDirection == EDirectionEnum::EForward)
-		{
-			AbilityComponent->SpecialFrontAttack();
-		}
-		else if (CurrentDirection == EDirectionEnum::EDown)
-		{
-			AbilityComponent->SpecialLowerAttack();
-		}
-		else
-		{
-			AbilityComponent->SpecialAttack();
-		}		
 	}
 }
 
@@ -558,6 +523,14 @@ void ABaseCharacter::Emote()
 	PlayMontage(EmoteMontage);
 }
 
+void ABaseCharacter::Launch_Implementation(const float LaunchXDistance, const float LaunchZDistance)
+{
+	float XDirection = GetActorForwardVector().X;
+	XDirection = (XDirection >= 0.f) ? 1.f : -1.f;
+	const FVector LaunchVelocity = FVector(XDirection * LaunchXDistance, 0.f, 200.f + LaunchZDistance);
+	LaunchCharacter(LaunchVelocity, true, true);
+}
+
 void ABaseCharacter::KnockBack(const AActor* DamageCauser)
 {
 	float XDirection = GetActorLocation().X - DamageCauser->GetActorLocation().X;
@@ -571,6 +544,20 @@ void ABaseCharacter::KnockBack(const AActor* DamageCauser)
 	
 	LaunchCharacter(LaunchVelocity, true, true);
 }
+
+void ABaseCharacter::HitImmunity()
+{
+	// Hit로 현재 상태 변경
+	// 타이머로 HitMontage 실행 시간만큼 뒤에 현재 상태를 Idle 상태로 전환
+	CurrentState = State_Hit;
+	const float HitMontagePlayTime = HitMontage->GetPlayLength();
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
+	{
+		CurrentState = STATE_Idle;
+	}), HitMontagePlayTime, false, -1.f);
+}
+
 
 void ABaseCharacter::PlayMontage(const TObjectPtr<UAnimMontage>& Montage)
 {
