@@ -280,6 +280,19 @@ void ABaseCharacter::Tick(float DeltaTime)
 	{
 		MulticastRPCApplyGuardSphereSize(DeltaTime);
 	}
+	// 최초 1회만 닉네임 바인딩
+	if (!bNameTagBound)
+	{
+		if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+		{
+			const FString& Nick = PS->GetPlayerNickName();
+			if (!Nick.IsEmpty())
+			{
+				UpdateNameTagUI(Nick);
+				bNameTagBound = true; // 한 번만 처리
+			}
+		}
+	}
 }
 
 // Called to bind functionality to input

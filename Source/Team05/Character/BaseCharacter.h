@@ -205,4 +205,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> NameTagComponent;
 
+private:
+	bool bNameTagBound = false;
 };
