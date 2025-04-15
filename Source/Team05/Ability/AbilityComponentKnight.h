@@ -32,7 +32,7 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCAttack(UAnimMontage* Montage, float LaunchXDistance = 0.f, float LaunchZDistance = 0.f);
-
+	
 	void LaunchCharacter(float LaunchXDistance, float LaunchZDistance);
 
 protected:
