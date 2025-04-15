@@ -30,6 +30,10 @@ public:
 	UPROPERTY(Replicated)
 	TSubclassOf<APawn> CharacterClass;
 
+	// 게임 체력
+	UPROPERTY(Replicated)
+	int32 MatchHealth = 100;
+
 	// 준비 여부
 	UPROPERTY(Replicated)
 	bool bReady;
@@ -47,4 +51,8 @@ public:
 
 	void SetCharacterClass(TSubclassOf<APawn> InClass);
 	TSubclassOf<APawn> GetCharacterClass() const;
+
+	void SetMatchHealth(int32 NewHealth);
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	int32 GetMatchHealth() const;
 };
