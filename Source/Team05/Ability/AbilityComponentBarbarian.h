@@ -3,24 +3,24 @@
 #include "CoreMinimal.h"
 #include "AbilityComponentBase.h"
 #include "Components/SceneComponent.h"
-#include "AbilityComponentKnight.generated.h"
+#include "AbilityComponentBarbarian.generated.h"
 
 class ABaseCharacter;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class TEAM05_API UAbilityComponentKnight : public UAbilityComponentBase
+class TEAM05_API UAbilityComponentBarbarian : public UAbilityComponentBase
 {
 	GENERATED_BODY()
 
 public:
-	UAbilityComponentKnight();
+	UAbilityComponentBarbarian();
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+							   FActorComponentTickFunction* ThisTickFunction) override;
 
 	virtual void SpecialAttack() override;
 	virtual void SpecialUpperAttack() override;

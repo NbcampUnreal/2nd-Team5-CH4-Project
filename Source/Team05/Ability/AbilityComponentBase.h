@@ -6,7 +6,7 @@
 #include "AbilityComponentBase.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class TEAM05_API UAbilityComponentBase : public USceneComponent
+class TEAM05_API UAbilityComponentBase : public USceneComponent, public ISpecialAttack
 {
 	GENERATED_BODY()
 

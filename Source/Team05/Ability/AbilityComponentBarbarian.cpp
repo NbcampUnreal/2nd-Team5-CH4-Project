@@ -1,7 +1,7 @@
-#include "AbilityComponentKnight.h"
+#include "AbilityComponentBarbarian.h"
 #include "Team05/Character/BaseCharacter.h"
 
-UAbilityComponentKnight::UAbilityComponentKnight()
+UAbilityComponentBarbarian::UAbilityComponentBarbarian()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
@@ -10,20 +10,20 @@ UAbilityComponentKnight::UAbilityComponentKnight()
 	bCanAttack = true;
 }
 
-void UAbilityComponentKnight::BeginPlay()
+void UAbilityComponentBarbarian::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void UAbilityComponentKnight::TickComponent(float DeltaTime, ELevelTick TickType,
+void UAbilityComponentBarbarian::TickComponent(float DeltaTime, ELevelTick TickType,
                                             FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 }
 
-void UAbilityComponentKnight::SpecialAttack()
+void UAbilityComponentBarbarian::SpecialAttack()
 {
 	if (bCanAttack == false)
 	{
@@ -45,7 +45,7 @@ void UAbilityComponentKnight::SpecialAttack()
 	}
 }
 
-void UAbilityComponentKnight::SpecialUpperAttack()
+void UAbilityComponentBarbarian::SpecialUpperAttack()
 {
 	if (bCanAttack == false)
 	{
@@ -67,12 +67,12 @@ void UAbilityComponentKnight::SpecialUpperAttack()
 	}
 }
 
-void UAbilityComponentKnight::SpecialLowerAttack()
+void UAbilityComponentBarbarian::SpecialLowerAttack()
 {
 	
 }
 
-void UAbilityComponentKnight::SpecialFrontAttack()
+void UAbilityComponentBarbarian::SpecialFrontAttack()
 {
 	if (bCanAttack == false)
 	{
@@ -94,14 +94,14 @@ void UAbilityComponentKnight::SpecialFrontAttack()
 	}
 }
 
-void UAbilityComponentKnight::ServerRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
+void UAbilityComponentBarbarian::ServerRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
 	float LaunchZDistance)
 {
 	LaunchCharacter(LaunchXDistance, LaunchZDistance);
 	MulticastRPCAttack(Montage, LaunchXDistance, LaunchZDistance);
 }
 
-void UAbilityComponentKnight::MulticastRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
+void UAbilityComponentBarbarian::MulticastRPCAttack_Implementation(UAnimMontage* Montage, float LaunchXDistance,
                                                                 float LaunchZDistance)
 {
 	if (OwnerCharacter->GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == Montage)
@@ -112,7 +112,7 @@ void UAbilityComponentKnight::MulticastRPCAttack_Implementation(UAnimMontage* Mo
 	OwnerCharacter->PlayMontage(Montage);
 }
 
-void UAbilityComponentKnight::LaunchCharacter(float LaunchXDistance, float LaunchZDistance)
+void UAbilityComponentBarbarian::LaunchCharacter(float LaunchXDistance, float LaunchZDistance)
 {
 	if (IsValid(OwnerCharacter) == false)
 	{
