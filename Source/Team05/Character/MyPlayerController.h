@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+//MyPlayerController.h
 
 #pragma once
 
@@ -8,6 +8,18 @@
 
 class UInputMappingContext;
 class UInputAction;
+
+USTRUCT(BlueprintType)
+struct FPlayerRankingInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	FString Nickname;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 Rank;
+};
 
 UCLASS()
 class TEAM05_API AMyPlayerController : public APlayerController
@@ -98,6 +110,14 @@ public:
 	UPROPERTY()
 	UUserWidget* CharacterSelectUI;
 
+	// 게임 결과 위젯 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> ResultUIClass;
+
+	// 게임 결과 UI 인스턴스
+	UPROPERTY()
+	UUserWidget* ResultUI;
+
 	UFUNCTION()
 	void OnRep_NameCheckText();
 
@@ -111,6 +131,18 @@ public:
 	// 캐릭터 UI 열기(클라이언트)
 	UFUNCTION(Client, Reliable)
 	void Client_OpenCharacterSelectWidget();
+
+	// 서버 퇴장시키기(클라이언트)
+	UFUNCTION(Client, Reliable)
+	void Client_KickWithMessage(const FString& Message);
+
+	// 게임 종료 위젯 띄워주기
+	UFUNCTION(Client, Reliable)
+	void Client_ShowMatchResultUI();
+	void Client_ShowMatchResultUI_Implementation();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveRankingInfo(const TArray<FPlayerRankingInfo>& RankingList);
 
 #pragma endregion
 

@@ -1,5 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
+//MyPlayerController.cpp
 
 #include "MyPlayerController.h"
 
@@ -13,7 +12,9 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Lobby/GM_LobbyMode.h"
+#include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
+#include "UI/Widgets/MatchResult.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -52,17 +53,25 @@ void AMyPlayerController::BeginPlay()
 		// "Lobby"라는 단어가 포함되어 있는지 검사
 		if (CurrentLevelName.Contains(TEXT("Lobby")))
 		{
-			if (NameInputUIClass)
+			if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 			{
-				NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
-
-				// UI 포인터 저장
-				Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
-
-				if (NameInputUI)
+				// 게임 플레이 여부 확인
+				if (!GI->HasInitializedLobby())
 				{
-					NameInputUI->AddToViewport();
-					UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+					if (NameInputUIClass)
+					{
+						NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
+
+						// UI 포인터 저장
+						Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
+
+						if (NameInputUI)
+						{
+							NameInputUI->AddToViewport();
+							GI->SetInitializedLobby(true); // 첫 진입 플래그 설정
+							UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+						}
+					}
 				}
 			}
 		}
@@ -107,6 +116,12 @@ void AMyPlayerController::OnRep_NameCheckText()
 	}
 }
 
+void AMyPlayerController::Client_KickWithMessage_Implementation(const FString& Message)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Kick] %s"), *Message);
+	ClientTravel(TEXT("/Game/_Dev/Min/DevMenu"), ETravelType::TRAVEL_Absolute);
+}
+
 FString AMyPlayerController::GetPlayerUniqueID() const
 {
 	if (APS_PlayerState* MyPS = GetPlayerState<APS_PlayerState>())
@@ -118,6 +133,77 @@ FString AMyPlayerController::GetPlayerUniqueID() const
 	}
 	else {
 		return "Error";
+	}
+}
+
+void AMyPlayerController::Client_ShowMatchResultUI_Implementation()
+{
+	if (ResultUIClass && !ResultUI)
+	{
+		ResultUI = CreateWidget<UUserWidget>(this, ResultUIClass);
+		if (ResultUI)
+		{
+			ResultUI->AddToViewport();
+
+			// UI 전용 입력 모드로 변경
+			FInputModeUIOnly Mode;
+			Mode.SetWidgetToFocus(ResultUI->GetCachedWidget());
+			SetInputMode(Mode);
+			SetShowMouseCursor(true);
+
+			UE_LOG(LogTemp, Log, TEXT("[Client] MatchResult UI shown."));
+
+			// GameInstance에서 순위 정보 가져와서 UI에 전달
+			if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+			{
+				if (UMatchResult* MatchResultWidget = Cast<UMatchResult>(ResultUI))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("MatchResult 위젯 캐스트 성공"));
+					for (int32 i = 0; i < GI->PlayerRanking.Num(); ++i)
+					{
+						const FString& PlayerID = GI->PlayerRanking[i];
+						if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
+						{
+							FString RankText = FString::Printf(TEXT("%d위: %s"), i + 1, *Info->Nickname);
+							MatchResultWidget->SetPlayerRankText(i + 1, RankText);
+							UE_LOG(LogTemp, Log, TEXT("[Client] Rank %d - %s"), i + 1, *Info->Nickname);
+						}
+					}
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("[Client] ResultUI cast to UMatchResult failed."));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[Client] BattleInstance cast failed."));
+			}
+		}
+	}
+}
+
+void AMyPlayerController::Client_ReceiveRankingInfo_Implementation(const TArray<FPlayerRankingInfo>& RankingList)
+{
+	if (ResultUIClass && !ResultUI)
+	{
+		ResultUI = CreateWidget<UUserWidget>(this, ResultUIClass);
+		if (ResultUI)
+		{
+			ResultUI->AddToViewport();
+			FInputModeUIOnly Mode;
+			Mode.SetWidgetToFocus(ResultUI->GetCachedWidget());
+			SetInputMode(Mode);
+			SetShowMouseCursor(true);
+
+			if (UMatchResult* ResultWidget = Cast<UMatchResult>(ResultUI))
+			{
+				for (const FPlayerRankingInfo& Info : RankingList)
+				{
+					ResultWidget->SetPlayerRankText(Info.Rank, Info.Nickname);
+				}
+			}
+		}
 	}
 }
 
@@ -207,5 +293,4 @@ void AMyPlayerController::ReturnToTitle_Implementation()
 		UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("DevMenu")), true);
 	}
 }
-
 

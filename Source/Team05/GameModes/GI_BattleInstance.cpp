@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GI_BattleInstance.cpp
 
 #include "GI_BattleInstance.h"
 
@@ -61,6 +60,11 @@ TSubclassOf<APawn> UGI_BattleInstance::GetCharacterClass(const FString& ID) cons
 	}
 
 	return nullptr;
+}
+
+bool UGI_BattleInstance::RemovePlayerInfo(const FString& ID)
+{
+	return PlayerInfoMap.Remove(ID) > 0;
 }
 
 void UGI_BattleInstance::AddPlayerSpawnInfo(int32 PlayerNum, TSubclassOf<APawn> CharacterClass)

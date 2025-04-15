@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//GI_BattleInstance.h
 
 #pragma once
 
@@ -23,9 +23,15 @@ struct FPlayerInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APawn> CharacterClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MatchHealth = 100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MatchRank = 0; // 추가: 순위 저장용
+
 	// 기본 생성자
 	FPlayerInfo()
-		: ID(TEXT("")), Nickname(TEXT("")), PlayerNum(0), CharacterClass(nullptr)
+		: ID(TEXT("")), Nickname(TEXT("")), PlayerNum(0), CharacterClass(nullptr), MatchHealth(100)
 	{
 	}
 
@@ -57,6 +63,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
 	TSubclassOf<APawn> GetCharacterClass(const FString& ID) const;
 
+	// 로그아웃용 
+	bool RemovePlayerInfo(const FString& ID);
+
+	// 게임 시작여부 확인용
+	bool HasInitializedLobby() const { return bHasInitializedLobby; }
+	void SetInitializedLobby(bool bInit) { bHasInitializedLobby = bInit; }
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
@@ -70,5 +83,9 @@ public:
 	UPROPERTY()
 	TMap<FString, FPlayerInfo> PlayerInfoMap;
 
-	
+	// PlayerRanking: 게임 결과를 위한 순위 저장
+	UPROPERTY()
+	TArray<FString> PlayerRanking;
+
+	bool bHasInitializedLobby = false;
 };

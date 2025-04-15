@@ -1,9 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//BaseCharacter.h
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/WidgetComponent.h"
+#include "UI/Widgets/NameTagWidget.h"    
 #include "BaseCharacter.generated.h"
 
 class UInputAction;
@@ -97,10 +99,11 @@ protected:
 	uint8 bOnGuard : 1;
 	int32 GuardStamina;
 	int32 MaxGuardStamina;
+	FVector CurrentGuardScale;
 	FTimerHandle GuardStaminaTimer;
 
-	UFUNCTION()
-	void OnRep_GuardState();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* GuardSphere;
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPCStartGuard();
@@ -110,11 +113,12 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCChangeGuard(bool bGuardState);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCApplyGuardSphereSize(float DeltaTime);
 	
 #pragma endregion
 	
-	UFUNCTION()
-	void OnRep_TakeDamage();
 	UFUNCTION()
 	void OnRep_InputEnabled();
 
@@ -142,7 +146,7 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	
-	void CheckAttackHit();
+	void CheckAttackHit(float Damage, float AttackRange, float AttackStartDistance);
 
 	void ReduceLife();
 	int32 GetLife() const { return Life; }
@@ -189,4 +193,18 @@ public:
 
 	// 네트워크 초기화 이후 호출됩니다. (PostReplication 관련)
 	virtual void PostNetInit() override;
+
+
+	// UI
+	// NameTag 위젯
+public:
+	UFUNCTION()
+	void UpdateNameTagUI(const FString& NewNickname);
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	TObjectPtr<UWidgetComponent> NameTagComponent;
+
+private:
+	bool bNameTagBound = false;
 };

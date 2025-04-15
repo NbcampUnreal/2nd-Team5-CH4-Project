@@ -116,11 +116,6 @@ void UAbilityComponentKnight::MulticastRPCAttack_Implementation(UAnimMontage* Mo
 	OwnerCharacter->PlayMontage(Montage);
 }
 
-void UAbilityComponentKnight::CheckAttackHit()
-{
-	OwnerCharacter->CheckAttackHit();
-}
-
 void UAbilityComponentKnight::LaunchCharacter(float LaunchXDistance, float LaunchZDistance)
 {
 	if (IsValid(OwnerCharacter) == false)

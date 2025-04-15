@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GM_LobbyMode.cpp
 
 #include "GameModes/Lobby/GM_LobbyMode.h"
 
@@ -16,7 +15,8 @@ AGM_LobbyMode::AGM_LobbyMode()
 	PrimaryActorTick.bCanEverTick = false;
 
 	BattleStartDelay = 10.0f;
-	MinPlayersToStart = 2;
+	//최소인원
+	MinPlayersToStart = 4;
 
 	bStartCountdownStarted = false;
 	bMatchStarted = false;
@@ -29,14 +29,14 @@ AGM_LobbyMode::AGM_LobbyMode()
 	SelectedBattleMap = EGameMapType::MarioMap;
 
 	// SeamlessTravel 활성화
-	bUseSeamlessTravel = false;
+	bUseSeamlessTravel = true;
 }
 
 void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	/*AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
+	AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
 	if (IsValid(GS) == false)
 	{
 		return;
@@ -44,10 +44,20 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 
 	if (GS->LobbyState != ELobbyState::Waiting)
 	{
-		NewPlayer->SetLifeSpan(0.1f);
-		UE_LOG(LogTemp, Log, TEXT("[Spawn] Return"));
+		AMyPlayerController* PC = Cast<AMyPlayerController>(NewPlayer);
+		PC->Client_KickWithMessage(TEXT("게임이 진행중이라 입장이 불가능합니다."));
 		return;
-	}*/
+	}
+
+	// 최대 인원 초과 시 퇴장 처리 (예: 4명 제한)
+	if (ConnectPlayerControllers.Num() >= 4) // 또는 별도 변수 사용 가능
+	{
+		if (AMyPlayerController* PC = Cast<AMyPlayerController>(NewPlayer))
+		{
+			PC->Client_KickWithMessage(TEXT("최대 인원이 초과되어 입장이 제한됩니다."));
+		}
+		return;
+	}
 
 	// 유저 고유 ID 기반으로 GameInstance에 PlayerNum 등록
 	if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPlayer->PlayerState))
@@ -67,6 +77,29 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 					if (GI->RegisterPlayerID(ID, OutNickname, OutPlayerNum))
 					{
 						PS->SetPlayerNum(OutPlayerNum);
+
+						// GameInstance에 저장된 닉네임이 있으면 PlayerState에 복사
+						if (GI->PlayerInfoMap.Contains(ID))
+						{
+							FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+							if (!StoredNickname.IsEmpty())
+							{
+								PS->SetPlayerNickName(StoredNickname);
+								UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Set nickname: %s for player ID: %s"), *StoredNickname, *ID);
+							}
+						}
+
+						// 플레이어 카운팅용
+						FString PlayerName = NewPlayer->GetName();
+						if (IsValid(GS))
+						{
+							const FString Msg = FString::Printf(TEXT("%s Welcome!"), *PlayerName);
+							AMyPlayerController* NewPC = Cast<AMyPlayerController>(NewPlayer);
+							if (IsValid(NewPC))
+							{
+								ConnectPlayerControllers.Add(NewPC);
+							}
+						}
 						UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Assigned PlayerNum: %d to ID: %s"), OutPlayerNum, *ID);
 					}
 				}
@@ -90,11 +123,117 @@ void AGM_LobbyMode::PostLogin(APlayerController* NewPlayer)
 void AGM_LobbyMode::Logout(AController* Exiting)
 {
 	Super::Logout(Exiting);
+
+	AMyPlayerController* ExitingPlayerController = Cast<AMyPlayerController>(Exiting);
+	if (IsValid(ExitingPlayerController) == true && ConnectPlayerControllers.Find(ExitingPlayerController) != INDEX_NONE)
+	{
+		ConnectPlayerControllers.Remove(ExitingPlayerController);
+
+		// ID 가져오기
+		FString ID = ExitingPlayerController->GetPlayerUniqueID();
+
+		// GameInstance에서 정보 삭제
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+		{
+			if (!(GetWorld() && GetWorld()->IsInSeamlessTravel()))
+			{
+				if (GI->PlayerInfoMap.Remove(ID) > 0)
+				{
+					UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[Logout] Skipped removing player info during travel. ID: %s"), *ID);
+			}
+		}
+	}
 }
 
 void AGM_LobbyMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 1초 간격으로 로비 상태 확인
+	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
+}
+
+//plus NameTag UI Nickname 
+void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
+{
+	Super::HandleSeamlessTravelPlayer(C);
+
+	//전투 대기시간 30초
+	CountdownRemaining = 30;
+
+	if (APlayerController* PC = Cast<APlayerController>(C))
+	{
+		// 닉네임 정보 복원 로직 추가
+		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+		{
+			if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
+			{
+				FString ID = MPC->GetPlayerUniqueID();
+
+				if (!ID.IsEmpty())
+				{
+					if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+					{
+						if (GI->PlayerInfoMap.Contains(ID))
+						{
+							// 닉네임 유지
+							FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+							if (!StoredNickname.IsEmpty())
+							{
+								PS->SetPlayerNickName(StoredNickname);
+								UE_LOG(LogTemp, Log, TEXT("[LobbyMode][SeamlessTravel] Restored nickname: %s for player ID: %s"), *StoredNickname, *ID);
+							}
+						}
+					}
+				}
+			}
+		}
+    
+		// 연결 보장
+		if (!ConnectPlayerControllers.Contains(PC))
+		{
+			if (AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC))
+			{
+				ConnectPlayerControllers.Add(NewPC);
+			}
+		}
+
+		// 플레이어 고유 ID 얻기 (컨트롤러에서 제공한다고 가정)
+		FString PlayerID = TEXT("Unknown");
+		if (AMyPlayerController* MyPC = Cast<AMyPlayerController>(PC))
+		{
+			PlayerID = MyPC->GetPlayerUniqueID();
+		}
+
+		// GameInstance에서 체력 정보 가져오기
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+		{
+			if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
+			{
+				if (Info->MatchHealth <= 0)
+				{
+					// 체력이 0이하인 경우 → 관전자 처리
+					PC->UnPossess();
+					PC->ChangeState(NAME_Spectating);
+
+					UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Player %s is eliminated and entered as spectator."), *PlayerID);
+				}
+				else {
+					SpawnPlayerInLobby(PC);
+				}
+			}
+		}
+
+		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+		{
+			PS->SetReady(true);
+		}
+	}
 
 	// 1초 간격으로 로비 상태 확인
 	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
@@ -146,6 +285,7 @@ void AGM_LobbyMode::UpdateCountdown(float Time)
 
 	if (CountdownRemaining <= 0.0f)
 	{
+		LobbyStateTimerHandle.Invalidate();
 		StartGame();
 	}
 }
@@ -167,7 +307,7 @@ void AGM_LobbyMode::StartGame()
 		const FString& MapName = BattleMapNames[SelectedBattleMap];
 		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Starting battle. ServerTravel to map: %s"), *MapName);
 
-		GetWorld()->ServerTravel(MapName + TEXT("?listen"));
+		GetWorld()->ServerTravel(MapName + TEXT("?listen"), true);
 	}
 	else
 	{
@@ -235,4 +375,3 @@ void AGM_LobbyMode::SpawnPlayerInLobby(APlayerController* PC)
 		}
 	}
 }
-
