@@ -73,6 +73,22 @@ void AGM_BattleMode::PostLogin(APlayerController* NewPlayer)
 
 		FString PlayerName = NewPlayer->GetName();
 
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+		{
+			if (AMyPlayerController* PC = Cast<AMyPlayerController>(NewPlayer))
+			{
+				FString ID = PC->GetPlayerUniqueID(); // Controller에서 고유 ID 얻는 함수
+
+				if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(ID))
+				{
+					if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+					{
+						PS->SetMatchHealth(Info->MatchHealth);
+					}
+				}
+			}
+		}
+
 		if (IsValid(GS))
 		{
 			const FString Msg = FString::Printf(TEXT("%s Welcome!"), *PlayerName);
@@ -127,12 +143,106 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 
 	AlivePlayerControllers.Remove(InController);
 	DeadPlayerControllers.Add(InController);
+
+	// 관전자 처리
+	InController->ChangeState(NAME_Spectating);
+	InController->UnPossess();
+
+	// 사망 순서에 따른 데미지 계산
+	int32 DeathOrder = DeadPlayerControllers.Num(); // 1이면 첫 번째 사망자
+	int32 Damage = 0;
+
+	switch (DeathOrder)
+	{
+	case 1: Damage = 100;	break;
+	case 2: Damage = 100;	break;
+	case 3: Damage = 100;	break;
+	default: break;
+	}
+
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+	{
+		FString PlayerID = InController->GetPlayerUniqueID(); // ID 가져오기
+
+		if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
+		{
+			Info->MatchHealth = FMath::Clamp(Info->MatchHealth - Damage, 0, 100);
+
+			// 순위 설정 (체력이 0이 된 첫 시점)
+			if (Info->MatchHealth <= 0 && Info->MatchRank == 0)
+			{
+				int32 Rank = GI->PlayerInfoMap.Num() - GI->PlayerRanking.Num(); // 4인 기준: 4 → 3 → 2
+				Info->MatchRank = Rank;
+				GI->PlayerRanking.Add(PlayerID);
+
+				UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Player %s is now Rank %d"), *PlayerID, Info->MatchRank);
+			}
+
+			if (APS_PlayerState* PS = Cast<APS_PlayerState>(InController->PlayerState))
+			{
+				PS->SetMatchHealth(Info->MatchHealth);
+			}
+		}
+
+		// 생존자 수 확인
+		int32 AliveCount = 0;
+		for (const auto& Elem : GI->PlayerInfoMap)
+		{
+			if (Elem.Value.MatchHealth > 0)
+				++AliveCount;
+		}
+
+		// 마지막 1인 생존자 → 1등 설정 및 결과창 출력
+		if (AliveCount == 1)
+		{
+			// 유일한 생존자 찾기
+			for (auto& Elem : GI->PlayerInfoMap)
+			{
+				if (Elem.Value.MatchHealth > 0 && Elem.Value.MatchRank == 0)
+				{
+					Elem.Value.MatchRank = 1; // 마지막 생존자 = 1등
+					UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Player %s is now Rank 1"), *Elem.Key);
+					break;
+				}
+			}
+
+			// PlayerInfoMap을 순위 기준으로 정렬
+			TArray<FPlayerInfo> SortedInfos;
+			GI->PlayerInfoMap.GenerateValueArray(SortedInfos);
+			SortedInfos.Sort([](const FPlayerInfo& A, const FPlayerInfo& B) {
+				return A.MatchRank < B.MatchRank;
+				});
+
+			// 랭킹 정보 배열 생성
+			TArray<FPlayerRankingInfo> FinalRankingList;
+			for (const FPlayerInfo& Info : SortedInfos)
+			{
+				FPlayerRankingInfo RankInfo;
+				RankInfo.Nickname = Info.Nickname;
+				RankInfo.Rank = Info.MatchRank;
+				FinalRankingList.Add(RankInfo);
+			}
+
+			// UI 전송
+			for (AMyPlayerController* MyPC : AlivePlayerControllers)
+			{
+				if (IsValid(MyPC))
+					MyPC->Client_ReceiveRankingInfo(FinalRankingList);
+			}
+			for (AMyPlayerController* MyPC : DeadPlayerControllers)
+			{
+				if (IsValid(MyPC))
+					MyPC->Client_ReceiveRankingInfo(FinalRankingList);
+			}
+
+			GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
+		}
+	}
 }
 
 void AGM_BattleMode::SpawnPlayerInBattle(APlayerController* Player)
 {
-	// 여기부터 스폰로직
-		// GameInstance에서 캐릭터 정보 받아오기
+	// GameInstance에서 캐릭터 정보 받아오기
 	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 	{
 		PlayerSpawnList = GI->CachedSpawnList;
@@ -223,21 +333,25 @@ void AGM_BattleMode::HandleSeamlessTravelPlayer(AController*& C)
 
 	if (APlayerController* PC = Cast<APlayerController>(C))
 	{
+		// 플레이어 고유 ID 얻기 (컨트롤러에서 제공한다고 가정)
+		FString PlayerID = TEXT("Unknown");
+		if (AMyPlayerController* MyPC = Cast<AMyPlayerController>(PC))
+		{
+			PlayerID = MyPC->GetPlayerUniqueID();
+		}
 		// 닉네임 정보 복원 로직 추가
 		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
 		{
 			if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
 			{
-				FString ID = MPC->GetPlayerUniqueID();
-
-				if (!ID.IsEmpty())
+				if (!PlayerID.IsEmpty())
 				{
 					if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 					{
-						if (GI->PlayerInfoMap.Contains(ID))
+						if (GI->PlayerInfoMap.Contains(PlayerID))
 						{
 							// 닉네임 유지
-							FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+							FString StoredNickname = GI->PlayerInfoMap[PlayerID].Nickname;
 							if (!StoredNickname.IsEmpty())
 							{
 								PS->SetPlayerNickName(StoredNickname);
@@ -249,12 +363,30 @@ void AGM_BattleMode::HandleSeamlessTravelPlayer(AController*& C)
 			}
 		}
 
-		SpawnPlayerInBattle(PC); // 스폰 함수 호출
-
-		AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
-		if (IsValid(NewPC))
+		// GameInstance에서 체력 정보 가져오기
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 		{
-			AlivePlayerControllers.Add(NewPC);
+			if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
+			{
+				if (Info->MatchHealth <= 0)
+				{
+					// 체력이 0이하인 경우 → 관전자 처리
+					PC->UnPossess();
+					PC->ChangeState(NAME_Spectating);
+
+					DeadPlayerControllers.Add(Cast<AMyPlayerController>(PC));
+					UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Player %s is eliminated and entered as spectator."), *PlayerID);
+				}
+				else {
+					SpawnPlayerInBattle(PC); // 스폰 함수 호출
+
+					AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
+					if (IsValid(NewPC))
+					{
+						AlivePlayerControllers.Add(NewPC);
+					}
+				}
+			}
 		}
 
 		// 1초 간격으로 로비 상태 확인
@@ -272,7 +404,7 @@ void AGM_BattleMode::OnMainTimerElapsed()
 	{
 	case EMatchState::Waiting:
 	{
-		if (AlivePlayerControllers.Num() < MinimumPlayerCountForPlaying)
+		if (AlivePlayerControllers.Num() < MinimumPlayerCountForPlaying - DeadPlayerControllers.Num())
 		{
 			RemainWaitingTimeForPlaying = WaitingTime;
 		}
@@ -311,12 +443,6 @@ void AGM_BattleMode::OnMainTimerElapsed()
 
 		if (RemainWaitingTimeForEnding <= 0)
 		{
-			// 모든 플레이어 타이틀로 복귀
-			/*UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 전투 종료 - 플레이어 타이틀로 이동"));
-
-			for (auto PC : AlivePlayerControllers) PC->ReturnToTitle();
-			for (auto PC : DeadPlayerControllers) PC->ReturnToTitle();*/
-
 			MainTimerHandle.Invalidate();
 
 			// 레벨 리셋 (Dedicated 서버용)

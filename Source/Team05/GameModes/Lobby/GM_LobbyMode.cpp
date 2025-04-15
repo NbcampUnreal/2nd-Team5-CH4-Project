@@ -193,33 +193,46 @@ void AGM_LobbyMode::HandleSeamlessTravelPlayer(AController*& C)
 				}
 			}
 		}
-
+    
 		// 연결 보장
 		if (!ConnectPlayerControllers.Contains(PC))
 		{
-			AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
-			if (IsValid(NewPC))
+			if (AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC))
 			{
 				ConnectPlayerControllers.Add(NewPC);
-				if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPC->PlayerState))
+			}
+		}
+
+		// 플레이어 고유 ID 얻기 (컨트롤러에서 제공한다고 가정)
+		FString PlayerID = TEXT("Unknown");
+		if (AMyPlayerController* MyPC = Cast<AMyPlayerController>(PC))
+		{
+			PlayerID = MyPC->GetPlayerUniqueID();
+		}
+
+		// GameInstance에서 체력 정보 가져오기
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+		{
+			if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
+			{
+				if (Info->MatchHealth <= 0)
 				{
-					//전투 종료 후 돌아왔으니 미리 레디 시켜주기
-					PS->SetReady(true);
+					// 체력이 0이하인 경우 → 관전자 처리
+					PC->UnPossess();
+					PC->ChangeState(NAME_Spectating);
+
+					UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Player %s is eliminated and entered as spectator."), *PlayerID);
+				}
+				else {
+					SpawnPlayerInLobby(PC);
 				}
 			}
-			// 레디 상태 유지
-			if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
-			{
-				PS->SetReady(true);
-			}
-			SpawnPlayerInLobby(PC);
 		}
-		// 레디 상태 유지
+
 		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
 		{
 			PS->SetReady(true);
 		}
-		SpawnPlayerInLobby(PC);
 	}
 
 	// 1초 간격으로 로비 상태 확인
