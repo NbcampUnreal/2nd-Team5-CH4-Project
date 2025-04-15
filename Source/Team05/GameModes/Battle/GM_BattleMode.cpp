@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GM_BattleMode.cpp
 
 #include "GameModes/Battle/GM_BattleMode.h"
 
@@ -46,6 +45,32 @@ void AGM_BattleMode::PostLogin(APlayerController* NewPlayer)
 
 	if (HasAuthority())
 	{
+		// 닉네임 설정 로직 추가
+		if (APS_PlayerState* PS = Cast<APS_PlayerState>(NewPlayer->PlayerState))
+		{
+			if (AMyPlayerController* MPC = Cast<AMyPlayerController>(NewPlayer))
+			{
+				FString ID = MPC->GetPlayerUniqueID();
+
+				if (!ID.IsEmpty())
+				{
+					if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+					{
+						if (GI->PlayerInfoMap.Contains(ID))
+						{
+							// PlayerState에 닉네임 설정
+							FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+							if (!StoredNickname.IsEmpty())
+							{
+								PS->SetPlayerNickName(StoredNickname);
+								UE_LOG(LogTemp, Log, TEXT("[BattleMode] Set nickname: %s for player ID: %s"), *StoredNickname, *ID);
+							}
+						}
+					}
+				}
+			}
+		}
+
 		FString PlayerName = NewPlayer->GetName();
 
 		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
@@ -301,6 +326,7 @@ void AGM_BattleMode::SpawnPlayerInBattle(APlayerController* Player)
 	}
 }
 
+//plus NameTag UI Nickname 
 void AGM_BattleMode::HandleSeamlessTravelPlayer(AController*& C)
 {
 	Super::HandleSeamlessTravelPlayer(C);
@@ -312,6 +338,29 @@ void AGM_BattleMode::HandleSeamlessTravelPlayer(AController*& C)
 		if (AMyPlayerController* MyPC = Cast<AMyPlayerController>(PC))
 		{
 			PlayerID = MyPC->GetPlayerUniqueID();
+		}
+		// 닉네임 정보 복원 로직 추가
+		if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+		{
+			if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
+			{
+				if (!PlayerID.IsEmpty())
+				{
+					if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+					{
+						if (GI->PlayerInfoMap.Contains(PlayerID))
+						{
+							// 닉네임 유지
+							FString StoredNickname = GI->PlayerInfoMap[PlayerID].Nickname;
+							if (!StoredNickname.IsEmpty())
+							{
+								PS->SetPlayerNickName(StoredNickname);
+								UE_LOG(LogTemp, Log, TEXT("[SeamlessTravel] Restored nickname: %s for player ID: %s"), *StoredNickname, *ID);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// GameInstance에서 체력 정보 가져오기

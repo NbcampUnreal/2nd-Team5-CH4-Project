@@ -1,5 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
+//MyPlayerController.cpp
 
 #include "MyPlayerController.h"
 
@@ -294,5 +293,4 @@ void AMyPlayerController::ReturnToTitle_Implementation()
 		UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("DevMenu")), true);
 	}
 }
-
 
