@@ -20,6 +20,14 @@ AOneWayPlatform::AOneWayPlatform()
 
     PlatformMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlatformMesh"));
     PlatformMesh->SetupAttachment(RootComponent);
+    PlatformMesh->SetCanEverAffectNavigation(true);
+    PlatformMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    PlatformMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+    NavModifier = CreateDefaultSubobject<UNavModifierComponent>(TEXT("NavModifier"));
+//    NavModifier->SetupAttachment(RootComponent);
+    NavModifier->SetAreaClass(UNavArea_Default::StaticClass());
+    NavModifier->bIncludeAgentHeight = true;
 }
 
 void AOneWayPlatform::BeginPlay()
