@@ -6,6 +6,8 @@
 #include "Camera/CameraActor.h"
 #include "BattleCamera.generated.h"
 
+class ABaseCharacter;
+
 UCLASS()
 class TEAM05_API ABattleCamera : public ACameraActor
 {
@@ -19,7 +21,6 @@ protected:
 
 public:
     void UpdateCamera();
-
 protected:
     UPROPERTY(EditAnywhere, Category = "Camera")
     float YMultiplier = 0.8f;
@@ -34,10 +35,10 @@ protected:
     float MoveInterpSpeed = 0.3f;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
-    float UpdateInterval = 0.5f;
+    float UpdateInterval = 0.1f;
 
-    UPROPERTY()
-    TArray<AActor*> TrackedActors;
+    UPROPERTY(VisibleAnywhere)
+    TArray<ABaseCharacter*> TrackedActors;
 
     FTimerHandle UpdateTimerHandle;
 };

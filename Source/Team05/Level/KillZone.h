@@ -41,6 +41,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Teleport")
 	FVector TeleportLocation;
 
+	UPROPERTY(EditAnywhere, Category = "Teleport")
+	FVector DeadLocation;
+
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	USoundBase* KillZoneSound;
 
