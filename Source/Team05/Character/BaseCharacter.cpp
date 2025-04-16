@@ -81,7 +81,6 @@ void ABaseCharacter::MulticastRPCApplyGuardSphereSize_Implementation(float Delta
 {
 	float GuardRatio = static_cast<float>(GuardStamina) / static_cast<float>(MaxGuardStamina);
 	FVector TargetScale = FVector(GuardRatio);
-	UE_LOG(LogTemp, Warning, TEXT("%s: %f"), *GetName(),GuardRatio);
 
 	CurrentGuardScale = FMath::VInterpTo(CurrentGuardScale, TargetScale, DeltaTime, 5.0f);
 	GuardSphere->SetRelativeScale3D(CurrentGuardScale);

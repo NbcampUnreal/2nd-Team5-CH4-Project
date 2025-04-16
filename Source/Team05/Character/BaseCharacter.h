@@ -45,12 +45,6 @@ public:
 	// 몽타주 리스트
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> BaseAttackMontage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> BaseUpperAttackAnimMontage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> BaseLowerAttackAnimMontage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAnimMontage> BaseFrontAttackAnimMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> HitMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
