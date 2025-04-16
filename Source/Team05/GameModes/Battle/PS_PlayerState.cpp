@@ -13,6 +13,10 @@ APS_PlayerState::APS_PlayerState()
 	Nickname = TEXT("Player");
 	CharacterClass = nullptr;
 	bReady = false;
+	// plus
+	MatchHealth = 100;
+	FatigueRate = 0;
+	Life = 3;
 }
 
 // ---Ready 상태 관리---

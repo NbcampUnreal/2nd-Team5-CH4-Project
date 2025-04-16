@@ -14,7 +14,6 @@
 #include "UI/Widgets/NameTagWidget.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "GameModes/Battle/GM_BattleMode.h"
-#include "Team05/Ability/AbilityComponentKnight.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -165,11 +164,8 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		ReduceLife();
 	}
 
-	// 넉백, 이펙트 등 처리
-	KnockBack(DamageCauser);
-	
 	const int DamageAmountInt = static_cast<int32>(DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
+	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. Fatigue: %d"), *GetName(), DamageAmountInt, PS->GetFatigueRate());
 	// 피격 후 면역 처리
 	HitImmunity();
 	// 넉백 처리
