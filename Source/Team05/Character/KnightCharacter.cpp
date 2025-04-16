@@ -37,7 +37,7 @@ void AKnightCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		}
 	}
 }
-
+	
 void AKnightCharacter::SpecialAttack_Input()
 {
 	if (bInputEnabled)
@@ -77,7 +77,9 @@ void AKnightCharacter::SpecialUpperAttack()
 
 void AKnightCharacter::SpecialLowerAttack()
 {
-	
+	ServerRPCAttack(SpecialLowerAttackAnimMontage);
+	Launch(0.f, -1000.f);
+	PlayMontage(SpecialLowerAttackAnimMontage);
 }
 
 void AKnightCharacter::SpecialFrontAttack()
