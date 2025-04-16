@@ -13,6 +13,8 @@ UENUM(BlueprintType)
 enum class EGameMapType : uint8
 {
 	MarioMap	UMETA(DisplayName = "Mario Map"),
+	PocketMap	UMETA(DisplayName = "PocketMap"),
+	ArenaMap	UMETA(DisplayName = "Arena Map"),
 	// 추후 확장
 };
 
@@ -60,6 +62,9 @@ protected:
 private:
 	// 상태 확인 함수
 	void CheckLobbyState();
+
+	// 공지용 함수(카운트다운)
+	void NotifyToAllPlayer(const FString& NotificationString);
 
 protected:
 	/** 전투 시작까지 대기 시간 */

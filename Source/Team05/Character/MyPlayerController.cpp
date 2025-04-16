@@ -125,6 +125,7 @@ void AMyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMyPlayerController, NameCheckText);
+	DOREPLIFETIME(AMyPlayerController, NotificationText);
 }
 
 void AMyPlayerController::OnRep_NameCheckText()
@@ -376,11 +377,19 @@ UPlayerListWidget* AMyPlayerController::GetPlayerListWidget() const
 	return PlayerListWidget; // 생성해둔 위젯 인스턴스 반환
 }
 
+void AMyPlayerController::OnRep_NotificationText()
+{
+}
+
 void AMyPlayerController::ReturnToTitle_Implementation()
 {
 	if (!HasAuthority())
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("DevMenu")), true);
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+		{
+			GI->SetInitializedLobby(false);
+			UGameplayStatics::OpenLevel(GetWorld(), FName(TEXT("DevMenu")), true);
+		}
 	}
 }
 

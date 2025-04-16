@@ -24,6 +24,8 @@ AGM_LobbyMode::AGM_LobbyMode()
 
 	// 전투 맵 이름 등록
 	BattleMapNames.Add(EGameMapType::MarioMap, TEXT("_MarioMap"));
+	BattleMapNames.Add(EGameMapType::PocketMap, TEXT("_PoketLeagueMap"));
+	BattleMapNames.Add(EGameMapType::ArenaMap, TEXT("_Arena"));
 
 	// 기본 맵 설정
 	SelectedBattleMap = EGameMapType::MarioMap;
@@ -285,6 +287,10 @@ void AGM_LobbyMode::UpdateCountdown(float Time)
 {
 	if (!bStartCountdownStarted || bMatchStarted) return;
 
+	FString NotificationString = FString::Printf(TEXT(""));
+	NotificationString = FString::Printf(TEXT("CountDown : %d "), CountdownRemaining);
+	NotifyToAllPlayer(NotificationString);
+
 	CountdownRemaining -= Time;
 
 	if (AGS_LobbyState* GS = GetGameState<AGS_LobbyState>())
@@ -310,8 +316,34 @@ void AGM_LobbyMode::StartGame()
 		GS->SetCountdownTime(0.0f);
 	}
 
+	// BattleMapNames 값이 비어있는지 확인
+	if (BattleMapNames.Num() > 0)
+	{
+		// 키 배열로 추출해서 무작위 선택
+		TArray<EGameMapType> MapTypes;
+		BattleMapNames.GetKeys(MapTypes);
+
+		// 무작위 인덱스 선택
+		int32 RandomIndex = FMath::RandRange(0, MapTypes.Num() - 1);
+		EGameMapType SelectedMapType = MapTypes[RandomIndex];
+
+		// 해당 키에 대한 맵 이름 가져오기
+		if (FString* MapName = BattleMapNames.Find(SelectedMapType))
+		{
+			UE_LOG(LogTemp, Log, TEXT("[LobbyMode] 선택된 전투 맵: %s"), **MapName);
+
+			// 서버 트래블로 이동 (Dedicated Server 기준)
+			FString TravelURL = *MapName + TEXT("?listen");
+			GetWorld()->ServerTravel(TravelURL, true);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] BattleMapNames가 비어 있습니다."));
+	}
+
 	// 선택된 맵 이름으로 ServerTravel
-	if (BattleMapNames.Contains(SelectedBattleMap))
+	/*if (BattleMapNames.Contains(SelectedBattleMap))
 	{
 		const FString& MapName = BattleMapNames[SelectedBattleMap];
 		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Starting battle. ServerTravel to map: %s"), *MapName);
@@ -321,13 +353,14 @@ void AGM_LobbyMode::StartGame()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] Invalid map type selected."));
-	}
+	}*/
 }
 
 void AGM_LobbyMode::CheckLobbyState()
 {
 	AGS_LobbyState* GS = GetGameState<AGS_LobbyState>();
 	if (!IsValid(GS)) return;
+	FString NotificationString = FString::Printf(TEXT(""));
 
 	switch (GS->GetLobbyState())
 	{
@@ -337,8 +370,28 @@ void AGM_LobbyMode::CheckLobbyState()
 		break;
 
 	case ELobbyState::Countdown:
+
+		if (!bStartCountdownStarted || bMatchStarted) return;
+
+		
+		NotificationString = FString::Printf(TEXT("CountDown : %.0f "), GS->GetCountdownTime());
+		NotifyToAllPlayer(NotificationString);
+
+		CountdownRemaining --;
+
+		if (IsValid(GS))
+		{
+			GS->SetCountdownTime(FMath::Max(CountdownRemaining, 0.0f));
+		}
+
+		if (CountdownRemaining <= 0.0f)
+		{
+			LobbyStateTimerHandle.Invalidate();
+			StartGame();
+		}
+
 		UE_LOG(LogTemp, Log, TEXT("[LobbyState] Countdown 중입니다."));
-		UpdateCountdown(1.0f); // Tick과 달리 고정된 주기 사용
+		//UpdateCountdown(1.0f); // Tick과 달리 고정된 주기 사용
 		break;
 
 	case ELobbyState::Started:
@@ -347,6 +400,14 @@ void AGM_LobbyMode::CheckLobbyState()
 
 	default:
 		break;
+	}
+}
+
+void AGM_LobbyMode::NotifyToAllPlayer(const FString& NotificationString)
+{
+	for (auto ConnectPlayerController : ConnectPlayerControllers)
+	{
+		ConnectPlayerController->NotificationText = FText::FromString(NotificationString);
 	}
 }
 
