@@ -40,10 +40,10 @@ void APS_PlayerState::SetPlayerNickName(FString InNickname)
 {
 	Nickname = InNickname;
 
-	// ���������� ��� ó���� �ʿ䰡 �ִٸ� ���⿡ OnRep_Nickname ȣ�� ����
+	// 서버에서도 즉시 처리할 필요가 있다면 여기에 OnRep_Nickname 호출 가능
 	if (HasAuthority())
 	{
-		OnRep_Nickname(); // �������� ���� ȣ���� ���� ���� (����)
+		OnRep_Nickname(); // 서버에서 직접 호출할 수도 있음 (선택)
 	}
 }
 
@@ -86,7 +86,7 @@ void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 void APS_PlayerState::OnRep_Nickname()
 {
-	// ���⿡���� PlayerCharacter�� �����ͼ� UI�� ������Ʈ�ϵ��� ������ �� ����
+	// 여기에서는 PlayerCharacter를 가져와서 UI를 업데이트하도록 지시할 수 있음
 
 	APawn* OwnerPawn = GetPawn();
 	if (IsValid(OwnerPawn))
