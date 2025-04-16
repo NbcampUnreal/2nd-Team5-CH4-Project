@@ -80,7 +80,7 @@ void AMageCharacter::SpecialFrontAttack()
 {
 }
 
-void AMageCharacter::Fire()
+void AMageCharacter::Fire_Implementation()
 {
 	if (ProjectileClass)
 	{

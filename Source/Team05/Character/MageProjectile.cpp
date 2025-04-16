@@ -18,7 +18,7 @@ AMageProjectile::AMageProjectile()
 	if (!CollisionComponent)
 	{
 		CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-		CollisionComponent->InitSphereRadius(15.0f);
+		CollisionComponent->InitSphereRadius(25.0f);
 		RootComponent = CollisionComponent;
 	}
 
@@ -26,8 +26,8 @@ AMageProjectile::AMageProjectile()
 	{
 		ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 		ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
-		ProjectileMovementComponent->InitialSpeed = 3000.0f;
-		ProjectileMovementComponent->MaxSpeed = 3000.0f;
+		ProjectileMovementComponent->InitialSpeed = 2000.0f;
+		ProjectileMovementComponent->MaxSpeed = 2000.0f;
 		ProjectileMovementComponent->bRotationFollowsVelocity = false;
 		ProjectileMovementComponent->bShouldBounce = false;
 		ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
@@ -48,19 +48,23 @@ AMageProjectile::AMageProjectile()
 			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
 		}
 		ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
-		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.09f, 0.09f, 0.09f));
+		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
 		ProjectileMeshComponent->SetupAttachment(RootComponent);
 	}
 
 	InitialLifeSpan = 1.0f;
+
+	CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
+	ProjectileMeshComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
+
+	// Replicate
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
 void AMageProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	SetReplicates(true);
-	AActor::SetReplicateMovement(true);
 }
 
 // Called every frame

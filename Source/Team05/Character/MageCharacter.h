@@ -28,6 +28,7 @@ public:
 	virtual void SpecialFrontAttack() override;
 
 	// 투사체 발사
+	UFUNCTION(Server, Reliable)
 	void Fire();
 
 	// 발사체 생성 위치 차이
