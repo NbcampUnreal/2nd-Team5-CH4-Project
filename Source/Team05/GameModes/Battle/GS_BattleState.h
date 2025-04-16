@@ -8,7 +8,6 @@
 #include "UI/Widgets/MatchBattleWidget.h"
 #include "GS_BattleState.generated.h"
 
-
 UCLASS()
 class TEAM05_API AGS_BattleState : public AGameStateBase
 {
@@ -33,8 +32,13 @@ public:
 	EMatchState MatchState = EMatchState::Waiting;
 
 	// UI
+	virtual void BeginPlay() override;
+
+protected:
+	UPROPERTY()
+	TObjectPtr<UMatchBattleWidget> MatchBattleWidget;
+
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UMatchBattleWidget> MatchBattleWidgetClass;
 
-	virtual void BeginPlay() override;
 };

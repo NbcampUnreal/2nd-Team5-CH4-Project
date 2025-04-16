@@ -17,8 +17,8 @@ void UPlayerStatusViewModel::UpdateFromPlayerState(APS_PlayerState* PlayerState)
 {
 	if (!PlayerState) return;
 
-	FatigueRate = PlayerState->GetFatigueRate();
-	Life = PlayerState->GetLife();
-	MatchHealth = PlayerState->GetMatchHealth();
-	Nickname = PlayerState->GetPlayerNickName();
+	UE_MVVM_SET_PROPERTY_VALUE(FatigueRate, PlayerState->GetFatigueRate());
+	UE_MVVM_SET_PROPERTY_VALUE(Life, PlayerState->GetLife());
+	UE_MVVM_SET_PROPERTY_VALUE(MatchHealth, PlayerState->GetMatchHealth());
+	UE_MVVM_SET_PROPERTY_VALUE(Nickname, PlayerState->GetPlayerNickName());
 }

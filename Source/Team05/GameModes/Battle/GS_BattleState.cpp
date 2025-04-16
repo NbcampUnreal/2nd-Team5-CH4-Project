@@ -12,25 +12,41 @@ void AGS_BattleState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsValid(MatchBattleWidgetClass))
+	// 서버 + 클라 모두 실행되도록
+	if (MatchBattleWidgetClass && GetWorld()->IsGameWorld())
 	{
-		UMatchBattleWidget* MatchUI = CreateWidget<UMatchBattleWidget>(GetWorld(), MatchBattleWidgetClass);
-		if (MatchUI)
-		{
-			MatchUI->AddToViewport();
+		MatchBattleWidget = CreateWidget<UMatchBattleWidget>(GetWorld(), MatchBattleWidgetClass);
 
-			for (int32 i = 0; i < 4; ++i)
+		if (MatchBattleWidget)
+		{
+			MatchBattleWidget->AddToViewport();
+
+			// 로컬에서 ViewModel 초기화
+			if (HasAuthority() == false)
 			{
-				UPlayerStatusViewModel* VM = NewObject<UPlayerStatusViewModel>(this);
-				if (i < PlayerArray.Num())
+				const TArray<APlayerState*>& Players = PlayerArray;
+
+				for (int32 i = 0; i < 4; ++i)
 				{
-					if (APS_PlayerState* PS = Cast<APS_PlayerState>(PlayerArray[i]))
+					UPlayerStatusViewModel* VM = NewObject<UPlayerStatusViewModel>(this);
+
+					if (i < Players.Num())
 					{
-						PS->SetViewModel(VM);
-						VM->UpdateFromPlayerState(PS);
+						if (APS_PlayerState* PS = Cast<APS_PlayerState>(Players[i]))
+						{
+							VM->UpdateFromPlayerState(PS); // PS 정보 로컬에서 사용
+						}
 					}
+					else
+					{
+						VM->Life = 0;
+						VM->FatigueRate = 0;
+						VM->MatchHealth = 0;
+						VM->Nickname = TEXT("Empty");
+					}
+
+					MatchBattleWidget->SetViewModelAt(i, VM);
 				}
-				MatchUI->SetViewModelAt(i, VM); // MatchBattleWidget 함수
 			}
 		}
 	}
