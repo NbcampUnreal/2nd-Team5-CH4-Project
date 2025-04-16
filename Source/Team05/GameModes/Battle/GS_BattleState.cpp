@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GS_BattleState.cpp
 
 #include "GS_BattleState.h"
 

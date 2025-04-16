@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//GS_BattleState.h
 
 #pragma once
 
@@ -7,9 +7,7 @@
 #include "GameModes/Battle/GM_BattleMode.h"
 #include "GS_BattleState.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
 class TEAM05_API AGS_BattleState : public AGameStateBase
 {

@@ -1,4 +1,4 @@
-//PS_PlayerState.cpp
+Ôªø//PS_PlayerState.cpp
 
 #include "PS_PlayerState.h"
 
@@ -15,6 +15,8 @@ APS_PlayerState::APS_PlayerState()
 	bReady = false;
 }
 
+// ---Ready ÏÉÅÌÉú Í¥ÄÎ¶¨---
+
 void APS_PlayerState::SetReady(bool bInReady)
 {
 	bReady = bInReady;
@@ -25,6 +27,8 @@ bool APS_PlayerState::IsReady() const
 {
 	return bReady;
 }
+
+// ---Player Í∏∞Î≥∏ Ï†ïÎ≥¥---
 
 void APS_PlayerState::SetPlayerNum(int32 InNum)
 {
@@ -38,12 +42,10 @@ int32 APS_PlayerState::GetPlayerNum() const
 
 void APS_PlayerState::SetPlayerNickName(FString InNickname)
 {
-	Nickname = InNickname;
-
-	// º≠πˆø°º≠µµ ¡ÔΩ√ √≥∏Æ«“ « ø‰∞° ¿÷¥Ÿ∏È ø©±‚ø° OnRep_Nickname »£√‚ ∞°¥…
 	if (HasAuthority())
 	{
-		OnRep_Nickname(); // º≠πˆø°º≠ ¡˜¡¢ »£√‚«“ ºˆµµ ¿÷¿Ω (º±≈√)
+		Nickname = InNickname;
+		OnRep_Nickname();
 	}
 }
 
@@ -62,9 +64,15 @@ TSubclassOf<APawn> APS_PlayerState::GetCharacterClass() const
 	return CharacterClass;
 }
 
+// ---Í≤åÏûÑ ÏÉÅÌÉú Ï†ïÎ≥¥---
+
 void APS_PlayerState::SetMatchHealth(int32 NewHealth)
 {
-	MatchHealth = NewHealth;
+	if (HasAuthority())
+	{
+		MatchHealth = NewHealth;
+		OnRep_MatchHealth();
+	}
 }
 
 int32 APS_PlayerState::GetMatchHealth() const
@@ -72,6 +80,82 @@ int32 APS_PlayerState::GetMatchHealth() const
 	return MatchHealth;
 }
 
+void APS_PlayerState::SetLife(int32 NewLife)
+{
+	if (HasAuthority())
+	{
+		Life = NewLife;
+		OnRep_Life();
+	}
+}
+
+int32 APS_PlayerState::GetLife() const
+{
+	return Life;
+}
+
+void APS_PlayerState::SetFatigueRate(int32 NewRate)
+{
+	if (HasAuthority())
+	{
+		FatigueRate = NewRate;
+		OnRep_FatigueRate();
+	}
+}
+
+int32 APS_PlayerState::GetFatigueRate() const
+{
+	return FatigueRate;
+}
+
+void APS_PlayerState::SetViewModel(UPlayerStatusViewModel* InViewModel)
+{
+	ViewModel = InViewModel;
+}
+
+// ---OnRep Ìï®Ïàò - ViewModel/UI Ïó∞Îèô---
+
+void APS_PlayerState::OnRep_Nickname()
+{
+	if (ViewModel)
+	{
+		ViewModel->Nickname = Nickname;
+	}
+
+	if (APawn* OwnerPawn = GetPawn())
+	{
+		if (ABaseCharacter* BaseChar = Cast<ABaseCharacter>(OwnerPawn))
+		{
+			BaseChar->UpdateNameTagUI(Nickname);
+		}
+	}
+}
+
+void APS_PlayerState::OnRep_MatchHealth()
+{
+	if (ViewModel)
+	{
+		ViewModel->MatchHealth = MatchHealth;
+	}
+}
+
+void APS_PlayerState::OnRep_Life()
+{
+	if (ViewModel)
+	{
+		ViewModel->Life = Life;
+	}
+}
+
+void APS_PlayerState::OnRep_FatigueRate()
+{
+	if (ViewModel)
+	{
+		ViewModel->FatigueRate = FatigueRate;
+	}
+}
+
+// ---Replication ÏÑ§Ï†ï---
 
 void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -81,20 +165,7 @@ void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(APS_PlayerState, Nickname);
 	DOREPLIFETIME(APS_PlayerState, CharacterClass);
 	DOREPLIFETIME(APS_PlayerState, MatchHealth);
+	DOREPLIFETIME(APS_PlayerState, FatigueRate);
+	DOREPLIFETIME(APS_PlayerState, Life);
 	DOREPLIFETIME(APS_PlayerState, bReady);
-}
-
-void APS_PlayerState::OnRep_Nickname()
-{
-	// ø©±‚ø°º≠¥¬ PlayerCharacter∏¶ ∞°¡ÆøÕº≠ UI∏¶ æ˜µ•¿Ã∆Æ«œµµ∑œ ¡ˆΩ√«“ ºˆ ¿÷¿Ω
-
-	APawn* OwnerPawn = GetPawn();
-	if (IsValid(OwnerPawn))
-	{
-		class ABaseCharacter* BaseChar = Cast<ABaseCharacter>(OwnerPawn);
-		if (IsValid(BaseChar))
-		{
-			BaseChar->UpdateNameTagUI(Nickname); 
-		}
-	}
 }

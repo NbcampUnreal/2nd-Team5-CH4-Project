@@ -15,6 +15,8 @@
 #include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "UI/Widgets/MatchResult.h"
+#include "UI/Widgets/MatchBattleWidget.h"
+#include "UI/Viewmodel/PlayerStatusViewModel.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -88,9 +90,49 @@ void AMyPlayerController::PostNetInit()
 	Super::PostNetInit();
 }
 
+// OnPossess-InitMatchBattleUI
 void AMyPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	if (!IsLocalController()) return;
+
+	InitMatchBattleUI(); 
+}
+
+// UI-MatchBattle 
+void AMyPlayerController::InitMatchBattleUI()
+{
+	if (!MatchBattleUIClass || MatchBattleUI) return;
+
+	// 1. UI 생성
+	MatchBattleUI = CreateWidget<UMatchBattleWidget>(this, MatchBattleUIClass);
+	if (!MatchBattleUI) return;
+
+	MatchBattleUI->AddToViewport();
+
+	// 2. ViewModel 생성
+	UPlayerStatusViewModel* ViewModel = NewObject<UPlayerStatusViewModel>(this);
+	check(ViewModel);
+
+	// 3. PlayerState 연동
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+	{
+		PS->SetViewModel(ViewModel);
+		ViewModel->UpdateFromPlayerState(PS);
+	}
+
+	// 4. UI에 ViewModel 연결
+	MatchBattleUI->BindViewModel(ViewModel);
+
+	// 5. 입력 모드 설정
+	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(MatchBattleUI->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+	SetShowMouseCursor(true);
+
+	UE_LOG(LogTemp, Log, TEXT("[Client] MatchBattleWidget UI created and ViewModel bound"));
 }
 
 void AMyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

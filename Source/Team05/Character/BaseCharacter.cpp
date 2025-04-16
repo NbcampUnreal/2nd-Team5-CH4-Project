@@ -12,6 +12,7 @@
 #include "Components/WidgetComponent.h"
 #include "UI/Widgets/NameTagWidget.h"
 #include "GameModes/Battle/PS_PlayerState.h"
+#include "GameModes/Battle/GM_BattleMode.h"
 #include "Team05/Ability/AbilityComponentKnight.h"
 
 
@@ -30,8 +31,6 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
 	GetCharacterMovement()->AirControl = 1.0f;
-	FatigueRate = 0;
-	Life = 3;
 
 	AbilityComponent = CreateDefaultSubobject<UAbilityComponentKnight>("Ability Component");
 
@@ -140,24 +139,37 @@ void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValu
 }
 
 
-float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (!HasAuthority() || CurrentState == STATE_Guard)
+	if (!HasAuthority())
 	{
 		return 0.f;
 	}
 
-	const int DamageAmountInt = static_cast<int32>(DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
+	APS_PlayerState* PS = GetPlayerState<APS_PlayerState>();
+	if (!PS) return 0.f;
 
-	// 넉백 처리
+	int32 CurrentHealth = PS->GetMatchHealth();
+	int32 NewHealth = FMath::Clamp(CurrentHealth - static_cast<int32>(DamageAmount), 0, 100);
+	PS->SetMatchHealth(NewHealth);
+
+	// 예시: 피로도도 증가시킬 수 있음
+	int32 NewFatigue = FMath::Clamp(PS->GetFatigueRate() + 1, 0, 100);
+	PS->SetFatigueRate(NewFatigue);
+
+	// Life 감소 로직은 별도로 (예: 체력이 0이 되었을 때)
+	if (NewHealth <= 0)
+	{
+		ReduceLife();
+	}
+
+	// 넉백, 이펙트 등 처리
 	KnockBack(DamageCauser);
-	
 	MulticastRPCHit();
 
-	FatigueRate += DamageAmountInt;
 	return DamageAmount;
 }
+
 
 
 void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, float AttackStartDistance = 1.f)
@@ -198,8 +210,30 @@ void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, float
 
 void ABaseCharacter::ReduceLife()
 {
-	Life = FMath::Clamp(Life - 1, 0, 3);
-	FatigueRate = 0;
+	APS_PlayerState* PS = GetPlayerState<APS_PlayerState>();
+	if (!PS) return;
+
+	int32 NewLife = FMath::Clamp(PS->GetLife() - 1, 0, 3);
+	PS->SetLife(NewLife);
+
+	// 사망 처리
+	if (NewLife <= 0)
+	{
+		// 예: 탈락 처리
+		if (AMyPlayerController* PC = Cast<AMyPlayerController>(GetController()))
+		{
+			if (AGM_BattleMode* GM = GetWorld()->GetAuthGameMode<AGM_BattleMode>())
+			{
+				GM->OnCharacterDead(PC);
+			}
+		}
+	}
+
+	// 체력 초기화
+	PS->SetMatchHealth(100);
+
+	// 피로도 초기화
+	PS->SetFatigueRate(0);
 }
 
 void ABaseCharacter::ServerRPCStartGuard_Implementation()
@@ -294,6 +328,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		}
 	}
 }
+
 
 // Called to bind functionality to input
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
