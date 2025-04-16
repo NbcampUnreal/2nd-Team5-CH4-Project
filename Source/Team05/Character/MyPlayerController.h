@@ -8,6 +8,7 @@
 
 class UInputMappingContext;
 class UInputAction;
+class UPlayerListWidget;
 
 USTRUCT(BlueprintType)
 struct FPlayerRankingInfo
@@ -123,6 +124,13 @@ public:
 	UPROPERTY()
 	UUserWidget* ResultUI;
 
+	// 로비 플레이어 리스트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PlayerListWidgetClass;
+
+	UPROPERTY()
+	UPlayerListWidget* PlayerListWidget;
+
 	UFUNCTION()
 	void OnRep_NameCheckText();
 
@@ -148,6 +156,15 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveRankingInfo(const TArray<FPlayerRankingInfo>& RankingList);
+
+	// 로비 플레이어 리스트
+	UFUNCTION(Client, Reliable)
+	void Client_ShowPlayerListWidget();
+
+	UFUNCTION(Client, Reliable)
+	void Client_RefreshPlayerList();
+
+	UPlayerListWidget* GetPlayerListWidget() const;
 
 #pragma endregion
 

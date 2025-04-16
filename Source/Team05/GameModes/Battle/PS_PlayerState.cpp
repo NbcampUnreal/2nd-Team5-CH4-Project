@@ -4,6 +4,8 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Character/BaseCharacter.h"
+#include "Character/MyPlayerController.h"
+#include "UI/Widgets/PlayerListWidget.h"
 #include "Net/UnrealNetwork.h"
 
 APS_PlayerState::APS_PlayerState()
@@ -18,7 +20,10 @@ APS_PlayerState::APS_PlayerState()
 void APS_PlayerState::SetReady(bool bInReady)
 {
 	bReady = bInReady;
-	//bReady = true;
+	if (HasAuthority())
+	{
+		OnRep_ReadyState(); // 서버에서 직접 호출할 수도 있음 (선택)
+	}
 }
 
 bool APS_PlayerState::IsReady() const
@@ -72,6 +77,25 @@ int32 APS_PlayerState::GetMatchHealth() const
 	return MatchHealth;
 }
 
+void APS_PlayerState::Multicast_UpdateReadyState_Implementation(bool bNewReady)
+{
+	// 실제 변수도 갱신
+	bReady = bNewReady;
+
+	// UI 위젯도 갱신
+	OnRep_ReadyState();
+}
+
+void APS_PlayerState::Multicast_NotifyReadyChanged_Implementation(bool bNewReady)
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (AMyPlayerController* PC = Cast<AMyPlayerController>(It->Get()))
+		{
+			PC->Client_RefreshPlayerList();
+		}
+	}
+}
 
 void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -95,6 +119,20 @@ void APS_PlayerState::OnRep_Nickname()
 		if (IsValid(BaseChar))
 		{
 			BaseChar->UpdateNameTagUI(Nickname); 
+		}
+	}
+}
+
+void APS_PlayerState::OnRep_ReadyState()
+{
+	if (GetWorld())
+	{
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (AMyPlayerController* PC = Cast<AMyPlayerController>(It->Get()))
+			{
+				PC->Client_RefreshPlayerList();
+			}
 		}
 	}
 }

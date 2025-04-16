@@ -581,9 +581,9 @@ void AGM_BattleMode::OnMainTimerElapsed()
 
 			// 레벨 리셋 (Dedicated 서버용)
 			FString LevelName = "DevLobby";
-			GetWorld()->ServerTravel(LevelName + TEXT("?listen"), true);
+			GetWorld()->ServerTravel(LevelName + TEXT("?listen"));
 
-			UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 레벨 초기화 및 DevLobby로 이동"), true);
+			UE_LOG(LogTemp, Warning, TEXT("[BattleMode] 레벨 초기화 및 DevLobby로 이동"));
 		}
 		break;
 	}
