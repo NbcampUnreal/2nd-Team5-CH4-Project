@@ -67,7 +67,7 @@ void ABattleCamera::UpdateCamera()
     float DistanceXZ = FVector2D(Max.X - Min.X, Max.Z - Min.Z).Size();
     float TargetY = FMath::Clamp(DistanceXZ * YMultiplier, MinY, MaxY);
 
-    FVector DesiredLocation = FVector(Center.X, TargetY, Center.Z+150);
+    FVector DesiredLocation = FVector(Center.X, TargetY, Center.Z+100);
     FVector NewLocation = FMath::VInterpTo(GetActorLocation(), DesiredLocation, UpdateInterval, MoveInterpSpeed);
 
     SetActorLocation(NewLocation);

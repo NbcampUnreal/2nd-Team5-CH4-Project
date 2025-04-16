@@ -23,7 +23,7 @@ public:
     void UpdateCamera();
 protected:
     UPROPERTY(EditAnywhere, Category = "Camera")
-    float YMultiplier = 0.8f;
+    float YMultiplier = 1.0f;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float MinY = 800.f;
