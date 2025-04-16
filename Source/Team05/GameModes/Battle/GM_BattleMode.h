@@ -63,16 +63,17 @@ public:
 	// 타이머 핸들
 	FTimerHandle MainTimerHandle;
 	FTimerHandle SingleTimerHandle;
+	FTimerHandle EndTimerHandle;
 
 	// 대기 시간 및 남은 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 WaitingTime = 15;
-	int32 RemainWaitingTimeForPlaying = 15;
+	int32 WaitingTime = 5;
+	int32 RemainWaitingTimeForPlaying = 5;
 
 	// 게임 종료 대기 시간 및 남은 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 EndingTime = 15;
-	int32 RemainWaitingTimeForEnding = 15;
+	int32 EndingTime = 20;
+	int32 RemainWaitingTimeForEnding = 20;
 
 protected:
 
