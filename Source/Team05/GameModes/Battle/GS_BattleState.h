@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameModes/Battle/GM_BattleMode.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 #include "GS_BattleState.generated.h"
 
 
@@ -30,4 +31,10 @@ public:
 	// 현재 매치 상태 (대기/플레이/종료 등)
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	EMatchState MatchState = EMatchState::Waiting;
+
+	// UI
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UMatchBattleWidget> MatchBattleWidgetClass;
+
+	virtual void BeginPlay() override;
 };

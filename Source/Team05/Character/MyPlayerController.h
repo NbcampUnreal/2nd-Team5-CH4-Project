@@ -145,22 +145,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveRankingInfo(const TArray<FPlayerRankingInfo>& RankingList);
 
-// UI-MatchBattle
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UMatchBattleWidget> MatchBattleUIClass;
-
-	UPROPERTY()
-	TObjectPtr<UMatchBattleWidget> MatchBattleUI;
-
-	// ViewModel (1인용 전용 ViewModel만 여기에)
-	UPROPERTY()
-	TObjectPtr<UPlayerStatusViewModel> LocalPlayerViewModel;
-
-	// UI + ViewModel 초기화
-	void InitMatchBattleUI();
-
-
 #pragma endregion
 
 public:
