@@ -38,5 +38,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AIEmote();
 	UFUNCTION(BlueprintCallable)
-	void AISkillAttack();
+	void AISkillAttack(FString CharacterName);
 };
