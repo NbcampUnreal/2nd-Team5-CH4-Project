@@ -202,10 +202,16 @@ public:
 	UFUNCTION()
 	void UpdateNameTagUI(const FString& NewNickname);
 
+	UFUNCTION()
+	USphereComponent* GetDetectSphere();
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> NameTagComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AIDetection")//AI detection radius
+	class USphereComponent* DetectionSphere;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AICharacterName")
+	FString AIchrName;
 private:
 	bool bNameTagBound = false;
 };
