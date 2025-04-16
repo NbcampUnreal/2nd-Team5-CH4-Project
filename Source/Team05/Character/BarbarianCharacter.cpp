@@ -10,12 +10,20 @@
 
 ABarbarianCharacter::ABarbarianCharacter()
 {
-	
+	bCanSpecialAttack = true;
 }
 
 void ABarbarianCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ABarbarianCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	GetWorldTimerManager().ClearTimer(CooldownTimer);
+	CooldownTimer.Invalidate();
 }
 
 void ABarbarianCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -42,7 +50,7 @@ void ABarbarianCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void ABarbarianCharacter::SpecialAttack_Input()
 {
-	if (bInputEnabled)
+	if (bInputEnabled && bCanSpecialAttack)
 	{
 		if (CurrentDirection == EDirectionEnum::EUp)
 		{
@@ -60,6 +68,8 @@ void ABarbarianCharacter::SpecialAttack_Input()
 		{
 			SpecialAttack();
 		}
+		
+		SetCooldownTimer(5.f);
 	}
 }
 
@@ -120,4 +130,16 @@ void ABarbarianCharacter::SpecialFrontAttack()
 	
 	PlayMontage(SpecialFrontAttackAnimMontage);
 	Launch(900.f, 0.f);
+}
+
+void ABarbarianCharacter::SetCooldownTimer(float Cooldown)
+{
+	bCanSpecialAttack = false;
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorldTimerManager().SetTimer(CooldownTimer, FTimerDelegate::CreateLambda([&]()
+		{
+			bCanSpecialAttack = true;
+		}), Cooldown, false);
+	}
 }
