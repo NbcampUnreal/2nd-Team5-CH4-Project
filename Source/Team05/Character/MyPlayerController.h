@@ -19,6 +19,11 @@ struct FPlayerRankingInfo
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 Rank;
+
+	FPlayerRankingInfo()
+		: Nickname(TEXT("")), Rank(0) // 여기!
+	{
+	}
 };
 
 UCLASS()
@@ -151,8 +156,16 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_ConfirmSelection();
 
-	// 타이틀 화면으로 복귀 (클라이언트 RPC)
+	// 플레이어 레디함수
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SetReadyOnly();
+
+	// 준비단계 플레이어의 움직임을 제한하는 함수
 	UFUNCTION(Client, Reliable)
+	void Client_SetInputEnabled(bool bEnable);
+
+	// 타이틀 화면으로 복귀 (클라이언트 RPC)
+	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void ReturnToTitle();
 
 	// 유저 고유 ID 문자열을 반환하는 함수

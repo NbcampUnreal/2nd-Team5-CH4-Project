@@ -18,6 +18,7 @@ enum class EMatchState : uint8
 };
 
 class AMyPlayerController;
+class ABaseAIController;
 struct FPlayerInfo;
 
 UCLASS()
@@ -39,16 +40,29 @@ public:
 	// 캐릭터 사망 처리 (컨트롤러 기준)
 	void OnCharacterDead(AMyPlayerController* InController);
 
+	// AI사망처리
+	void OnAIDead(ABaseAIController* InAIController);
+
 	void SpawnPlayerInBattle(APlayerController* Player);
+
+	// AI스폰 함수
+	void SpawnRandomAIs();
 
 private:
 	// 1초 간격으로 호출되는 메인 타이머 콜백
 	UFUNCTION()
 	void OnMainTimerElapsed();
 
+	// 싱글모드용 타이머
+	UFUNCTION()
+	void OnSingleTimerElapsed();
+
+	
+
 public:
 	// 타이머 핸들
 	FTimerHandle MainTimerHandle;
+	FTimerHandle SingleTimerHandle;
 
 	// 대기 시간 및 남은 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -61,20 +75,42 @@ public:
 	int32 RemainWaitingTimeForEnding = 15;
 
 protected:
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character")
-	TSubclassOf<APawn> KnightCharacterClass;
 
+	// Player 카운팅
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<AMyPlayerController>> AlivePlayerControllers;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<AMyPlayerController>> DeadPlayerControllers;
 
+	//AI카운팅
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TObjectPtr<ABaseAIController>> AliveAIControllers;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TObjectPtr<ABaseAIController>> DeadAIControllers;
+
+	//AI 클래스들
+	//컨트롤러
+	UPROPERTY(EditAnywhere, Category = "AI")
+	TSubclassOf<ABaseAIController> AIControllerClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "SingleMode|AI")
+	TSubclassOf<APawn> BP_KnightAIClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "SingleMode|AI")
+	TSubclassOf<APawn> BP_MageAIClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "SingleMode|AI")
+	TSubclassOf<APawn> BP_BarbarianAIClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "SingleMode|AI")
+	TSubclassOf<APawn> BP_RogueAIClass;
+
 private:
 	TArray<FPlayerInfo> PlayerSpawnList;
 
 	// 최소 시작 인원
-	int32 MinimumPlayerCountForPlaying = 4;
+	int32 MinimumPlayerCountForPlaying = 2;
 
 };
