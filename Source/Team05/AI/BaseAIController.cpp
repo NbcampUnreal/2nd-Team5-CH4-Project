@@ -3,7 +3,9 @@
 
 #include "BaseAIController.h"
 #include "Components/SphereComponent.h"
+
 #include "Character/KnightCharacter.h"
+#include "Character/BarbarianCharacter.h"
 
 ABaseAIController::ABaseAIController()
 {
@@ -34,13 +36,37 @@ void ABaseAIController::AIBaseAttack()
 void ABaseAIController::AISkillAttack(FString CharacterName)
 {
 	APawn* ctrlPawn = GetPawn();
+	float skillRate = FMath::FRandRange(0.0f, 1.0f);
 	//FVector2D dir;
-	float skillRate=FMath::FRandRange(0.0f, 1.0f);
 	if (ctrlPawn)
 	{
 		if (CharacterName == "Barbarian")
 		{
-			
+			ABarbarianCharacter* ctrlChr;
+			ctrlChr = Cast<ABarbarianCharacter>(ctrlPawn);
+
+			if (ctrlChr)
+			{
+				//dir.X = FMath::FRandRange(0.0f, 1.0f);
+				//dir.Y = FMath::FRandRange(-1.0f, 1.0f);
+				//ctrlChr->SetDirection(dir);
+				if (skillRate < 0.25f)
+				{
+					ctrlChr->SpecialAttack();
+				}
+				else if (skillRate >= 0.25f && skillRate < 0.5f)
+				{
+					ctrlChr->SpecialFrontAttack();
+				}
+				else if (skillRate >= 0.5f && skillRate < 0.75f)
+				{
+					ctrlChr->SpecialLowerAttack();
+				}
+				else
+				{
+					ctrlChr->SpecialUpperAttack();
+				}
+			}
 		}
 		else if (CharacterName == "Mage")
 		{
@@ -60,13 +86,17 @@ void ABaseAIController::AISkillAttack(FString CharacterName)
 				//dir.X = FMath::FRandRange(0.0f, 1.0f);
 				//dir.Y = FMath::FRandRange(-1.0f, 1.0f);
 				//ctrlChr->SetDirection(dir);
-				if (skillRate < 0.33f)
+				if (skillRate < 0.25f)
 				{
 					ctrlChr->SpecialAttack();
 				}
-				else if (skillRate >= 0.33f && skillRate < 0.66f)
+				else if (skillRate >= 0.25f && skillRate < 0.5f)
 				{
 					ctrlChr->SpecialFrontAttack();
+				}
+				else if (skillRate >= 0.5f && skillRate < 0.75f)
+				{
+					ctrlChr->SpecialLowerAttack();
 				}
 				else
 				{
