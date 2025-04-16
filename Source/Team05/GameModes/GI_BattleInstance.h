@@ -88,4 +88,7 @@ public:
 	TArray<FString> PlayerRanking;
 
 	bool bHasInitializedLobby = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bSingleMode = false;
 };

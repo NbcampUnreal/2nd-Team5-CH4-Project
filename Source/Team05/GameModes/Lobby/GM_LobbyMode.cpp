@@ -16,7 +16,7 @@ AGM_LobbyMode::AGM_LobbyMode()
 
 	BattleStartDelay = 10.0f;
 	//최소인원
-	MinPlayersToStart = 4;
+	MinPlayersToStart = 2;
 
 	bStartCountdownStarted = false;
 	bMatchStarted = false;
@@ -153,6 +153,15 @@ void AGM_LobbyMode::Logout(AController* Exiting)
 void AGM_LobbyMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+	{
+		// 싱글모드면 플레이어 1명
+		if (GI->bSingleMode)
+		{
+			MinPlayersToStart = 1;
+		}
+	}
 
 	// 1초 간격으로 로비 상태 확인
 	GetWorldTimerManager().SetTimer(LobbyStateTimerHandle, this, &AGM_LobbyMode::CheckLobbyState, 1.0f, true);
