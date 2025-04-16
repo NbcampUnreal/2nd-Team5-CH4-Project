@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Components/WidgetComponent.h"
+#include "Components/SphereComponent.h"
 #include "UI/Widgets/NameTagWidget.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 
@@ -39,6 +40,7 @@ ABaseCharacter::ABaseCharacter()
 	KnockBackCoefficientZ = 5.f;
 
 	Super::JumpMaxCount = MaxJumpCount;
+	GetCharacterMovement()->JumpZVelocity = 600.f;
 
 	// 가드 스피어 초기화
 	GuardSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuardSphere"));
@@ -54,6 +56,18 @@ ABaseCharacter::ABaseCharacter()
 	NameTagComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	NameTagComponent->SetDrawAtDesiredSize(true);
 	NameTagComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f)); 
+
+	//AI detect sphere
+	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
+	DetectionSphere->SetupAttachment(RootComponent);
+	DetectionSphere->SetSphereRadius(1000.0f);
+	DetectionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	DetectionSphere->SetCollisionObjectType(ECC_WorldDynamic);
+	DetectionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	DetectionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	//AI chr Name
+	AIchrName = "";
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -539,13 +553,13 @@ void ABaseCharacter::KnockBack(const AActor* DamageCauser)
 {
 	float XDirection = GetActorLocation().X - DamageCauser->GetActorLocation().X;
 	XDirection = (XDirection >= 0.f) ? 1.f : -1.f;
-	
+
 	const int32 KnockBackAmount = DefaultKnockBackX + KnockBackCoefficientX * FatigueRate;
 	const FVector KnockBackDir = FVector(XDirection, 0.f, 0.f);
 
 	FVector LaunchVelocity = KnockBackDir * KnockBackAmount;
 	LaunchVelocity.Z = DefaultKnockBackZ + KnockBackCoefficientZ * FatigueRate;
-	
+
 	LaunchCharacter(LaunchVelocity, true, true);
 }
 
@@ -557,9 +571,9 @@ void ABaseCharacter::HitImmunity()
 	const float HitMontagePlayTime = HitMontage->GetPlayLength();
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
-	{
-		CurrentState = STATE_Idle;
-	}), HitMontagePlayTime, false, -1.f);
+		{
+			CurrentState = STATE_Idle;
+		}), HitMontagePlayTime, false, -1.f);
 }
 
 
@@ -616,4 +630,9 @@ void ABaseCharacter::UpdateNameTagUI(const FString& NewNickname)
 			Widget->SetNickname(NewNickname);
 		}
 	}
+}
+
+USphereComponent* ABaseCharacter::GetDetectSphere()
+{
+	return DetectionSphere;
 }

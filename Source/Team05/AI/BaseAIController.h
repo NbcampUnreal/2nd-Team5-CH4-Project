@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "../Character/BaseCharacter.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "BaseAIController.generated.h"
 
 /**
@@ -39,4 +40,6 @@ public:
 	void AIEmote();
 	UFUNCTION(BlueprintCallable)
 	void AISkillAttack(FString CharacterName);
+	UFUNCTION(BlueprintCallable)
+	AActor* AIDetectTarget();
 };

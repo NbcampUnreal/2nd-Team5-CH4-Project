@@ -40,10 +40,10 @@ void APS_PlayerState::SetPlayerNickName(FString InNickname)
 {
 	Nickname = InNickname;
 
-	// ¼­¹ö¿¡¼­µµ Áï½Ã Ã³¸®ÇÒ ÇÊ¿ä°¡ ÀÖ´Ù¸é ¿©±â¿¡ OnRep_Nickname È£Ãâ °¡´É
+	// ì„œë²„ì—ì„œë„ ì¦‰ì‹œ ì²˜ë¦¬í•  í•„ìš”ê°€ ìˆë‹¤ë©´ ì—¬ê¸°ì— OnRep_Nickname í˜¸ì¶œ ê°€ëŠ¥
 	if (HasAuthority())
 	{
-		OnRep_Nickname(); // ¼­¹ö¿¡¼­ Á÷Á¢ È£ÃâÇÒ ¼öµµ ÀÖÀ½ (¼±ÅÃ)
+		OnRep_Nickname(); // ì„œë²„ì—ì„œ ì§ì ‘ í˜¸ì¶œí•  ìˆ˜ë„ ìˆìŒ (ì„ íƒ)
 	}
 }
 
@@ -86,7 +86,7 @@ void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 void APS_PlayerState::OnRep_Nickname()
 {
-	// ¿©±â¿¡¼­´Â PlayerCharacter¸¦ °¡Á®¿Í¼­ UI¸¦ ¾÷µ¥ÀÌÆ®ÇÏµµ·Ï Áö½ÃÇÒ ¼ö ÀÖÀ½
+	// ì—¬ê¸°ì—ì„œëŠ” PlayerCharacterë¥¼ ê°€ì ¸ì™€ì„œ UIë¥¼ ì—…ë°ì´íŠ¸í•˜ë„ë¡ ì§€ì‹œí•  ìˆ˜ ìˆìŒ
 
 	APawn* OwnerPawn = GetPawn();
 	if (IsValid(OwnerPawn))

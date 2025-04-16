@@ -55,21 +55,45 @@ void AMyPlayerController::BeginPlay()
 		{
 			if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 			{
-				// 게임 플레이 여부 확인
-				if (!GI->HasInitializedLobby())
+				//싱글모드인지 확인
+				if (!GI->bSingleMode)
 				{
-					if (NameInputUIClass)
+					// 게임 플레이 여부 확인
+					if (!GI->HasInitializedLobby())
 					{
-						NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
-
-						// UI 포인터 저장
-						Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
-
-						if (NameInputUI)
+						if (NameInputUIClass)
 						{
-							NameInputUI->AddToViewport();
-							GI->SetInitializedLobby(true); // 첫 진입 플래그 설정
-							UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+							NameInputUI = CreateWidget<UUserWidget>(this, NameInputUIClass);
+
+							// UI 포인터 저장
+							Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->NameInputUI = NameInputUI;
+
+							if (NameInputUI)
+							{
+								NameInputUI->AddToViewport();
+								GI->SetInitializedLobby(true); // 첫 진입 플래그 설정
+								UE_LOG(LogTemp, Log, TEXT("NameInput UI created and shown."));
+							}
+						}
+					}
+				}
+				else {
+					if (APS_PlayerState* ps = Cast<APS_PlayerState>(this->PlayerState))
+					{
+						ps->SetPlayerNickName("Player");
+						if (CharacterSelectUIClass)
+						{
+							CharacterSelectUI = CreateWidget<UUserWidget>(this, CharacterSelectUIClass);
+
+							// UI 포인터 저장
+							Cast<AMyPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->CharacterSelectUI = CharacterSelectUI;
+
+							if (CharacterSelectUI)
+							{
+								CharacterSelectUI->AddToViewport();
+								GI->SetInitializedLobby(true); // 첫 진입 플래그 설정
+								UE_LOG(LogTemp, Log, TEXT("Single Mode"));
+							}
 						}
 					}
 				}
@@ -120,6 +144,31 @@ void AMyPlayerController::Client_KickWithMessage_Implementation(const FString& M
 {
 	UE_LOG(LogTemp, Warning, TEXT("[Kick] %s"), *Message);
 	ClientTravel(TEXT("/Game/_Dev/Min/DevMenu"), ETravelType::TRAVEL_Absolute);
+}
+
+void AMyPlayerController::Server_SetReadyOnly_Implementation()
+{
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+	{
+		PS->SetReady(true);
+		UE_LOG(LogTemp, Log, TEXT("[PlayerController] Ready 상태 설정 완료."));
+	}
+}
+
+void AMyPlayerController::Client_SetInputEnabled_Implementation(bool bEnable)
+{
+	if (bEnable)
+	{
+		FInputModeGameOnly InputMode;
+		SetInputMode(InputMode);
+	}
+	else
+	{
+		FInputModeUIOnly InputMode;
+		SetInputMode(InputMode);
+	}
+
+	bShowMouseCursor = !bEnable;
 }
 
 FString AMyPlayerController::GetPlayerUniqueID() const
@@ -274,7 +323,7 @@ void AMyPlayerController::Server_ConfirmSelection_Implementation()
 {
 	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
 	{
-		PS->SetReady(true);
+		//PS->SetReady(true);
 
 		if (!GetPawn()) // 아직 Pawn 없으면 스폰
 		{
