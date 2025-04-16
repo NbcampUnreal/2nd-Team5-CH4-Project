@@ -42,7 +42,7 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void AMageCharacter::SpecialAttack_Input()
 {
-	if (bInputEnabled)
+	if (bInputEnabled && bCanSpecialAttack)
 	{
 		if (CurrentDirection == EDirectionEnum::EUp)
 		{
@@ -59,13 +59,17 @@ void AMageCharacter::SpecialAttack_Input()
 		else
 		{
 			SpecialAttack();
-		}		
+		}
+
+		SetCooldownTimer(SpecialAttackCooldown);
 	}
 }
 
 void AMageCharacter::SpecialAttack()
 {
+	ServerRPCAttack(SpecialAttackAnimMontage);
 	Fire();
+	PlayAnimMontage(SpecialAttackAnimMontage);
 }
 
 void AMageCharacter::SpecialUpperAttack()
@@ -84,7 +88,7 @@ void AMageCharacter::Fire_Implementation()
 {
 	if (ProjectileClass)
 	{
-		MuzzleOffset.Set(10.0f, 0.0f, 0.0f);
+		MuzzleOffset.Set(70.0f, 0.0f, 0.0f);
 		const FVector MuzzleLocation = GetActorLocation() + GetActorForwardVector() * MuzzleOffset;
 		
 		const FRotator MuzzleRotation = GetActorRotation();

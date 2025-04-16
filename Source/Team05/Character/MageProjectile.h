@@ -19,6 +19,18 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UFUNCTION(Category = "Projectile")
+	void OnProjectileImpact(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	//이 발사체가 가할 대미지 타입과 대미지
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
+	TSubclassOf<class UDamageType> DamageType;
+ 
+	//이 발사체가 가하는 대미지
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
+	float Damage;
+ 
+	
 public:
 	virtual void Tick(float DeltaTime) override;
 

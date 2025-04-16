@@ -3,6 +3,8 @@
 
 #include "MageProjectile.h"
 
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values
 AMageProjectile::AMageProjectile()
@@ -18,7 +20,7 @@ AMageProjectile::AMageProjectile()
 	if (!CollisionComponent)
 	{
 		CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-		CollisionComponent->InitSphereRadius(25.0f);
+		CollisionComponent->InitSphereRadius(30.0f);
 		RootComponent = CollisionComponent;
 	}
 
@@ -26,8 +28,8 @@ AMageProjectile::AMageProjectile()
 	{
 		ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 		ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
-		ProjectileMovementComponent->InitialSpeed = 2000.0f;
-		ProjectileMovementComponent->MaxSpeed = 2000.0f;
+		ProjectileMovementComponent->InitialSpeed = 1500.0f;
+		ProjectileMovementComponent->MaxSpeed = 1500.0f;
 		ProjectileMovementComponent->bRotationFollowsVelocity = false;
 		ProjectileMovementComponent->bShouldBounce = false;
 		ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
@@ -48,7 +50,7 @@ AMageProjectile::AMageProjectile()
 			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
 		}
 		ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
-		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
+		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.65f, 0.65f, 0.65f));
 		ProjectileMeshComponent->SetupAttachment(RootComponent);
 	}
 
@@ -59,12 +61,31 @@ AMageProjectile::AMageProjectile()
 
 	// Replicate
 	bReplicates = true;
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AMageProjectile::OnProjectileImpact);
+	}
+
+	// 데미지 타입 초기화
+	DamageType = UDamageType::StaticClass();
+	Damage = 5.f;
 }
 
 // Called when the game starts or when spawned
 void AMageProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AMageProjectile::OnProjectileImpact(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != GetInstigator())
+	{
+		UGameplayStatics::ApplyDamage(OtherActor, Damage, GetInstigator()->GetController(), this, DamageType);
+		Destroy();
+	}
 }
 
 // Called every frame
