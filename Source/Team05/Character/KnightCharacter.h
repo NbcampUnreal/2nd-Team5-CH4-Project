@@ -1,11 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//KnightCharacter.h
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
 #include "Ability/SpecialAttack.h"
-#include "UObject/Object.h"
 #include "KnightCharacter.generated.h"
 
 UCLASS()
