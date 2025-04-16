@@ -2,7 +2,7 @@
 
 
 #include "BaseAIController.h"
-
+#include "Components/SphereComponent.h"
 #include "Character/KnightCharacter.h"
 
 ABaseAIController::ABaseAIController()
@@ -13,6 +13,7 @@ ABaseAIController::ABaseAIController()
 	defRate = 0.0f;
 	range = 0.0f;
 	guardTime = 0.0f;
+	bReplicates = true;
 }
 
 void ABaseAIController::AIBaseAttack()
@@ -33,7 +34,8 @@ void ABaseAIController::AIBaseAttack()
 void ABaseAIController::AISkillAttack(FString CharacterName)
 {
 	APawn* ctrlPawn = GetPawn();
-	FVector2D dir;
+	//FVector2D dir;
+	float skillRate=FMath::FRandRange(0.0f, 1.0f);
 	if (ctrlPawn)
 	{
 		if (CharacterName == "Barbarian")
@@ -55,10 +57,21 @@ void ABaseAIController::AISkillAttack(FString CharacterName)
 
 			if (ctrlChr)
 			{
-				dir.X = FMath::FRandRange(0.0f, 1.0f);
-				dir.Y = FMath::FRandRange(-1.0f, 1.0f);
-				ctrlChr->SetDirection(dir);
-				ctrlChr->SpecialAttack();
+				//dir.X = FMath::FRandRange(0.0f, 1.0f);
+				//dir.Y = FMath::FRandRange(-1.0f, 1.0f);
+				//ctrlChr->SetDirection(dir);
+				if (skillRate < 0.33f)
+				{
+					ctrlChr->SpecialAttack();
+				}
+				else if (skillRate >= 0.33f && skillRate < 0.66f)
+				{
+					ctrlChr->SpecialFrontAttack();
+				}
+				else
+				{
+					ctrlChr->SpecialUpperAttack();
+				}
 			}
 		}
 	}
@@ -75,7 +88,6 @@ void ABaseAIController::AIStartDefense()
 		if (ctrlChr)
 		{
 			ctrlChr->StartGuard();
-//			GetWorld()->GetTimerManager().SetTimer(guardTimer, this, &ABaseAIController::AIStopDefense, guardTime, false);
 		}
 	}
 }
@@ -106,4 +118,29 @@ void ABaseAIController::AIEmote()
 			ctrlChr->Emote();
 		}
 	}
+}
+
+AActor* ABaseAIController::AIDetectTarget()
+{
+	ABaseCharacter* chr = Cast<ABaseCharacter>(GetPawn());
+	USphereComponent* detectSphere=chr->GetDetectSphere();
+	float closestDistance = 10000.0f;
+	AActor* closestChr=nullptr;
+
+	if (chr && detectSphere)
+	{
+		TArray<AActor*> overlappingActors;
+		detectSphere->GetOverlappingActors(overlappingActors, ABaseCharacter::StaticClass());
+
+		for (AActor* act : overlappingActors)
+		{			
+			if (act != chr &&  closestDistance > FVector::Distance(act->GetActorLocation(), chr->GetActorLocation()))
+			{
+				closestDistance = FVector::Distance(act->GetActorLocation(), chr->GetActorLocation());
+				closestChr = act;
+			}
+		}
+	}
+
+	return closestChr;
 }

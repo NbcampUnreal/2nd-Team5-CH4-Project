@@ -39,4 +39,6 @@ public:
 	void AIEmote();
 	UFUNCTION(BlueprintCallable)
 	void AISkillAttack(FString CharacterName);
+	UFUNCTION(BlueprintCallable)
+	AActor* AIDetectTarget();
 };
