@@ -15,6 +15,8 @@
 #include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "UI/Widgets/MatchResult.h"
+#include "UI/Widgets/MatchBattleWidget.h"
+#include "UI/Viewmodel/PlayerStatusViewModel.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),

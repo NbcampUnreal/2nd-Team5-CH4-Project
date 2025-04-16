@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 #include "MyPlayerController.generated.h"
 
 class UInputMappingContext;
