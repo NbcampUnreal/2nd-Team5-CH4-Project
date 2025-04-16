@@ -95,8 +95,8 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 	DeadPlayerControllers.Add(InController);
 
 	// 관전자 처리
-	InController->ChangeState(NAME_Spectating);
-	InController->UnPossess();
+	/*InController->ChangeState(NAME_Spectating);
+	InController->UnPossess();*/
 
 	// 사망 순서에 따른 데미지 계산
 	int32 DeathOrder = DeadPlayerControllers.Num(); // 1이면 첫 번째 사망자
@@ -184,8 +184,6 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 				if (IsValid(MyPC))
 					MyPC->Client_ReceiveRankingInfo(FinalRankingList);
 			}
-
-			
 		}
 		else if (AliveCount == 0)
 		{
@@ -230,8 +228,19 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 				if (IsValid(MyPC))
 					MyPC->Client_ReceiveRankingInfo(FinalRankingList);
 			}
-			GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
+			//GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
 		}
+
+		// 일정 시간 후 Ending 상태로 전환
+		FTimerDelegate EndDelegate;
+		EndDelegate.BindLambda([this]()
+			{
+				if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+				{
+					GS->MatchState = EMatchState::Ending;
+				}
+			});
+		GetWorldTimerManager().SetTimer(EndTimerHandle, EndDelegate, 1.0f, false); // Ending 상태 진입
 	}
 }
 
@@ -313,6 +322,17 @@ void AGM_BattleMode::OnAIDead(ABaseAIController* InAIController)
 			}
 
 			GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
+
+			// 일정 시간 후 Ending 상태로 전환
+			FTimerDelegate EndDelegate;
+			EndDelegate.BindLambda([this]()
+				{
+					if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+					{
+						GS->MatchState = EMatchState::Ending;
+					}
+				});
+			GetWorldTimerManager().SetTimer(EndTimerHandle, EndDelegate, 1.0f, false); // Ending 상태 진입
 		}
 	}
 }
@@ -553,6 +573,10 @@ void AGM_BattleMode::OnMainTimerElapsed()
 
 		if (RemainWaitingTimeForEnding <= 0)
 		{
+			// 모든 플레이어를 타이틀로 복귀
+			for (auto PC : AlivePlayerControllers) PC->ReturnToTitle();
+			for (auto PC : DeadPlayerControllers) PC->ReturnToTitle();
+
 			MainTimerHandle.Invalidate();
 
 			// 레벨 리셋 (Dedicated 서버용)
@@ -631,6 +655,9 @@ void AGM_BattleMode::OnSingleTimerElapsed()
 
 		if (RemainWaitingTimeForEnding <= 0)
 		{
+			for (auto PC : AlivePlayerControllers) PC->ReturnToTitle();
+			for (auto PC : DeadPlayerControllers) PC->ReturnToTitle();
+
 			MainTimerHandle.Invalidate();
 
 			// 레벨 리셋

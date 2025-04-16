@@ -159,12 +159,16 @@ void AMyPlayerController::Client_SetInputEnabled_Implementation(bool bEnable)
 {
 	if (bEnable)
 	{
-		EnableInput(this);
+		FInputModeGameOnly InputMode;
+		SetInputMode(InputMode);
 	}
 	else
 	{
-		DisableInput(this);
+		FInputModeUIOnly InputMode;
+		SetInputMode(InputMode);
 	}
+
+	bShowMouseCursor = !bEnable;
 }
 
 FString AMyPlayerController::GetPlayerUniqueID() const
