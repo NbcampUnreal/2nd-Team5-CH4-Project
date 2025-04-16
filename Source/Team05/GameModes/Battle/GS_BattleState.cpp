@@ -1,12 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GS_BattleState.cpp
 
 #include "GS_BattleState.h"
 
+#include "GameModes/Battle/PS_PlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "GameModes/Battle/GM_BattleMode.h"
 //debug
 #include "Kismet/KismetSystemLibrary.h"
+
 
 void AGS_BattleState::Multicast_PrintMessage_Implementation(const FString& Msg)
 {

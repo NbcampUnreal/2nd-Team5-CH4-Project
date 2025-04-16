@@ -13,6 +13,7 @@
 #include "Components/SphereComponent.h"
 #include "UI/Widgets/NameTagWidget.h"
 #include "GameModes/Battle/PS_PlayerState.h"
+#include "GameModes/Battle/GM_BattleMode.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -27,8 +28,6 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
 	GetCharacterMovement()->AirControl = 1.0f;
-	FatigueRate = 0;
-	Life = 3;
 
 	// 리스폰 무적 시간 초기화
 	RespawnImmunityTime = 1.f;
@@ -146,23 +145,33 @@ void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValu
 }
 
 
-float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (!HasAuthority() || CurrentState == STATE_Guard || CurrentState == State_Hit || CurrentState == STATE_Respawn)
 	{
 		return 0.f;
 	}
-	
+
 	const int DamageAmountInt = static_cast<int32>(DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. %d"), *GetName(), DamageAmountInt, FatigueRate);
+	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage."), *GetName(), DamageAmountInt);
+
 	// 피격 후 면역 처리
 	HitImmunity();
+
 	// 넉백 처리
 	KnockBack(DamageCauser);
-	
+
 	MulticastRPCHit();
 
+	// 1. BaseCharacter 내부에 누적
 	FatigueRate += DamageAmountInt;
+
+	// 2. PlayerState로 UI 반영용 값 복사
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+	{
+		PS->SetFatigueRate(FatigueRate);
+	}
+
 	return DamageAmount;
 }
 
@@ -214,9 +223,18 @@ void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, bool 
 
 void ABaseCharacter::ReduceLife()
 {
+	// 1. BaseCharacter 내부 변수 조정
 	Life = FMath::Clamp(Life - 1, 0, 3);
 	FatigueRate = 0;
+
+	// 2. PlayerState로 값 복사
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+	{
+		PS->SetLife(Life);
+		PS->SetFatigueRate(FatigueRate);
+	}
 }
+
 
 void ABaseCharacter::RespawnImmunity()
 {
@@ -337,6 +355,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		}
 	}
 }
+
 
 // Called to bind functionality to input
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

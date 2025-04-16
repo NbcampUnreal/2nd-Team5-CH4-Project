@@ -1,15 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//GS_BattleState.h
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameModes/Battle/GM_BattleMode.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 #include "GS_BattleState.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class TEAM05_API AGS_BattleState : public AGameStateBase
 {
@@ -32,4 +30,5 @@ public:
 	// 현재 매치 상태 (대기/플레이/종료 등)
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	EMatchState MatchState = EMatchState::Waiting;
+
 };

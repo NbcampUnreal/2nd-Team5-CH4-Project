@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 #include "MyPlayerController.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
+class UMatchBattleWidget;
+class UPlayerStatusViewModel;
 class UPlayerListWidget;
 
 USTRUCT(BlueprintType)
@@ -189,4 +192,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetPlayerUniqueID() const;
 
+	// UI-MatchWidget, Viewmodel
+private:
+		// 이 선언이 필요함!
+		void InitializeBattleUIAndViewModels();
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UMatchBattleWidget> MatchBattleUIClass;
+
+	UPROPERTY()
+	TObjectPtr<UMatchBattleWidget> MatchBattleUI;
 };

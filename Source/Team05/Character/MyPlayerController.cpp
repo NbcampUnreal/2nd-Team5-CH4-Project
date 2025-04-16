@@ -13,11 +13,14 @@
 #include "GameModes/GI_BattleInstance.h"
 #include "GameModes/Lobby/GM_LobbyMode.h"
 #include "GameModes/Lobby/GS_LobbyState.h"
+#include "GameModes/Battle/GS_BattleState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "UI/Widgets/MatchResult.h"
 #include "UI/Widgets/PlayerListWidget.h"
 #include "Character/BaseCharacter.h"
 #include "EngineUtils.h"
+#include "UI/Widgets/MatchBattleWidget.h"
+#include "UI/Viewmodel/PlayerStatusViewModel.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -102,8 +105,53 @@ void AMyPlayerController::BeginPlay()
 				}
 			}
 		}
+		//// Battle 레벨에 진입 시 BattleWidget 연결
+		//else if (CurrentLevelName.Contains(TEXT("Mario"))) // "Battle" 레벨이름 수정 필요
+		//{
+		//	InitializeBattleUIAndViewModels();
+		//}
 	}
 }
+
+//void AMyPlayerController::InitializeBattleUIAndViewModels()
+//{
+//	if (!MatchBattleUIClass) return;
+//
+//	// 1. UI 생성
+//	MatchBattleUI = CreateWidget<UMatchBattleWidget>(this, MatchBattleUIClass);
+//	if (!MatchBattleUI) return;
+//
+//	// 2. ViewModel 생성 및 연결
+//	if (AGameStateBase* GameState = GetWorld()->GetGameState())
+//	{
+//		const TArray<APlayerState*>& PlayerArray = GameState->PlayerArray;
+//
+//		for (int32 i = 0; i < PlayerArray.Num(); ++i)
+//		{
+//			if (APS_PlayerState* PS = Cast<APS_PlayerState>(PlayerArray[i]))
+//			{
+//				// ViewModel 생성
+//				UPlayerStatusViewModel* NewVM = NewObject<UPlayerStatusViewModel>(this);
+//				NewVM->UpdateFromPlayerState(PS);
+//
+//				// 위젯에 연결
+//				MatchBattleUI->SetViewModelAt(i, NewVM);
+//			}
+//		}
+//	}
+//
+//	// 3. Add to viewport
+//	MatchBattleUI->AddToViewport();
+//
+//	// 4. 입력 모드 전환
+//	FInputModeGameAndUI InputMode;
+//	InputMode.SetWidgetToFocus(MatchBattleUI->TakeWidget());
+//	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+//	SetInputMode(InputMode);
+//	SetShowMouseCursor(true);
+//
+//	UE_LOG(LogTemp, Log, TEXT("[Client] MatchBattleWidget UI created and initialized"));
+//}
 
 void AMyPlayerController::PostInitializeComponents()
 {
