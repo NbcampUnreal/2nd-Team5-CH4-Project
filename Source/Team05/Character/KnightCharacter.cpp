@@ -8,20 +8,11 @@
 
 AKnightCharacter::AKnightCharacter()
 {
-	bCanSpecialAttack = true;
 }
 
 void AKnightCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void AKnightCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
-
-	GetWorldTimerManager().ClearTimer(CooldownTimer);
-	CooldownTimer.Invalidate();
 }
 
 void AKnightCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -67,7 +58,7 @@ void AKnightCharacter::SpecialAttack_Input()
 			SpecialAttack();
 		}
 		
-		SetCooldownTimer(5.f);
+		SetCooldownTimer(SpecialAttackCooldown);
 	}
 }
 
@@ -97,16 +88,4 @@ void AKnightCharacter::SpecialFrontAttack()
 	ServerRPCAttack(SpecialFrontAttackAnimMontage);
 	Launch(1000.f, 0.f);
 	PlayMontage(SpecialFrontAttackAnimMontage);
-}
-
-void AKnightCharacter::SetCooldownTimer(float Cooldown)
-{
-	bCanSpecialAttack = false;
-	if (IsValid(GetWorld()) == true)
-	{
-		GetWorldTimerManager().SetTimer(CooldownTimer, FTimerDelegate::CreateLambda([&]()
-		{
-			bCanSpecialAttack = true;
-		}), Cooldown, false);
-	}
 }

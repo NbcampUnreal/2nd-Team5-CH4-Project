@@ -18,7 +18,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -27,14 +26,8 @@ public:
 	virtual void SpecialUpperAttack() override;
 	virtual void SpecialLowerAttack() override;
 	virtual void SpecialFrontAttack() override;
-
-	void SetCooldownTimer(float Cooldown);
 	
 protected:
-	bool bCanSpecialAttack;
-
-	FTimerHandle CooldownTimer;
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> SpecialAttackAnimMontage;
 
