@@ -40,6 +40,7 @@ ABaseCharacter::ABaseCharacter()
 	KnockBackCoefficientZ = 5.f;
 
 	Super::JumpMaxCount = MaxJumpCount;
+	GetCharacterMovement()->JumpZVelocity = 600.f;
 
 	// 가드 스피어 초기화
 	GuardSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuardSphere"));
