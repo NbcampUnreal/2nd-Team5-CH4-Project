@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "NavModifierComponent.h"
+#include "NavAreas/NavArea_Default.h"
 #include "OneWayPlatform.generated.h"
 
 class UBoxComponent;
@@ -31,5 +33,7 @@ private:
     FTimerHandle TimerHandle_CheckPlayer;
 
     void CheckPlayersPosition();
-
+protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    class UNavModifierComponent* NavModifier;
 };

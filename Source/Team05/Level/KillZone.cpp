@@ -98,6 +98,9 @@ void AKillZone::OnCollisionBeginOverlap(
             else {
                 // 액터를 새로운 위치로 이동
                 OtherActor->SetActorLocation(TeleportLocation);
+                
+                // 캐릭터 리스폰 후 RespawnImmunityTime 동안 무적
+                bc->RespawnImmunity();
             }
         }
 	}

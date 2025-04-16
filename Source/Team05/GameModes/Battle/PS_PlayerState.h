@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//PS_PlayerState.h
 
 #pragma once
 
@@ -22,13 +22,17 @@ public:
 	UPROPERTY(Replicated)
 	int32 PlayerNum;
 
-	// 닉네임
-	UPROPERTY(Replicated)
+	// 기존 닉네임 선언을 수정
+	UPROPERTY(ReplicatedUsing = OnRep_Nickname)
 	FString Nickname;
 
 	// 선택된 캐릭터 클래스
 	UPROPERTY(Replicated)
 	TSubclassOf<APawn> CharacterClass;
+
+	// 게임 체력
+	UPROPERTY(Replicated)
+	int32 MatchHealth = 100;
 
 	// 준비 여부
 	UPROPERTY(Replicated)
@@ -47,4 +51,14 @@ public:
 
 	void SetCharacterClass(TSubclassOf<APawn> InClass);
 	TSubclassOf<APawn> GetCharacterClass() const;
+
+	void SetMatchHealth(int32 NewHealth);
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	int32 GetMatchHealth() const;
+  
+//UI NameTag
+protected:
+	UFUNCTION()
+	void OnRep_Nickname();
+
 };

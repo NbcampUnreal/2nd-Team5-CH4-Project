@@ -16,11 +16,11 @@ private:
 
 protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "CheckHit")
-	float AttackDamage;
+	float AttackDamage = 5.f;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "CheckHit")
-	float AttackRange;
+	float AttackRange = 50.f;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "CheckHit")
-	float AttackStartDistance;
+	bool bAttackFromOrigin = false;
 };

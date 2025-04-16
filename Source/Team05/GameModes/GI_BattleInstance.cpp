@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//GI_BattleInstance.cpp
 
 #include "GI_BattleInstance.h"
 

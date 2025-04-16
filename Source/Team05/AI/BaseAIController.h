@@ -33,9 +33,10 @@ public:
 	void AIBaseAttack();
 	UFUNCTION(BlueprintCallable)
 	void AIStartDefense();
+	UFUNCTION(BlueprintCallable)
 	void AIStopDefense();
 	UFUNCTION(BlueprintCallable)
 	void AIEmote();
 	UFUNCTION(BlueprintCallable)
-	void AISkillAttack();
+	void AISkillAttack(FString CharacterName);
 };

@@ -9,6 +9,6 @@ void UCheckHitNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
 	ABaseCharacter* OwnerCharacter = Cast<ABaseCharacter>(MeshComp->GetOwner());
 	if (IsValid(OwnerCharacter))
 	{
-		OwnerCharacter->CheckAttackHit(AttackDamage, AttackRange, AttackStartDistance);
+		OwnerCharacter->CheckAttackHit(AttackDamage, AttackRange, bAttackFromOrigin);
 	}
 }

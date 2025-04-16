@@ -3,6 +3,8 @@
 
 #include "BaseAIController.h"
 
+#include "Character/KnightCharacter.h"
+
 ABaseAIController::ABaseAIController()
 {
 	direction = true;
@@ -28,9 +30,38 @@ void ABaseAIController::AIBaseAttack()
 	
 }
 
-void ABaseAIController::AISkillAttack()
+void ABaseAIController::AISkillAttack(FString CharacterName)
 {
+	APawn* ctrlPawn = GetPawn();
+	FVector2D dir;
+	if (ctrlPawn)
+	{
+		if (CharacterName == "Barbarian")
+		{
+			
+		}
+		else if (CharacterName == "Mage")
+		{
+			
+		}
+		else if (CharacterName == "Rogue")
+		{
+			
+		}
+		else // Default: Knight
+		{
+			AKnightCharacter* ctrlChr;
+			ctrlChr = Cast<AKnightCharacter>(ctrlPawn);
 
+			if (ctrlChr)
+			{
+				dir.X = FMath::FRandRange(0.0f, 1.0f);
+				dir.Y = FMath::FRandRange(-1.0f, 1.0f);
+				ctrlChr->SetDirection(dir);
+				ctrlChr->SpecialAttack();
+			}
+		}
+	}
 }
 
 void ABaseAIController::AIStartDefense()
@@ -44,7 +75,7 @@ void ABaseAIController::AIStartDefense()
 		if (ctrlChr)
 		{
 			ctrlChr->StartGuard();
-			GetWorld()->GetTimerManager().SetTimer(guardTimer, this, &ABaseAIController::AIStopDefense, guardTime, false);
+//			GetWorld()->GetTimerManager().SetTimer(guardTimer, this, &ABaseAIController::AIStopDefense, guardTime, false);
 		}
 	}
 }
