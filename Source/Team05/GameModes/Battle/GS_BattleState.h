@@ -31,14 +31,4 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	EMatchState MatchState = EMatchState::Waiting;
 
-	// UI
-	virtual void BeginPlay() override;
-
-protected:
-	UPROPERTY()
-	TObjectPtr<UMatchBattleWidget> MatchBattleWidget;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UMatchBattleWidget> MatchBattleWidgetClass;
-
 };

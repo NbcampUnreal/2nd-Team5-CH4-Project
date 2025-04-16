@@ -9,6 +9,8 @@
 
 class UInputMappingContext;
 class UInputAction;
+class UMatchBattleWidget;
+class UPlayerStatusViewModel;
 
 USTRUCT(BlueprintType)
 struct FPlayerRankingInfo
@@ -173,4 +175,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetPlayerUniqueID() const;
 
+	// UI-MatchWidget, Viewmodel
+private:
+		// 이 선언이 필요함!
+		void InitializeBattleUIAndViewModels();
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UMatchBattleWidget> MatchBattleUIClass;
+
+	UPROPERTY()
+	TObjectPtr<UMatchBattleWidget> MatchBattleUI;
 };

@@ -142,36 +142,30 @@ void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValu
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || CurrentState == STATE_Guard || CurrentState == State_Hit || CurrentState == STATE_Respawn)
 	{
 		return 0.f;
 	}
 
-	APS_PlayerState* PS = GetPlayerState<APS_PlayerState>();
-	if (!PS) return 0.f;
-
-	int32 CurrentHealth = PS->GetMatchHealth();
-	int32 NewHealth = FMath::Clamp(CurrentHealth - static_cast<int32>(DamageAmount), 0, 100);
-	PS->SetMatchHealth(NewHealth);
-
-	// 예시: 피로도도 증가시킬 수 있음
-	int32 NewFatigue = FMath::Clamp(PS->GetFatigueRate() + 1, 0, 100);
-	PS->SetFatigueRate(NewFatigue);
-
-	// Life 감소 로직은 별도로 (예: 체력이 0이 되었을 때)
-	if (NewHealth <= 0)
-	{
-		ReduceLife();
-	}
-
 	const int DamageAmountInt = static_cast<int32>(DamageAmount);
-	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage. Fatigue: %d"), *GetName(), DamageAmountInt, PS->GetFatigueRate());
+	UE_LOG(LogTemp, Warning, TEXT("%s takes %d damage."), *GetName(), DamageAmountInt);
+
 	// 피격 후 면역 처리
 	HitImmunity();
+
 	// 넉백 처리
 	KnockBack(DamageCauser);
-	
+
 	MulticastRPCHit();
+
+	// 1. BaseCharacter 내부에 누적
+	FatigueRate += DamageAmountInt;
+
+	// 2. PlayerState로 UI 반영용 값 복사
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+	{
+		PS->SetFatigueRate(FatigueRate);
+	}
 
 	return DamageAmount;
 }
@@ -224,31 +218,18 @@ void ABaseCharacter::CheckAttackHit(float AttackDamage, float AttackRange, bool 
 
 void ABaseCharacter::ReduceLife()
 {
-	APS_PlayerState* PS = GetPlayerState<APS_PlayerState>();
-	if (!PS) return;
+	// 1. BaseCharacter 내부 변수 조정
+	Life = FMath::Clamp(Life - 1, 0, 3);
+	FatigueRate = 0;
 
-	int32 NewLife = FMath::Clamp(PS->GetLife() - 1, 0, 3);
-	PS->SetLife(NewLife);
-
-	// 사망 처리
-	if (NewLife <= 0)
+	// 2. PlayerState로 값 복사
+	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
 	{
-		// 예: 탈락 처리
-		if (AMyPlayerController* PC = Cast<AMyPlayerController>(GetController()))
-		{
-			if (AGM_BattleMode* GM = GetWorld()->GetAuthGameMode<AGM_BattleMode>())
-			{
-				GM->OnCharacterDead(PC);
-			}
-		}
+		PS->SetLife(Life);
+		PS->SetFatigueRate(FatigueRate);
 	}
-
-	// 체력 초기화
-	PS->SetMatchHealth(100);
-
-	// 피로도 초기화
-	PS->SetFatigueRate(0);
 }
+
 
 void ABaseCharacter::RespawnImmunity()
 {
