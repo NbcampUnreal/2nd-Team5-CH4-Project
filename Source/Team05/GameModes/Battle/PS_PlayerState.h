@@ -27,7 +27,7 @@ public:
 	FString Nickname;
 
 	// 선택된 캐릭터 클래스
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
 	TSubclassOf<APawn> CharacterClass;
 
 	// 게임 체력
@@ -55,10 +55,20 @@ public:
 	void SetMatchHealth(int32 NewHealth);
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	int32 GetMatchHealth() const;
+
+	// 레디 상황 실시간 반영
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateReadyState(bool bNewReady);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_NotifyReadyChanged(bool bNewReady);
   
 //UI NameTag
 protected:
 	UFUNCTION()
 	void OnRep_Nickname();
+
+	UFUNCTION()
+	void OnRep_ReadyState();
 
 };

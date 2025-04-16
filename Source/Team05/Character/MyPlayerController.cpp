@@ -15,6 +15,9 @@
 #include "GameModes/Lobby/GS_LobbyState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 #include "UI/Widgets/MatchResult.h"
+#include "UI/Widgets/PlayerListWidget.h"
+#include "Character/BaseCharacter.h"
+#include "EngineUtils.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -150,7 +153,8 @@ void AMyPlayerController::Server_SetReadyOnly_Implementation()
 {
 	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
 	{
-		PS->SetReady(true);
+		PS->Multicast_UpdateReadyState(true); // 또는 false
+		PS->Multicast_NotifyReadyChanged(true);
 		UE_LOG(LogTemp, Log, TEXT("[PlayerController] Ready 상태 설정 완료."));
 	}
 }
@@ -232,6 +236,40 @@ void AMyPlayerController::Client_ShowMatchResultUI_Implementation()
 	}
 }
 
+void AMyPlayerController::Client_ShowPlayerListWidget_Implementation()
+{
+	if (IsLocalController() && PlayerListWidgetClass && !PlayerListWidget)
+	{
+		if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
+		{
+			PlayerListWidget = CreateWidget<UPlayerListWidget>(this, PlayerListWidgetClass);
+			if (PlayerListWidget)
+			{
+				UE_LOG(LogTemp, Log, TEXT("UI Create UI Opened"));
+				PlayerListWidget->AddToViewport();
+				PlayerListWidget->AddPlayerEntry(PS->GetPlayerNickName(), PS->IsReady());
+			}
+		}
+	}
+}
+
+void AMyPlayerController::Client_RefreshPlayerList_Implementation()
+{
+	if (PlayerListWidget)
+	{
+		PlayerListWidget->ClearPlayerEntries();
+
+		for (TActorIterator<APlayerState> It(GetWorld()); It; ++It)
+		{
+			APS_PlayerState* PS = Cast<APS_PlayerState>(*It);
+			if (PS)
+			{
+				PlayerListWidget->AddPlayerEntry(PS->GetPlayerNickName(), PS->IsReady());
+			}
+		}
+	}
+}
+
 void AMyPlayerController::Client_ReceiveRankingInfo_Implementation(const TArray<FPlayerRankingInfo>& RankingList)
 {
 	if (ResultUIClass && !ResultUI)
@@ -305,7 +343,6 @@ void AMyPlayerController::Client_OpenCharacterSelectWidget_Implementation()
 	if (NameInputUI)
 	{
 		NameInputUI->RemoveFromParent();
-		NameInputUI = nullptr;
 	}
 
 	if (CharacterSelectUIClass)
@@ -323,8 +360,6 @@ void AMyPlayerController::Server_ConfirmSelection_Implementation()
 {
 	if (APS_PlayerState* PS = GetPlayerState<APS_PlayerState>())
 	{
-		//PS->SetReady(true);
-
 		if (!GetPawn()) // 아직 Pawn 없으면 스폰
 		{
 			if (AGM_LobbyMode* GM = GetWorld()->GetAuthGameMode<AGM_LobbyMode>())
@@ -332,7 +367,13 @@ void AMyPlayerController::Server_ConfirmSelection_Implementation()
 				GM->SpawnPlayerInLobby(this);
 			}
 		}
+		Client_ShowPlayerListWidget();
 	}
+}
+
+UPlayerListWidget* AMyPlayerController::GetPlayerListWidget() const
+{
+	return PlayerListWidget; // 생성해둔 위젯 인스턴스 반환
 }
 
 void AMyPlayerController::ReturnToTitle_Implementation()
