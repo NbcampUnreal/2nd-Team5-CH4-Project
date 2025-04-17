@@ -53,7 +53,7 @@ ABaseCharacter::ABaseCharacter()
 	GuardSphere->SetVisibility(false);
 
 	// 가드 스피어 Mesh 설정
-	static ConstructorHelpers::FObjectFinder<UStaticMesh>GuardSphereMesh(TEXT("/Game/_Blueprint/Character/SM_GuardSphere.SM_GuardSphere"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>GuardSphereMesh(TEXT("/Game/_Blueprint/Character/Meshes/SM_GuardSphere.SM_GuardSphere"));
 	if(GuardSphereMesh.Succeeded())
 	{
 		GuardSphere->SetStaticMesh(GuardSphereMesh.Object);

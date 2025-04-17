@@ -54,7 +54,7 @@ AMageProjectile::AMageProjectile()
 		ProjectileMeshComponent->SetupAttachment(RootComponent);
 	}
 
-	InitialLifeSpan = 1.0f;
+	InitialLifeSpan = 2.0f;
 
 	CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
 	ProjectileMeshComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));

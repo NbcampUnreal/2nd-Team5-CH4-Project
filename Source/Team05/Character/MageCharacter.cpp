@@ -44,23 +44,24 @@ void AMageCharacter::SpecialAttack_Input()
 {
 	if (bInputEnabled && bCanSpecialAttack)
 	{
-		if (CurrentDirection == EDirectionEnum::EUp)
-		{
-			SpecialUpperAttack();
-		}
-		else if (CurrentDirection == EDirectionEnum::EForward)
-		{
-			SpecialFrontAttack();
-		}
-		else if (CurrentDirection == EDirectionEnum::EDown)
-		{
-			SpecialLowerAttack();
-		}
-		else
-		{
-			SpecialAttack();
-		}
+		// if (CurrentDirection == EDirectionEnum::EUp)
+		// {
+		// 	SpecialUpperAttack();
+		// }
+		// else if (CurrentDirection == EDirectionEnum::EForward)
+		// {
+		// 	SpecialFrontAttack();
+		// }
+		// else if (CurrentDirection == EDirectionEnum::EDown)
+		// {
+		// 	SpecialLowerAttack();
+		// }
+		// else
+		// {
+		// 	SpecialAttack();
+		// }
 
+		SpecialAttack();
 		SetCooldownTimer(SpecialAttackCooldown);
 	}
 }
@@ -68,7 +69,7 @@ void AMageCharacter::SpecialAttack_Input()
 void AMageCharacter::SpecialAttack()
 {
 	ServerRPCAttack(SpecialAttackAnimMontage);
-	Fire();
+	// Fire();
 	PlayAnimMontage(SpecialAttackAnimMontage);
 }
 
