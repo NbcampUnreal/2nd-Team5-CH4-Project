@@ -175,9 +175,15 @@ void APS_PlayerState::OnRep_ReadyState()
 
 void APS_PlayerState::OnRep_MatchHealth()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep_MatchHealth] PlayerNum=%d, HP=%d"), PlayerNum, MatchHealth);
+
 	if (CachedMatchBattleWidget)
 	{
 		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CachedMatchBattleWidget is null"));
 	}
 }
 

@@ -3,25 +3,37 @@
 #include "UI/Widgets/MatchBattleWidget.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameStateBase.h"
+#include "TimerManager.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 
 void UMatchBattleWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (const AGameStateBase* GS = GetWorld()->GetGameState<AGameStateBase>())
+    // UI 생성 후 한 프레임 뒤에 PlayerArray 연결
+    FTimerHandle DelayHandle;
+    GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &UMatchBattleWidget::BindAllPlayerStates, 0.2f, false);
+}
+
+void UMatchBattleWidget::BindAllPlayerStates()
+{
+    const AGameStateBase* GS = GetWorld()->GetGameState<AGameStateBase>();
+    if (!GS)
     {
-        const TArray<APlayerState*>& Players = GS->PlayerArray;
+        UE_LOG(LogTemp, Warning, TEXT("BindAllPlayerStates: GameState is null"));
+        return;
+    }
 
-        for (int32 i = 0; i < Players.Num() && i < 4; ++i)
+    const TArray<APlayerState*>& Players = GS->PlayerArray;
+    UE_LOG(LogTemp, Warning, TEXT("BindAllPlayerStates: PlayerArray.Num() = %d"), Players.Num());
+
+    for (int32 i = 0; i < Players.Num() && i < 4; ++i)
+    {
+        if (APS_PlayerState* PS = Cast<APS_PlayerState>(Players[i]))
         {
-            if (APS_PlayerState* PS = Cast<APS_PlayerState>(Players[i]))
-            {
-                PS->CachedMatchBattleWidget = this;
-                PS->CachedIndex = i;
-
-                UpdatePlayerStatus(i, PS); // 초기 UI 표시
-            }
+            PS->CachedMatchBattleWidget = this;
+            PS->CachedIndex = i;
+            UpdatePlayerStatus(i, PS);
         }
     }
 }
@@ -29,12 +41,19 @@ void UMatchBattleWidget::NativeConstruct()
 
 void UMatchBattleWidget::UpdatePlayerStatus(int32 Index, APS_PlayerState* PS)
 {
-    if (!PS) return;
+    if (!PS)
+    {
+        UE_LOG(LogTemp, Error, TEXT("UpdatePlayerStatus: PlayerState is null at index %d"), Index);
+        return;
+    }
 
     FString Nickname = PS->GetPlayerNickName();
     FString FatigueStr = FString::Printf(TEXT("%d%%"), PS->GetFatigueRate());
     FString LifeStr = FString::Printf(TEXT("목숨x%d"), PS->GetLife());
     FString HealthStr = FString::Printf(TEXT("%d%%"), PS->GetMatchHealth());
+
+    UE_LOG(LogTemp, Log, TEXT("Update UI [Index %d] Nickname=%s Life=%s HP=%s Fatigue=%s"),
+        Index, *Nickname, *LifeStr, *HealthStr, *FatigueStr);
 
     // 인덱스는 0~3 기준
     switch (Index)

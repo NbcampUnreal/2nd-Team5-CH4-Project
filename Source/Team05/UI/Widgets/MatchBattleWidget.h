@@ -73,4 +73,9 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerName4;
+
+private:
+    // 함수 선언
+    void BindAllPlayerStates();
+
 };
