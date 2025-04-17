@@ -1,4 +1,4 @@
-//PS_PlayerState.cpp
+﻿//PS_PlayerState.cpp
 
 #include "PS_PlayerState.h"
 
@@ -15,7 +15,13 @@ APS_PlayerState::APS_PlayerState()
 	Nickname = TEXT("Player");
 	CharacterClass = nullptr;
 	bReady = false;
+	// plus
+	MatchHealth = 100;
+	FatigueRate = 0;
+	Life = 3;
 }
+
+// ---Ready 상태 관리---
 
 void APS_PlayerState::SetReady(bool bInReady)
 {
@@ -30,6 +36,8 @@ bool APS_PlayerState::IsReady() const
 {
 	return bReady;
 }
+
+// ---Player 기본 정보---
 
 void APS_PlayerState::SetPlayerNum(int32 InNum)
 {
@@ -67,9 +75,15 @@ TSubclassOf<APawn> APS_PlayerState::GetCharacterClass() const
 	return CharacterClass;
 }
 
+// ---게임 상태 정보---
+
 void APS_PlayerState::SetMatchHealth(int32 NewHealth)
 {
-	MatchHealth = NewHealth;
+	if (HasAuthority())
+	{
+		MatchHealth = NewHealth;
+		OnRep_MatchHealth();
+	}
 }
 
 int32 APS_PlayerState::GetMatchHealth() const
@@ -96,31 +110,52 @@ void APS_PlayerState::Multicast_NotifyReadyChanged_Implementation(bool bNewReady
 		}
 	}
 }
-
-void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APS_PlayerState::SetLife(int32 NewLife)
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(APS_PlayerState, PlayerNum);
-	DOREPLIFETIME(APS_PlayerState, Nickname);
-	DOREPLIFETIME(APS_PlayerState, CharacterClass);
-	DOREPLIFETIME(APS_PlayerState, MatchHealth);
-	DOREPLIFETIME(APS_PlayerState, bReady);
+	if (HasAuthority())
+	{
+		Life = NewLife;
+		OnRep_Life();
+	}
 }
+
+int32 APS_PlayerState::GetLife() const
+{
+	return Life;
+}
+
+void APS_PlayerState::SetFatigueRate(int32 NewRate)
+{
+	if (HasAuthority())
+	{
+		FatigueRate = NewRate;
+		OnRep_FatigueRate();
+	}
+}
+
+int32 APS_PlayerState::GetFatigueRate() const
+{
+	return FatigueRate;
+}
+
+// ---OnRep 함수 - ViewModel/UI 연동---
 
 void APS_PlayerState::OnRep_Nickname()
 {
-	// 여기에서는 PlayerCharacter를 가져와서 UI를 업데이트하도록 지시할 수 있음
 
-	APawn* OwnerPawn = GetPawn();
-	if (IsValid(OwnerPawn))
+	if (APawn* OwnerPawn = GetPawn())
 	{
-		class ABaseCharacter* BaseChar = Cast<ABaseCharacter>(OwnerPawn);
-		if (IsValid(BaseChar))
+		if (ABaseCharacter* BaseChar = Cast<ABaseCharacter>(OwnerPawn))
 		{
-			BaseChar->UpdateNameTagUI(Nickname); 
+			BaseChar->UpdateNameTagUI(Nickname);
 		}
 	}
+
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+
 }
 
 void APS_PlayerState::OnRep_ReadyState()
@@ -135,4 +170,44 @@ void APS_PlayerState::OnRep_ReadyState()
 			}
 		}
 	}
+}
+
+
+void APS_PlayerState::OnRep_MatchHealth()
+{
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+}
+
+void APS_PlayerState::OnRep_Life()
+{
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+}
+
+void APS_PlayerState::OnRep_FatigueRate()
+{
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+}
+
+// ---Replication 설정---
+
+void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APS_PlayerState, PlayerNum);
+	DOREPLIFETIME(APS_PlayerState, Nickname);
+	DOREPLIFETIME(APS_PlayerState, CharacterClass);
+	DOREPLIFETIME(APS_PlayerState, MatchHealth);
+	DOREPLIFETIME(APS_PlayerState, FatigueRate);
+	DOREPLIFETIME(APS_PlayerState, Life);
+	DOREPLIFETIME(APS_PlayerState, bReady);
 }

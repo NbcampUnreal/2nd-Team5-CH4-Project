@@ -18,11 +18,12 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// ---기본 플레이어 정보---
+	
 	// 플레이어 번호
 	UPROPERTY(Replicated)
 	int32 PlayerNum;
 
-	// 기존 닉네임 선언을 수정
 	UPROPERTY(ReplicatedUsing = OnRep_Nickname)
 	FString Nickname;
 
@@ -30,19 +31,25 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
 	TSubclassOf<APawn> CharacterClass;
 
-	// 게임 체력
-	UPROPERTY(Replicated)
-	int32 MatchHealth = 100;
-
 	// 준비 여부
 	UPROPERTY(Replicated)
 	bool bReady;
 
-	// Getter / Setter
-	void SetReady(bool bInReady);
-	bool IsReady() const;
+	// ---게임 상태 정보---
+	
+	UPROPERTY(ReplicatedUsing = OnRep_Life)
+	int32 Life = 3;
 
-	// Getter / Setter
+	// FatigueRate OnRep
+	UPROPERTY(ReplicatedUsing = OnRep_FatigueRate)
+	int32 FatigueRate = 0;
+
+	// MatchHealth OnRep
+	UPROPERTY(ReplicatedUsing = OnRep_MatchHealth)
+	int32 MatchHealth = 100;
+	
+	// ---Getter / Setter---
+
 	void SetPlayerNum(int32 InNum);
 	int32 GetPlayerNum() const;
 
@@ -52,7 +59,16 @@ public:
 	void SetCharacterClass(TSubclassOf<APawn> InClass);
 	TSubclassOf<APawn> GetCharacterClass() const;
 
-	void SetMatchHealth(int32 NewHealth);
+	void SetReady(bool bInReady);
+	bool IsReady() const;
+
+	void SetLife(int32 InLife);
+	int32 GetLife() const;
+
+	void SetFatigueRate(int32 InRate);
+	int32 GetFatigueRate() const;
+
+	void SetMatchHealth(int32 InHealth);
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	int32 GetMatchHealth() const;
 
@@ -63,12 +79,39 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_NotifyReadyChanged(bool bNewReady);
   
-//UI NameTag
-protected:
+
+	// ---OnRep 함수들---
+	// UI에 표시되는 값(FatigueRate, MatchHealth 등)은 반드시 Replicated + OnRep 로 설정
+
 	UFUNCTION()
 	void OnRep_Nickname();
 
 	UFUNCTION()
+	void OnRep_FatigueRate();
+
+	UFUNCTION()
+	void OnRep_Life();
+
+	UFUNCTION()
+	void OnRep_MatchHealth();
+
+	UFUNCTION()
 	void OnRep_ReadyState();
 
+//각 플레이어의 상태가 바뀔 때
+//클라이언트에 있는 UI를 자동으로 업데이트하려고 UI 위젯을 직접 기억(Caching)해두는 용도
+	// 클라이언트 UI와 연결
+	UPROPERTY()
+	class UMatchBattleWidget* CachedMatchBattleWidget;
+
+	UPROPERTY()
+	int32 CachedIndex = -1; // 0~3
+	//이 값들은 보통 MatchBattleWidget의 NativeConstruct() 시점에 설정
+	// 
+	//이 두 변수는 Replicated 아님 → 서버에 전달되지 않음
+
+	//오직 클라이언트 내부에서만 사용
+
+	//반드시 UI 생성 이후에 값 세팅해야 함(BeginPlay에서 곧바로 쓰면 nullptr일 수 있음)
 };
+
