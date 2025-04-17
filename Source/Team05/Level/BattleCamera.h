@@ -29,7 +29,7 @@ protected:
     float MinY = 800.f;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
-    float MaxY = 1800.0f;
+    float MaxY = 2000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float MoveInterpSpeed = 0.3f;
