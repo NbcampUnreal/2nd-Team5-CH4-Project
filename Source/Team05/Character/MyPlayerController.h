@@ -9,6 +9,7 @@
 class UInputMappingContext;
 class UInputAction;
 class UPlayerListWidget;
+class USoundBase;
 
 USTRUCT(BlueprintType)
 struct FPlayerRankingInfo
@@ -134,6 +135,16 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_NotificationText, BlueprintReadWrite)
 	FText NotificationText;
 
+	// 레디고위젯
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> ReadyGoWidgetClass;
+	// 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+	USoundBase* ReadyGoSound;
+
+	UFUNCTION(BlueprintCallable, Category = "SFX")
+	void PlayReadyGoSound();
+
 	UFUNCTION()
 	void OnRep_NameCheckText();
 
@@ -171,6 +182,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_NotificationText();
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlayReadyGoFX();
 
 #pragma endregion
 

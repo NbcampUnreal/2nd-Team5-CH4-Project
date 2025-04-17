@@ -18,6 +18,7 @@
 #include "UI/Widgets/PlayerListWidget.h"
 #include "Character/BaseCharacter.h"
 #include "EngineUtils.h"
+#include "Sound/SoundBase.h"
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
@@ -126,6 +127,25 @@ void AMyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(AMyPlayerController, NameCheckText);
 	DOREPLIFETIME(AMyPlayerController, NotificationText);
+}
+
+void AMyPlayerController::PlayReadyGoSound()
+{
+	if (ReadyGoSound)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ReadyGo] 사운드 재생 시작"));
+		UGameplayStatics::PlaySound2D(this, ReadyGoSound);
+	}
+
+	if (ReadyGoWidgetClass)
+	{
+		UUserWidget* Widget = CreateWidget(this, ReadyGoWidgetClass);
+		if (Widget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[ReadyGo] 위젯 표시"));
+			Widget->AddToViewport();
+		}
+	}
 }
 
 void AMyPlayerController::OnRep_NameCheckText()
@@ -379,6 +399,11 @@ UPlayerListWidget* AMyPlayerController::GetPlayerListWidget() const
 
 void AMyPlayerController::OnRep_NotificationText()
 {
+}
+
+void AMyPlayerController::Client_PlayReadyGoFX_Implementation()
+{
+	PlayReadyGoSound(); // 위젯 사운드 재생
 }
 
 void AMyPlayerController::ReturnToTitle_Implementation()
