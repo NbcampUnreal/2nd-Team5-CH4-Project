@@ -4,6 +4,7 @@
 #include "BaseAIController.h"
 #include "Components/SphereComponent.h"
 #include "Character/MageCharacter.h"
+#include "Character/RogueCharacter.h"
 #include "Character/KnightCharacter.h"
 #include "Character/BarbarianCharacter.h"
 
@@ -80,7 +81,13 @@ void ABaseAIController::AISkillAttack(FString CharacterName)
 		}
 		else if (CharacterName == "Rogue")
 		{
-			
+			ARogueCharacter* ctrlChr;
+			ctrlChr = Cast<ARogueCharacter>(ctrlPawn);
+
+			if (ctrlChr)
+			{
+				ctrlChr->SpecialAttack();
+			}
 		}
 		else // Default: Knight
 		{
