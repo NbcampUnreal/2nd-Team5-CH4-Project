@@ -102,6 +102,19 @@ void AMyPlayerController::BeginPlay()
 				}
 			}
 		}
+		// "Battle" 레벨 분기 추가 - 일단 mario맵으로 설정
+		else if (CurrentLevelName.Contains(TEXT("Mario")))
+		{
+			if (MatchBattleWidgetClass && !MatchBattleWidget)
+			{
+				MatchBattleWidget = CreateWidget<UMatchBattleWidget>(this, MatchBattleWidgetClass);
+				if (MatchBattleWidget)
+				{
+					MatchBattleWidget->AddToViewport();
+					UE_LOG(LogTemp, Log, TEXT("MatchBattle UI created and shown."));
+				}
+			}
+		}
 	}
 }
 
