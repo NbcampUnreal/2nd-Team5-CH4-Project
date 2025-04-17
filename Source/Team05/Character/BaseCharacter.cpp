@@ -28,6 +28,8 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	// 공중에서 좌우 컨트롤 배율 100퍼센트로 지정
 	GetCharacterMovement()->AirControl = 1.0f;
+	FatigueRate = 0;
+	Life = 3;
 
 	// 리스폰 무적 시간 초기화
 	RespawnImmunityTime = 1.f;

@@ -150,6 +150,12 @@ void APS_PlayerState::OnRep_Nickname()
 			BaseChar->UpdateNameTagUI(Nickname);
 		}
 	}
+
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+
 }
 
 void APS_PlayerState::OnRep_ReadyState()
@@ -169,17 +175,26 @@ void APS_PlayerState::OnRep_ReadyState()
 
 void APS_PlayerState::OnRep_MatchHealth()
 {
-
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
 }
 
 void APS_PlayerState::OnRep_Life()
 {
-
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
 }
 
 void APS_PlayerState::OnRep_FatigueRate()
 {
-
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
 }
 
 // ---Replication 설정---

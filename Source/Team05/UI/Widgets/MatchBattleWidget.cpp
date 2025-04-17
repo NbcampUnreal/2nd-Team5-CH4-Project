@@ -8,7 +8,24 @@
 void UMatchBattleWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    if (const AGameStateBase* GS = GetWorld()->GetGameState<AGameStateBase>())
+    {
+        const TArray<APlayerState*>& Players = GS->PlayerArray;
+
+        for (int32 i = 0; i < Players.Num() && i < 4; ++i)
+        {
+            if (APS_PlayerState* PS = Cast<APS_PlayerState>(Players[i]))
+            {
+                PS->CachedMatchBattleWidget = this;
+                PS->CachedIndex = i;
+
+                UpdatePlayerStatus(i, PS); // 초기 UI 표시
+            }
+        }
+    }
 }
+
 
 void UMatchBattleWidget::UpdatePlayerStatus(int32 Index, APS_PlayerState* PS)
 {
