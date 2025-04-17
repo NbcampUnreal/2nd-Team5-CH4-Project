@@ -13,8 +13,8 @@ void AGS_BattleState::Multicast_PrintMessage_Implementation(const FString& Msg)
 	UKismetSystemLibrary::PrintString(
 		this,
 		Msg,
-		true,   
-		true,   
+		true,
+		true,
 		FLinearColor::Yellow,
 		10.0f
 	);

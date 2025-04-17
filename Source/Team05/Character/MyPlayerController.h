@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 #include "MyPlayerController.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
+class UMatchBattleWidget;
 class UPlayerListWidget;
 
 USTRUCT(BlueprintType)
@@ -195,4 +197,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetPlayerUniqueID() const;
 
+	// UI-MatchWidget
+public:
+	//오직 클라이언트가 BeginPlay()에서 위젯을 생성할 때만 사용
+	//서버와 동기화할 필요가 없기 때문에 Replicated는 필요 없음
+	//동기화 방식은 PlayerState에서 처리
+
+	//에디터에서 위젯 클래스 할당
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> MatchBattleWidgetClass;
+
+private:
+	// 실제 생성된 위젯 인스턴스
+	UPROPERTY()
+	class UMatchBattleWidget* MatchBattleWidget;
 };
