@@ -782,4 +782,77 @@ void AGM_BattleMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+	{
+		if (GI->bSingleMode)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[SeamlessTravel] SingleMode"));
+			if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+			{
+				// 플레이어 고유 ID 얻기 (컨트롤러에서 제공한다고 가정)
+				FString PlayerID = TEXT("Unknown");
+				if (AMyPlayerController* MyPC = Cast<AMyPlayerController>(PC))
+				{
+					PlayerID = MyPC->GetPlayerUniqueID();
+				}
+
+				if (!GI->PlayerInfoMap.Contains(PlayerID))
+				{
+					UE_LOG(LogTemp, Error, TEXT("[BattleMode] PlayerInfoMap에 %s 없음!"), *PlayerID);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Log, TEXT("[BattleMode] PlayerInfoMap OK - 캐릭터 스폰 시도"));
+				}
+				// 닉네임 정보 복원 로직 추가
+				if (APS_PlayerState* PS = Cast<APS_PlayerState>(PC->PlayerState))
+				{
+					if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
+					{
+						if (!PlayerID.IsEmpty())
+						{
+							if (GI->PlayerInfoMap.Contains(PlayerID))
+							{
+								// 닉네임 유지
+								FString StoredNickname = GI->PlayerInfoMap[PlayerID].Nickname;
+								if (!StoredNickname.IsEmpty())
+								{
+									PS->SetPlayerNickName(StoredNickname);
+									UE_LOG(LogTemp, Log, TEXT("[SeamlessTravel] Restored nickname: %s for player ID: %s"), *StoredNickname, *PlayerID);
+								}
+							}
+						}
+					}
+				}
+
+				// GameInstance에서 체력 정보 가져오기
+				if (FPlayerInfo* Info = GI->PlayerInfoMap.Find(PlayerID))
+				{
+					if (Info->MatchHealth <= 0)
+					{
+						// 체력이 0이하인 경우 → 관전자 처리
+						PC->UnPossess();
+						PC->ChangeState(NAME_Spectating);
+						DeadPlayerControllers.Add(Cast<AMyPlayerController>(PC));
+						UE_LOG(LogTemp, Warning, TEXT("[BattleMode] Player %s is eliminated and entered as spectator."), *PlayerID);
+					}
+					else {
+						UE_LOG(LogTemp, Warning, TEXT("[BattleMode] SpawnIn"));
+						SpawnPlayerInBattle(PC); // 스폰 함수 호출
+
+						AMyPlayerController* NewPC = Cast<AMyPlayerController>(PC);
+						if (IsValid(NewPC))
+						{
+							UE_LOG(LogTemp, Warning, TEXT("[BattleMode] NewPlayerAdd"));
+							AlivePlayerControllers.Add(NewPC);
+						}
+					}
+				}
+
+				// 싱글모드면 다른 타이머와 추가 함수 작동
+				// 1초 간격으로 로비 상태 확인
+				GetWorldTimerManager().SetTimer(SingleTimerHandle, this, &AGM_BattleMode::OnSingleTimerElapsed, 1.0f, true);
+			}
+		}
+	}
 }
