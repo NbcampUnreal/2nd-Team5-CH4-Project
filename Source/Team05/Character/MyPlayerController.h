@@ -131,6 +131,9 @@ public:
 	UPROPERTY()
 	UPlayerListWidget* PlayerListWidget;
 
+	UPROPERTY(ReplicatedUsing = OnRep_NotificationText, BlueprintReadWrite)
+	FText NotificationText;
+
 	UFUNCTION()
 	void OnRep_NameCheckText();
 
@@ -165,6 +168,9 @@ public:
 	void Client_RefreshPlayerList();
 
 	UPlayerListWidget* GetPlayerListWidget() const;
+
+	UFUNCTION()
+	void OnRep_NotificationText();
 
 #pragma endregion
 

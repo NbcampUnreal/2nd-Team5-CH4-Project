@@ -57,7 +57,6 @@ private:
 	UFUNCTION()
 	void OnSingleTimerElapsed();
 
-	
 
 public:
 	// 타이머 핸들
