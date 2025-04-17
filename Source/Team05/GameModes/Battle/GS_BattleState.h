@@ -12,12 +12,13 @@ UCLASS()
 class TEAM05_API AGS_BattleState : public AGameStateBase
 {
 	GENERATED_BODY()
-	
+
 public:
+	AGS_BattleState();
 
 	// 복제 대상 등록
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	// 디버깅용 메세지 뿌리기
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PrintMessage(const FString& Msg);
@@ -31,4 +32,16 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	EMatchState MatchState = EMatchState::Waiting;
 
+protected:
+	// UI 자동 갱신용 타이머
+	FTimerHandle TimerHandle_UpdateBattleUI;
+
+	// 자동 갱신 시작
+	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void StartBattleUIUpdate();
+
+	UFUNCTION()
+	void UpdateAllPlayerUI();
 };

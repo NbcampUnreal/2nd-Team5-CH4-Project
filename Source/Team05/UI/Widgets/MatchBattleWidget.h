@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "UI/Viewmodel/PlayerStatusViewModel.h"
 #include "MatchBattleWidget.generated.h"
 
+class UTextBlock;
+class APS_PlayerState;
 
 UCLASS()
 class TEAM05_API UMatchBattleWidget : public UUserWidget
@@ -14,20 +15,62 @@ class TEAM05_API UMatchBattleWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	// 플레이어 4명의 ViewModel 저장
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModel", meta = (BindWidgetViewModel))
-	TObjectPtr<UPlayerStatusViewModel> ViewModel1;
+    virtual void NativeConstruct() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModel", meta = (BindWidgetViewModel))
-	TObjectPtr<UPlayerStatusViewModel> ViewModel2;
+    // 외부에서 호출해서 상태 업데이트
+    UFUNCTION(BlueprintCallable)
+    void UpdatePlayerStatus(int32 Index, APS_PlayerState* PlayerState);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModel", meta = (BindWidgetViewModel))
-	TObjectPtr<UPlayerStatusViewModel> ViewModel3;
+protected:
+    // 플레이어 1
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerFatigueRate1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ViewModel", meta = (BindWidgetViewModel))
-	TObjectPtr<UPlayerStatusViewModel> ViewModel4;
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerLife1;
 
-	// 외부에서 ViewModel을 인덱스별로 할당할 수 있는 함수
-	UFUNCTION(BlueprintCallable, Category = "ViewModel")
-	void SetViewModelAt(int32 Index, UPlayerStatusViewModel* InViewModel);
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerMatchHealth1;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerName1;
+
+    // 플레이어 2
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerFatigueRate2;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerLife2;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerMatchHealth2;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerName2;
+
+    // 플레이어 3
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerFatigueRate3;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerLife3;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerMatchHealth3;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerName3;
+
+    // 플레이어 4
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerFatigueRate4;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerLife4;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerMatchHealth4;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* tPlayerName4;
 };

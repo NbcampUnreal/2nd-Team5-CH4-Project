@@ -4,10 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "UI/Viewmodel/PlayerStatusViewModel.h"
 #include "PS_PlayerState.generated.h"
 
-class UPlayerStatusViewModel;
 
 UCLASS()
 class TEAM05_API APS_PlayerState : public APlayerState
@@ -81,13 +79,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_NotifyReadyChanged(bool bNewReady);
   
-
-	// ---ViewModel 연동---
-	void SetViewModel(UPlayerStatusViewModel* InViewModel);
-
-protected:
-	UPROPERTY()
-	TObjectPtr<UPlayerStatusViewModel> ViewModel; 
 
 	// ---OnRep 함수들---
 

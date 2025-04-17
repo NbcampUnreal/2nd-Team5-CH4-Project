@@ -17,19 +17,21 @@ class TEAM05_API UPlayerStatusViewModel : public UMVVMViewModelBase
 public:
 	UPlayerStatusViewModel();
 
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "Player")
-	int32 FatigueRate;
-
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "Player")
-	int32 Life;
-
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "Player")
+   // 체력 (0~100)
+	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "ViewModel")
 	int32 MatchHealth;
 
-	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "Player")
-	FString Nickname;
+	// 피로도 (0~100)
+	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "ViewModel")
+	int32 FatigueRate;
 
-	void UpdateFromPlayerState(class APS_PlayerState* PlayerState);
+	// 목숨 수 (기본 3)
+	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "ViewModel")
+	int32 Life;
+
+	// 닉네임
+	UPROPERTY(BlueprintReadWrite, FieldNotify, Category = "ViewModel")
+	FString Nickname;
 
 };
 

@@ -192,13 +192,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetPlayerUniqueID() const;
 
-	// UI-MatchWidget, Viewmodel
-private:
-		
-	void InitializeBattleUIAndViewModels();
-	UPROPERTY(EditAnywhere, Category = "UI")
-	TSubclassOf<UMatchBattleWidget> MatchBattleUIClass;
+	// UI-MatchWidget
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> MatchBattleWidgetClass;
 
 	UPROPERTY()
-	TObjectPtr<UMatchBattleWidget> MatchBattleUI;
+	UMatchBattleWidget* MatchBattleWidget;
+
+	UFUNCTION(BlueprintCallable)
+	UMatchBattleWidget* GetMatchBattleWidget() const { return MatchBattleWidget; }
 };

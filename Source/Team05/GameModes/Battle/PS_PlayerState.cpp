@@ -138,19 +138,10 @@ int32 APS_PlayerState::GetFatigueRate() const
 	return FatigueRate;
 }
 
-void APS_PlayerState::SetViewModel(UPlayerStatusViewModel* InViewModel)
-{
-	ViewModel = InViewModel;
-}
-
 // ---OnRep 함수 - ViewModel/UI 연동---
 
 void APS_PlayerState::OnRep_Nickname()
 {
-	if (ViewModel)
-	{
-		ViewModel->Nickname = Nickname;
-	}
 
 	if (APawn* OwnerPawn = GetPawn())
 	{
@@ -178,26 +169,17 @@ void APS_PlayerState::OnRep_ReadyState()
 
 void APS_PlayerState::OnRep_MatchHealth()
 {
-	if (ViewModel)
-	{
-		ViewModel->MatchHealth = MatchHealth;
-	}
+
 }
 
 void APS_PlayerState::OnRep_Life()
 {
-	if (ViewModel)
-	{
-		ViewModel->Life = Life;
-	}
+
 }
 
 void APS_PlayerState::OnRep_FatigueRate()
 {
-	if (ViewModel)
-	{
-		ViewModel->FatigueRate = FatigueRate;
-	}
+
 }
 
 // ---Replication 설정---
