@@ -4,6 +4,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameStateBase.h"
 #include "TimerManager.h"
+#include "GameModes/Battle/GS_BattleState.h"
 #include "GameModes/Battle/PS_PlayerState.h"
 
 void UMatchBattleWidget::NativeConstruct()
@@ -12,7 +13,13 @@ void UMatchBattleWidget::NativeConstruct()
 
     // UI 생성 후 한 프레임 뒤에 PlayerArray 연결
     FTimerHandle DelayHandle;
-    GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &UMatchBattleWidget::BindAllPlayerStates, 0.2f, false);
+    GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &UMatchBattleWidget::BindAllPlayerStates, 1.0f, false);
+    // 위젯 생성 후 GameState에 자기 자신 등록
+    if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+    {
+        GS->RegisterMatchWidget(this);
+    }
+
 }
 
 void UMatchBattleWidget::BindAllPlayerStates()

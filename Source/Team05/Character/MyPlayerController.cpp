@@ -17,6 +17,7 @@
 #include "UI/Widgets/MatchResult.h"
 #include "UI/Widgets/PlayerListWidget.h"
 #include "Character/BaseCharacter.h"
+#include "TimerManager.h"
 #include "EngineUtils.h"
 #include "Sound/SoundBase.h"
 
@@ -114,7 +115,7 @@ void AMyPlayerController::BeginPlay()
 				MatchBattleWidget = CreateWidget<UMatchBattleWidget>(this, MatchBattleWidgetClass);
 				if (MatchBattleWidget)
 				{
-					MatchBattleWidget->AddToViewport(0);
+					MatchBattleWidget->AddToViewport(-1);
 					UE_LOG(LogTemp, Log, TEXT("MatchBattleWidget created and added to viewport."));
 				}
 				else

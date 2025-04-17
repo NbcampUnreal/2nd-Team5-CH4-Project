@@ -6,6 +6,7 @@
 #include "Character/BaseCharacter.h"
 #include "Character/MyPlayerController.h"
 #include "UI/Widgets/PlayerListWidget.h"
+#include "GameModes/Battle/GS_BattleState.h"
 #include "Net/UnrealNetwork.h"
 
 APS_PlayerState::APS_PlayerState()
@@ -151,11 +152,17 @@ void APS_PlayerState::OnRep_Nickname()
 		}
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_Nickname() 호출됨: Nick=%s"), *Nickname);
+
 	if (CachedMatchBattleWidget)
 	{
 		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
 	}
 
+	if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+	{
+		GS->NotifyAllWidgetsToRefresh(this);
+	}
 }
 
 void APS_PlayerState::OnRep_ReadyState()
@@ -197,13 +204,26 @@ void APS_PlayerState::OnRep_Life()
 	{
 		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
 	}
+
+	//  GameState를 통해 전체 위젯에 UI 갱신 요청
+	if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+	{
+		GS->NotifyAllWidgetsToRefresh(this);
+	}
 }
 
 void APS_PlayerState::OnRep_FatigueRate()
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_FatigueRate() 호출됨: Nick=%s Fatigue=%d"), *GetPlayerNickName(), FatigueRate);
+
 	if (CachedMatchBattleWidget)
 	{
 		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+
+	if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+	{
+		GS->NotifyAllWidgetsToRefresh(this);
 	}
 }
 

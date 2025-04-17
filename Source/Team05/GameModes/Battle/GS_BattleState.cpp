@@ -5,6 +5,7 @@
 
 #include "Net/UnrealNetwork.h"
 #include "GameModes/Battle/GM_BattleMode.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 //debug
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -32,6 +33,25 @@ void AGS_BattleState::OnRep_PlayerArray()
 	{
 		APlayerState* PS = PlayerArray[i];
 		UE_LOG(LogTemp, Warning, TEXT("Client Player[%d] = %s"), i, *PS->GetPlayerName());
+	}
+}
+
+void AGS_BattleState::NotifyAllWidgetsToRefresh(APS_PlayerState* ChangedState)
+{
+	for (UMatchBattleWidget* Widget : ActiveMatchWidgets)
+	{
+		if (Widget && ChangedState)
+		{
+			Widget->UpdatePlayerStatus(ChangedState->CachedIndex, ChangedState);
+		}
+	}
+}
+
+void AGS_BattleState::RegisterMatchWidget(UMatchBattleWidget* Widget)
+{
+	if (Widget && !ActiveMatchWidgets.Contains(Widget))
+	{
+		ActiveMatchWidgets.Add(Widget);
 	}
 }
 
