@@ -9,6 +9,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Character/BaseCharacter.h"
 #include "Character/MyPlayerController.h"
+#include "AI/BaseAIController.h"
 #include "GameModes/Battle/GM_BattleMode.h"
 
 // Sets default values
@@ -89,8 +90,15 @@ void AKillZone::OnCollisionBeginOverlap(
                 // 사망처리
                 if (AGM_BattleMode* gamemode = Cast<AGM_BattleMode>(GetWorld()->GetAuthGameMode()))
                 {
-                    AMyPlayerController* Controller = Cast<AMyPlayerController>(bc->GetController());
-                    gamemode->OnCharacterDead(Controller);
+                    if (AMyPlayerController* Controller = Cast<AMyPlayerController>(bc->GetController()))
+                    {
+                        gamemode->OnCharacterDead(Controller);
+                    }
+                    else if (ABaseAIController* AI = Cast<ABaseAIController>(bc->GetController()))
+                    {
+                        gamemode->OnAIDead(AI);
+                    }
+                    
                     //OtherActor->SetActorHiddenInGame(true);
 					OtherActor->SetActorLocation(DeadLocation);
                 }
