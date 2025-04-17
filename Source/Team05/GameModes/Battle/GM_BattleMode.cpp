@@ -275,73 +275,77 @@ void AGM_BattleMode::OnAIDead(ABaseAIController* InAIController)
 	// 현재 살아있는 플레이어 수 체크 (체력이 0 이상인 사람 기준)
 	int32 AlivePlayerCount = 0;
 
-	if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
+	// 살아있는 AI가 없으면
+	if (AliveAIControllers.Num() <= 0)
 	{
-		for (const auto& Elem : GI->PlayerInfoMap)
+		if (UGI_BattleInstance* GI = Cast<UGI_BattleInstance>(GetGameInstance()))
 		{
-			if (Elem.Value.MatchHealth > 0)
+			for (const auto& Elem : GI->PlayerInfoMap)
 			{
-				++AlivePlayerCount;
-			}
-		}
-
-		// 플레이어가 단 1명만 살아남았다면 → 해당 플레이어를 1등 처리하고 결과 UI 출력
-		if (AlivePlayerCount == 1)
-		{
-			// 생존자 1명 → 1등 처리
-			for (auto& Elem : GI->PlayerInfoMap)
-			{
-				if (Elem.Value.MatchHealth > 0 && Elem.Value.MatchRank == 0)
+				if (Elem.Value.MatchHealth > 0)
 				{
-					Elem.Value.MatchRank = 1;
-					GI->PlayerRanking.Add(Elem.Key);
-					UE_LOG(LogTemp, Warning, TEXT("[BattleMode][AI] 최종 생존자 %s → Rank 1"), *Elem.Key);
-					break;
+					++AlivePlayerCount;
 				}
 			}
-		}
 
-		// 정렬 및 결과 전송 (공통)
-		if (AlivePlayerCount <= 1)
-		{
-			TArray<FPlayerInfo> SortedInfos;
-			GI->PlayerInfoMap.GenerateValueArray(SortedInfos);
-			SortedInfos.Sort([](const FPlayerInfo& A, const FPlayerInfo& B) {
-				return A.MatchRank < B.MatchRank;
-				});
-
-			TArray<FPlayerRankingInfo> FinalRankingList;
-			for (const FPlayerInfo& Info : SortedInfos)
+			// 플레이어가 단 1명만 살아남았다면 → 해당 플레이어를 1등 처리하고 결과 UI 출력
+			if (AlivePlayerCount == 1)
 			{
-				FPlayerRankingInfo RankInfo;
-				RankInfo.Nickname = Info.Nickname;
-				RankInfo.Rank = Info.MatchRank;
-				FinalRankingList.Add(RankInfo);
-			}
-
-			for (AMyPlayerController* PC : AlivePlayerControllers)
-			{
-				if (IsValid(PC))
-					PC->Client_ReceiveRankingInfo(FinalRankingList);
-			}
-			for (AMyPlayerController* PC : DeadPlayerControllers)
-			{
-				if (IsValid(PC))
-					PC->Client_ReceiveRankingInfo(FinalRankingList);
-			}
-
-			GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
-
-			// 일정 시간 후 Ending 상태로 전환
-			FTimerDelegate EndDelegate;
-			EndDelegate.BindLambda([this]()
+				// 생존자 1명 → 1등 처리
+				for (auto& Elem : GI->PlayerInfoMap)
 				{
-					if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+					if (Elem.Value.MatchHealth > 0 && Elem.Value.MatchRank == 0)
 					{
-						GS->MatchState = EMatchState::Ending;
+						Elem.Value.MatchRank = 1;
+						GI->PlayerRanking.Add(Elem.Key);
+						UE_LOG(LogTemp, Warning, TEXT("[BattleMode][AI] 최종 생존자 %s → Rank 1"), *Elem.Key);
+						break;
 					}
-				});
-			GetWorldTimerManager().SetTimer(EndTimerHandle, EndDelegate, 1.0f, false); // Ending 상태 진입
+				}
+			}
+
+			// 정렬 및 결과 전송 (공통)
+			if (AlivePlayerCount <= 1)
+			{
+				TArray<FPlayerInfo> SortedInfos;
+				GI->PlayerInfoMap.GenerateValueArray(SortedInfos);
+				SortedInfos.Sort([](const FPlayerInfo& A, const FPlayerInfo& B) {
+					return A.MatchRank < B.MatchRank;
+					});
+
+				TArray<FPlayerRankingInfo> FinalRankingList;
+				for (const FPlayerInfo& Info : SortedInfos)
+				{
+					FPlayerRankingInfo RankInfo;
+					RankInfo.Nickname = Info.Nickname;
+					RankInfo.Rank = Info.MatchRank;
+					FinalRankingList.Add(RankInfo);
+				}
+
+				for (AMyPlayerController* PC : AlivePlayerControllers)
+				{
+					if (IsValid(PC))
+						PC->Client_ReceiveRankingInfo(FinalRankingList);
+				}
+				for (AMyPlayerController* PC : DeadPlayerControllers)
+				{
+					if (IsValid(PC))
+						PC->Client_ReceiveRankingInfo(FinalRankingList);
+				}
+
+				GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
+
+				// 일정 시간 후 Ending 상태로 전환
+				FTimerDelegate EndDelegate;
+				EndDelegate.BindLambda([this]()
+					{
+						if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+						{
+							GS->MatchState = EMatchState::Ending;
+						}
+					});
+				GetWorldTimerManager().SetTimer(EndTimerHandle, EndDelegate, 1.0f, false); // Ending 상태 진입
+			}
 		}
 	}
 }
