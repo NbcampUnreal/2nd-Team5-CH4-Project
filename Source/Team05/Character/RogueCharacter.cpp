@@ -1,24 +1,25 @@
-//MageCharacter.cpp
+//RougeCharacter.h
 
-
-#include "MageCharacter.h"
+#include "RogueCharacter.h"
 
 #include "EnhancedInputComponent.h"
 #include "MyPlayerController.h"
 
 
-AMageCharacter::AMageCharacter()
+// Sets default values
+ARogueCharacter::ARogueCharacter()
 {
 	
 }
 
-void AMageCharacter::BeginPlay()
+void ARogueCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+
+void ARogueCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
     
@@ -33,59 +34,42 @@ void AMageCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 					MyPlayerController->SpecialAttackAction,
 					ETriggerEvent::Started,
 					this,
-					&AMageCharacter::SpecialAttack_Input
+					&ARogueCharacter::SpecialAttack_Input
 				);
 			}
 		}
 	}
 }
 
-void AMageCharacter::SpecialAttack_Input()
+void ARogueCharacter::SpecialAttack_Input()
 {
 	if (bInputEnabled && bCanSpecialAttack)
 	{
-		// if (CurrentDirection == EDirectionEnum::EUp)
-		// {
-		// 	SpecialUpperAttack();
-		// }
-		// else if (CurrentDirection == EDirectionEnum::EForward)
-		// {
-		// 	SpecialFrontAttack();
-		// }
-		// else if (CurrentDirection == EDirectionEnum::EDown)
-		// {
-		// 	SpecialLowerAttack();
-		// }
-		// else
-		// {
-		// 	SpecialAttack();
-		// }
-
 		SpecialAttack();
 		SetCooldownTimer(SpecialAttackCooldown);
 	}
 }
 
-void AMageCharacter::SpecialAttack()
+void ARogueCharacter::SpecialAttack()
 {
 	ServerRPCAttack(SpecialAttackAnimMontage);
 	// Fire();
 	PlayAnimMontage(SpecialAttackAnimMontage);
 }
 
-void AMageCharacter::SpecialUpperAttack()
+void ARogueCharacter::SpecialUpperAttack()
 {
 }
 
-void AMageCharacter::SpecialLowerAttack()
+void ARogueCharacter::SpecialLowerAttack()
 {
 }
 
-void AMageCharacter::SpecialFrontAttack()
+void ARogueCharacter::SpecialFrontAttack()
 {
 }
 
-void AMageCharacter::Fire_Implementation()
+void ARogueCharacter::Fire_Implementation()
 {
 	if (ProjectileClass)
 	{
@@ -102,7 +86,7 @@ void AMageCharacter::Fire_Implementation()
 			SpawnParams.Instigator = GetInstigator();
                     
 			// 총구에 발사체를 스폰합니다.
-			AMageProjectile* Projectile = World->SpawnActor<AMageProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			ARogueProjectile* Projectile = World->SpawnActor<ARogueProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
 			if (Projectile)
 			{
 				// 발사체의 초기 탄도를 설정합니다.
@@ -111,6 +95,5 @@ void AMageCharacter::Fire_Implementation()
 			}
 		}
 	}
-	
 }
 
