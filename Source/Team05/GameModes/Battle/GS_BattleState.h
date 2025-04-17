@@ -22,6 +22,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PrintMessage(const FString& Msg);
 
+
 public:
 	// 생존한 플레이어 컨트롤러 수
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)

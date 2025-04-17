@@ -189,6 +189,10 @@ void APS_PlayerState::OnRep_MatchHealth()
 
 void APS_PlayerState::OnRep_Life()
 {
+	// 기존대로 자기 자신의 MatchBattleWidget만 업데이트하되
+	// 아래처럼 로그 추가해서 확인
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_Life() 호출됨: Nick=%s Life=%d"), *GetPlayerNickName(), Life);
+
 	if (CachedMatchBattleWidget)
 	{
 		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);

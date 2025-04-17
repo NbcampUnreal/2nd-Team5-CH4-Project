@@ -30,9 +30,6 @@ protected:
     UTextBlock* tPlayerLife1;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* tPlayerMatchHealth1;
-
-    UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerName1;
 
     // 플레이어 2
@@ -41,9 +38,6 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerLife2;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* tPlayerMatchHealth2;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerName2;
@@ -56,9 +50,6 @@ protected:
     UTextBlock* tPlayerLife3;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* tPlayerMatchHealth3;
-
-    UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerName3;
 
     // 플레이어 4
@@ -67,9 +58,6 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerLife4;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* tPlayerMatchHealth4;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* tPlayerName4;

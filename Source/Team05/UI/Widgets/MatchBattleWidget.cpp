@@ -41,19 +41,21 @@ void UMatchBattleWidget::BindAllPlayerStates()
 
 void UMatchBattleWidget::UpdatePlayerStatus(int32 Index, APS_PlayerState* PS)
 {
-    if (!PS)
+    if (!PS) return;
+
+    APawn* Pawn = PS->GetPawn();
+    if (!Pawn || !Pawn->IsPlayerControlled())
     {
-        UE_LOG(LogTemp, Error, TEXT("UpdatePlayerStatus: PlayerState is null at index %d"), Index);
+        // AI는 표시하지 않음
+        UE_LOG(LogTemp, Log, TEXT("Index %d은 AI이므로 UI에서 생략"), Index);
         return;
     }
 
     FString Nickname = PS->GetPlayerNickName();
     FString FatigueStr = FString::Printf(TEXT("%d%%"), PS->GetFatigueRate());
     FString LifeStr = FString::Printf(TEXT("목숨x%d"), PS->GetLife());
-    FString HealthStr = FString::Printf(TEXT("%d%%"), PS->GetMatchHealth());
-
-    UE_LOG(LogTemp, Log, TEXT("Update UI [Index %d] Nickname=%s Life=%s HP=%s Fatigue=%s"),
-        Index, *Nickname, *LifeStr, *HealthStr, *FatigueStr);
+    UE_LOG(LogTemp, Log, TEXT("Update UI [Index %d] Nickname=%s HP=%s Fatigue=%s"),
+        Index, *Nickname, *LifeStr, *FatigueStr);
 
     // 인덱스는 0~3 기준
     switch (Index)
@@ -62,25 +64,21 @@ void UMatchBattleWidget::UpdatePlayerStatus(int32 Index, APS_PlayerState* PS)
         if (tPlayerName1) tPlayerName1->SetText(FText::FromString(Nickname));
         if (tPlayerFatigueRate1) tPlayerFatigueRate1->SetText(FText::FromString(FatigueStr));
         if (tPlayerLife1) tPlayerLife1->SetText(FText::FromString(LifeStr));
-        if (tPlayerMatchHealth1) tPlayerMatchHealth1->SetText(FText::FromString(HealthStr));
         break;
     case 1:
         if (tPlayerName2) tPlayerName2->SetText(FText::FromString(Nickname));
         if (tPlayerFatigueRate2) tPlayerFatigueRate2->SetText(FText::FromString(FatigueStr));
         if (tPlayerLife2) tPlayerLife2->SetText(FText::FromString(LifeStr));
-        if (tPlayerMatchHealth2) tPlayerMatchHealth2->SetText(FText::FromString(HealthStr));
         break;
     case 2:
         if (tPlayerName3) tPlayerName3->SetText(FText::FromString(Nickname));
         if (tPlayerFatigueRate3) tPlayerFatigueRate3->SetText(FText::FromString(FatigueStr));
         if (tPlayerLife3) tPlayerLife3->SetText(FText::FromString(LifeStr));
-        if (tPlayerMatchHealth3) tPlayerMatchHealth3->SetText(FText::FromString(HealthStr));
         break;
     case 3:
         if (tPlayerName4) tPlayerName4->SetText(FText::FromString(Nickname));
         if (tPlayerFatigueRate4) tPlayerFatigueRate4->SetText(FText::FromString(FatigueStr));
         if (tPlayerLife4) tPlayerLife4->SetText(FText::FromString(LifeStr));
-        if (tPlayerMatchHealth4) tPlayerMatchHealth4->SetText(FText::FromString(HealthStr));
         break;
     }
 }
