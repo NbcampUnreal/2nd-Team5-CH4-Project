@@ -1,20 +1,67 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// GS_BattleState.cpp
 
 
 #include "GS_BattleState.h"
 
 #include "Net/UnrealNetwork.h"
 #include "GameModes/Battle/GM_BattleMode.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 //debug
 #include "Kismet/KismetSystemLibrary.h"
+
+void AGS_BattleState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UE_LOG(LogTemp, Warning, TEXT("[GS_BattleState] BeginPlay: PlayerArray.Num() = %d"), PlayerArray.Num());
+
+	for (int32 i = 0; i < PlayerArray.Num(); ++i)
+	{
+		APlayerState* PS = PlayerArray[i];
+		if (PS)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("  Player[%d]: %s"), i, *PS->GetPlayerName());
+		}
+	}
+}
+
+void AGS_BattleState::OnRep_PlayerArray()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Client] OnRep_PlayerArray() 호출됨: %d명"), PlayerArray.Num());
+
+	for (int32 i = 0; i < PlayerArray.Num(); ++i)
+	{
+		APlayerState* PS = PlayerArray[i];
+		UE_LOG(LogTemp, Warning, TEXT("Client Player[%d] = %s"), i, *PS->GetPlayerName());
+	}
+}
+
+void AGS_BattleState::NotifyAllWidgetsToRefresh(APS_PlayerState* ChangedState)
+{
+	for (UMatchBattleWidget* Widget : ActiveMatchWidgets)
+	{
+		if (Widget && ChangedState)
+		{
+			Widget->UpdatePlayerStatus(ChangedState->CachedIndex, ChangedState);
+		}
+	}
+}
+
+void AGS_BattleState::RegisterMatchWidget(UMatchBattleWidget* Widget)
+{
+	if (Widget && !ActiveMatchWidgets.Contains(Widget))
+	{
+		ActiveMatchWidgets.Add(Widget);
+	}
+}
 
 void AGS_BattleState::Multicast_PrintMessage_Implementation(const FString& Msg)
 {
 	UKismetSystemLibrary::PrintString(
 		this,
 		Msg,
-		true,   
-		true,   
+		true,
+		true,
 		FLinearColor::Yellow,
 		10.0f
 	);
