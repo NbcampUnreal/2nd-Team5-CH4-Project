@@ -48,6 +48,9 @@ public:
 	// AI스폰 함수
 	void SpawnRandomAIs();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TriggerReadyGo();
+
 private:
 	// 1초 간격으로 호출되는 메인 타이머 콜백
 	UFUNCTION()

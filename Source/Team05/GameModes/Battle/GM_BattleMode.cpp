@@ -184,6 +184,17 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 				if (IsValid(MyPC))
 					MyPC->Client_ReceiveRankingInfo(FinalRankingList);
 			}
+			GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
+			// 일정 시간 후 Ending 상태로 전환
+			FTimerDelegate EndDelegate;
+			EndDelegate.BindLambda([this]()
+				{
+					if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+					{
+						GS->MatchState = EMatchState::Ending;
+					}
+				});
+			GetWorldTimerManager().SetTimer(EndTimerHandle, EndDelegate, 1.0f, false); // Ending 상태 진입
 		}
 		else if (AliveCount == 0)
 		{
@@ -228,19 +239,17 @@ void AGM_BattleMode::OnCharacterDead(AMyPlayerController* InController)
 				if (IsValid(MyPC))
 					MyPC->Client_ReceiveRankingInfo(FinalRankingList);
 			}
-			//GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
-		}
-
-		// 일정 시간 후 Ending 상태로 전환
-		FTimerDelegate EndDelegate;
-		EndDelegate.BindLambda([this]()
-			{
-				if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+			GetWorldTimerManager().ClearTimer(MainTimerHandle); // 종료 타이머 멈춤
+			// 일정 시간 후 Ending 상태로 전환
+			FTimerDelegate EndDelegate;
+			EndDelegate.BindLambda([this]()
 				{
-					GS->MatchState = EMatchState::Ending;
-				}
-			});
-		GetWorldTimerManager().SetTimer(EndTimerHandle, EndDelegate, 1.0f, false); // Ending 상태 진입
+					if (AGS_BattleState* GS = GetGameState<AGS_BattleState>())
+					{
+						GS->MatchState = EMatchState::Ending;
+					}
+				});
+		}
 	}
 }
 
@@ -536,6 +545,8 @@ void AGM_BattleMode::OnMainTimerElapsed()
 
 		if (RemainWaitingTimeForPlaying <= 0)
 		{
+			// 사운드 재생
+			Multicast_TriggerReadyGo();
 			// AI 스폰 함수
 			SpawnRandomAIs();
 			GS->MatchState = EMatchState::Playing;
@@ -616,6 +627,8 @@ void AGM_BattleMode::OnSingleTimerElapsed()
 
 		if (RemainWaitingTimeForPlaying <= 0)
 		{
+			// 사운드 재생
+			Multicast_TriggerReadyGo();
 			// AI 스폰 함수
 			SpawnRandomAIs();
 			GS->MatchState = EMatchState::Playing;
@@ -670,6 +683,18 @@ void AGM_BattleMode::OnSingleTimerElapsed()
 	}
 	default:
 		break;
+	}
+}
+
+void AGM_BattleMode::Multicast_TriggerReadyGo_Implementation()
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AMyPlayerController* PC = Cast<AMyPlayerController>(It->Get());
+		if (PC)
+		{
+			PC->Client_PlayReadyGoFX();
+		}
 	}
 }
 
