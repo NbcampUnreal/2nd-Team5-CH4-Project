@@ -22,14 +22,14 @@
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
-	  MoveAction(nullptr),
-	  JumpAction(nullptr),
-	  DirectionAction(nullptr),
-	  BaseAttackAction(nullptr),
-	  SpecialAttackAction(nullptr),
-	  SpecialMoveAction(nullptr),
-	  GuardAction(nullptr),
-	  EmoteAction(nullptr)
+	MoveAction(nullptr),
+	JumpAction(nullptr),
+	DirectionAction(nullptr),
+	BaseAttackAction(nullptr),
+	SpecialAttackAction(nullptr),
+	SpecialMoveAction(nullptr),
+	GuardAction(nullptr),
+	EmoteAction(nullptr)
 {
 }
 
@@ -37,6 +37,7 @@ void AMyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// --- 입력 매핑 처리 ---
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
@@ -47,7 +48,7 @@ void AMyPlayerController::BeginPlay()
 			}
 		}
 	}
-
+	// --- 클라이언트 전용 UI 처리 ---
 	// 로비용 UI
 	if (IsLocalController())
 	{
@@ -81,10 +82,11 @@ void AMyPlayerController::BeginPlay()
 						}
 					}
 				}
-				else {
-					if (APS_PlayerState* ps = Cast<APS_PlayerState>(this->PlayerState))
+				else
+				{
+					if (APS_PlayerState* PS = Cast<APS_PlayerState>(this->PlayerState))
 					{
-						ps->SetPlayerNickName("Player");
+						PS->SetPlayerNickName("Player");
 						if (CharacterSelectUIClass)
 						{
 							CharacterSelectUI = CreateWidget<UUserWidget>(this, CharacterSelectUIClass);
@@ -101,6 +103,28 @@ void AMyPlayerController::BeginPlay()
 						}
 					}
 				}
+			}
+		}
+
+		// --- Battle 레벨용 MatchBattleWidget 추가 ---
+		else
+		{
+			if (IsValid(MatchBattleWidgetClass))
+			{
+				MatchBattleWidget = CreateWidget<UMatchBattleWidget>(this, MatchBattleWidgetClass);
+				if (MatchBattleWidget)
+				{
+					MatchBattleWidget->AddToViewport(0);
+					UE_LOG(LogTemp, Log, TEXT("MatchBattleWidget created and added to viewport."));
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("Failed to create MatchBattleWidget."));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("MatchBattleWidgetClass is not set."));
 			}
 		}
 	}
@@ -417,4 +441,5 @@ void AMyPlayerController::ReturnToTitle_Implementation()
 		}
 	}
 }
+
 
