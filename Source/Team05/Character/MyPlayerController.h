@@ -194,8 +194,8 @@ public:
 
 	// UI-MatchWidget, Viewmodel
 private:
-		// 이 선언이 필요함!
-		void InitializeBattleUIAndViewModels();
+		
+	void InitializeBattleUIAndViewModels();
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UMatchBattleWidget> MatchBattleUIClass;
 

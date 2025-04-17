@@ -51,10 +51,12 @@ int32 APS_PlayerState::GetPlayerNum() const
 
 void APS_PlayerState::SetPlayerNickName(FString InNickname)
 {
+	Nickname = InNickname;
+
+	// 서버에서도 즉시 처리할 필요가 있다면 여기에 OnRep_Nickname 호출 가능
 	if (HasAuthority())
 	{
-		Nickname = InNickname;
-		OnRep_Nickname();
+		OnRep_Nickname(); // 서버에서 직접 호출할 수도 있음 (선택)
 	}
 }
 
@@ -172,7 +174,7 @@ void APS_PlayerState::OnRep_ReadyState()
 		}
 	}
 }
-}
+
 
 void APS_PlayerState::OnRep_MatchHealth()
 {

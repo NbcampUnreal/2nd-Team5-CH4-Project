@@ -81,7 +81,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_NotifyReadyChanged(bool bNewReady);
   
-//UI NameTag
 
 	// ---ViewModel 연동---
 	void SetViewModel(UPlayerStatusViewModel* InViewModel);
@@ -95,7 +94,6 @@ protected:
 	UFUNCTION()
 	void OnRep_Nickname();
 
-	// UI Viewmodel
 	UFUNCTION()
 	void OnRep_FatigueRate();
 
