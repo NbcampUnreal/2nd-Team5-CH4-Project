@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "UI/Widgets/MatchBattleWidget.h"
 #include "MyPlayerController.generated.h"
 
 class UInputMappingContext;
 class UInputAction;
+class UMatchBattleWidget;
+class UPlayerStatusViewModel;
 class UPlayerListWidget;
 
 USTRUCT(BlueprintType)
@@ -195,4 +198,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetPlayerUniqueID() const;
 
+	// UI-MatchWidget
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> MatchBattleWidgetClass;
+
+	UPROPERTY()
+	UMatchBattleWidget* MatchBattleWidget;
+
+	UFUNCTION(BlueprintCallable)
+	UMatchBattleWidget* GetMatchBattleWidget() const { return MatchBattleWidget; }
 };

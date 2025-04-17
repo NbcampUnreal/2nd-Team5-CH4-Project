@@ -21,14 +21,14 @@
 
 AMyPlayerController::AMyPlayerController()
 	: InputMappingContext(nullptr),
-	  MoveAction(nullptr),
-	  JumpAction(nullptr),
-	  DirectionAction(nullptr),
-	  BaseAttackAction(nullptr),
-	  SpecialAttackAction(nullptr),
-	  SpecialMoveAction(nullptr),
-	  GuardAction(nullptr),
-	  EmoteAction(nullptr)
+	MoveAction(nullptr),
+	JumpAction(nullptr),
+	DirectionAction(nullptr),
+	BaseAttackAction(nullptr),
+	SpecialAttackAction(nullptr),
+	SpecialMoveAction(nullptr),
+	GuardAction(nullptr),
+	EmoteAction(nullptr)
 {
 }
 
@@ -392,4 +392,5 @@ void AMyPlayerController::ReturnToTitle_Implementation()
 		}
 	}
 }
+
 

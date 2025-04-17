@@ -202,9 +202,7 @@ public:
 	// 네트워크 초기화 이후 호출됩니다. (PostReplication 관련)
 	virtual void PostNetInit() override;
 
-
-	// UI
-	// NameTag 위젯
+	// ---NameTag 위젯---
 public:
 	UFUNCTION()
 	void UpdateNameTagUI(const FString& NewNickname);
@@ -221,4 +219,5 @@ protected:
 	FString AIchrName;
 private:
 	bool bNameTagBound = false;
+
 };
