@@ -139,9 +139,12 @@ void AGM_LobbyMode::Logout(AController* Exiting)
 		{
 			if (!(GetWorld() && GetWorld()->IsInSeamlessTravel()))
 			{
-				if (GI->PlayerInfoMap.Remove(ID) > 0)
+				if (!GI->bSingleMode)
 				{
-					UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+					if (GI->PlayerInfoMap.Remove(ID) > 0)
+					{
+						UE_LOG(LogTemp, Log, TEXT("[Logout] Removed player info for ID: %s"), *ID);
+					}
 				}
 			}
 			else
@@ -162,6 +165,42 @@ void AGM_LobbyMode::BeginPlay()
 		if (GI->bSingleMode)
 		{
 			MinPlayersToStart = 1;
+
+			// 현재 플레이어 컨트롤러 가져오기
+			if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+			{
+				if (AMyPlayerController* MPC = Cast<AMyPlayerController>(PC))
+				{
+					FString ID = MPC->GetPlayerUniqueID();
+					if (!ID.IsEmpty())
+					{
+						// 플레이어 상태
+						if (APS_PlayerState* PS = Cast<APS_PlayerState>(MPC->PlayerState))
+						{
+							FString OutNickname;
+							int32 OutPlayerNum = 0;
+
+							if (GI->RegisterPlayerID(ID, OutNickname, OutPlayerNum))
+							{
+								PS->SetPlayerNum(OutPlayerNum);
+
+								if (GI->PlayerInfoMap.Contains(ID))
+								{
+									FString StoredNickname = GI->PlayerInfoMap[ID].Nickname;
+									if (!StoredNickname.IsEmpty())
+									{
+										PS->SetPlayerNickName(StoredNickname);
+										UE_LOG(LogTemp, Log, TEXT("[LobbyMode] Set nickname: %s for player ID: %s"), *StoredNickname, *ID);
+									}
+								}
+
+								// 연결 리스트 추가
+								ConnectPlayerControllers.Add(MPC);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -341,19 +380,6 @@ void AGM_LobbyMode::StartGame()
 	{
 		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] BattleMapNames가 비어 있습니다."));
 	}
-
-	// 선택된 맵 이름으로 ServerTravel
-	/*if (BattleMapNames.Contains(SelectedBattleMap))
-	{
-		const FString& MapName = BattleMapNames[SelectedBattleMap];
-		UE_LOG(LogTemp, Warning, TEXT("[LobbyMode] Starting battle. ServerTravel to map: %s"), *MapName);
-
-		GetWorld()->ServerTravel(MapName + TEXT("?listen"), true);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[LobbyMode] Invalid map type selected."));
-	}*/
 }
 
 void AGM_LobbyMode::CheckLobbyState()
