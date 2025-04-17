@@ -1,4 +1,4 @@
-//PS_PlayerState.cpp
+﻿//PS_PlayerState.cpp
 
 #include "PS_PlayerState.h"
 
@@ -6,6 +6,7 @@
 #include "Character/BaseCharacter.h"
 #include "Character/MyPlayerController.h"
 #include "UI/Widgets/PlayerListWidget.h"
+#include "GameModes/Battle/GS_BattleState.h"
 #include "Net/UnrealNetwork.h"
 
 APS_PlayerState::APS_PlayerState()
@@ -15,7 +16,13 @@ APS_PlayerState::APS_PlayerState()
 	Nickname = TEXT("Player");
 	CharacterClass = nullptr;
 	bReady = false;
+	// plus
+	MatchHealth = 100;
+	FatigueRate = 0;
+	Life = 3;
 }
+
+// ---Ready 상태 관리---
 
 void APS_PlayerState::SetReady(bool bInReady)
 {
@@ -30,6 +37,8 @@ bool APS_PlayerState::IsReady() const
 {
 	return bReady;
 }
+
+// ---Player 기본 정보---
 
 void APS_PlayerState::SetPlayerNum(int32 InNum)
 {
@@ -67,9 +76,15 @@ TSubclassOf<APawn> APS_PlayerState::GetCharacterClass() const
 	return CharacterClass;
 }
 
+// ---게임 상태 정보---
+
 void APS_PlayerState::SetMatchHealth(int32 NewHealth)
 {
-	MatchHealth = NewHealth;
+	if (HasAuthority())
+	{
+		MatchHealth = NewHealth;
+		OnRep_MatchHealth();
+	}
 }
 
 int32 APS_PlayerState::GetMatchHealth() const
@@ -96,30 +111,57 @@ void APS_PlayerState::Multicast_NotifyReadyChanged_Implementation(bool bNewReady
 		}
 	}
 }
-
-void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APS_PlayerState::SetLife(int32 NewLife)
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(APS_PlayerState, PlayerNum);
-	DOREPLIFETIME(APS_PlayerState, Nickname);
-	DOREPLIFETIME(APS_PlayerState, CharacterClass);
-	DOREPLIFETIME(APS_PlayerState, MatchHealth);
-	DOREPLIFETIME(APS_PlayerState, bReady);
+	if (HasAuthority())
+	{
+		Life = NewLife;
+		OnRep_Life();
+	}
 }
+
+int32 APS_PlayerState::GetLife() const
+{
+	return Life;
+}
+
+void APS_PlayerState::SetFatigueRate(int32 NewRate)
+{
+	if (HasAuthority())
+	{
+		FatigueRate = NewRate;
+		OnRep_FatigueRate();
+	}
+}
+
+int32 APS_PlayerState::GetFatigueRate() const
+{
+	return FatigueRate;
+}
+
+// ---OnRep 함수 - ViewModel/UI 연동---
 
 void APS_PlayerState::OnRep_Nickname()
 {
-	// 여기에서는 PlayerCharacter를 가져와서 UI를 업데이트하도록 지시할 수 있음
 
-	APawn* OwnerPawn = GetPawn();
-	if (IsValid(OwnerPawn))
+	if (APawn* OwnerPawn = GetPawn())
 	{
-		class ABaseCharacter* BaseChar = Cast<ABaseCharacter>(OwnerPawn);
-		if (IsValid(BaseChar))
+		if (ABaseCharacter* BaseChar = Cast<ABaseCharacter>(OwnerPawn))
 		{
-			BaseChar->UpdateNameTagUI(Nickname); 
+			BaseChar->UpdateNameTagUI(Nickname);
 		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_Nickname() 호출됨: Nick=%s"), *Nickname);
+
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+
+	if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+	{
+		GS->NotifyAllWidgetsToRefresh(this);
 	}
 }
 
@@ -135,4 +177,67 @@ void APS_PlayerState::OnRep_ReadyState()
 			}
 		}
 	}
+}
+
+
+void APS_PlayerState::OnRep_MatchHealth()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep_MatchHealth] PlayerNum=%d, HP=%d"), PlayerNum, MatchHealth);
+
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CachedMatchBattleWidget is null"));
+	}
+}
+
+void APS_PlayerState::OnRep_Life()
+{
+	// 기존대로 자기 자신의 MatchBattleWidget만 업데이트하되
+	// 아래처럼 로그 추가해서 확인
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_Life() 호출됨: Nick=%s Life=%d"), *GetPlayerNickName(), Life);
+
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+
+	//  GameState를 통해 전체 위젯에 UI 갱신 요청
+	if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+	{
+		GS->NotifyAllWidgetsToRefresh(this);
+	}
+}
+
+void APS_PlayerState::OnRep_FatigueRate()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_FatigueRate() 호출됨: Nick=%s Fatigue=%d"), *GetPlayerNickName(), FatigueRate);
+
+	if (CachedMatchBattleWidget)
+	{
+		CachedMatchBattleWidget->UpdatePlayerStatus(CachedIndex, this);
+	}
+
+	if (AGS_BattleState* GS = GetWorld()->GetGameState<AGS_BattleState>())
+	{
+		GS->NotifyAllWidgetsToRefresh(this);
+	}
+}
+
+// ---Replication 설정---
+
+void APS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APS_PlayerState, PlayerNum);
+	DOREPLIFETIME(APS_PlayerState, Nickname);
+	DOREPLIFETIME(APS_PlayerState, CharacterClass);
+	DOREPLIFETIME(APS_PlayerState, MatchHealth);
+	DOREPLIFETIME(APS_PlayerState, FatigueRate);
+	DOREPLIFETIME(APS_PlayerState, Life);
+	DOREPLIFETIME(APS_PlayerState, bReady);
 }
