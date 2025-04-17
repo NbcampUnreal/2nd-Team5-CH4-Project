@@ -158,7 +158,7 @@ void ABaseCharacter::ServerRPCRotateCharacter_Implementation(const float YawValu
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (!HasAuthority() || CurrentState == STATE_Guard || CurrentState == State_Hit || CurrentState == STATE_Respawn)
+	if (!HasAuthority() || CurrentState == ECharacterState::STATE_Guard || CurrentState == ECharacterState::STATE_Hit || CurrentState == ECharacterState::STATE_Respawn)
 	{
 		return 0.f;
 	}
@@ -168,7 +168,6 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
 	// 피격 후 면역 처리
 	HitImmunity();
-
 	// 넉백 처리
 	KnockBack(DamageCauser);
 
@@ -246,23 +245,22 @@ void ABaseCharacter::ReduceLife()
 	}
 }
 
-
 void ABaseCharacter::RespawnImmunity()
 {
 	// 리스폰 이펙트 실행
 	
-	CurrentState = STATE_Respawn;
+	CurrentState = ECharacterState::STATE_Respawn;
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
 	{
-		CurrentState = STATE_Idle;
+		CurrentState = ECharacterState::STATE_Idle;
 	}), RespawnImmunityTime, false, -1.f);
 }
 
 
 void ABaseCharacter::ServerRPCStartGuard_Implementation()
 {	
-	CurrentState = STATE_Guard;
+	CurrentState = ECharacterState::STATE_Guard;
 	bInputEnabled = false;
 	bOnGuard = true;
 
@@ -284,7 +282,7 @@ void ABaseCharacter::ServerRPCStartGuard_Implementation()
 
 void ABaseCharacter::ServerRPCStopGuard_Implementation()
 {
-	CurrentState = STATE_Idle;
+	CurrentState = ECharacterState::STATE_Idle;
 	bInputEnabled = true;
 	bOnGuard = false;
 
@@ -329,6 +327,8 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 void ABaseCharacter::MulticastRPCHit_Implementation()
 {
 	PlayMontage(HitMontage);
+	// 피격 후 면역 처리
+	HitImmunity();
 }
 
 void ABaseCharacter::SetCooldownTimer(float Cooldown)
@@ -366,7 +366,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 		}
 	}
 }
-
 
 // Called to bind functionality to input
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -614,12 +613,12 @@ void ABaseCharacter::HitImmunity()
 {
 	// Hit로 현재 상태 변경
 	// 타이머로 HitMontage 실행 시간만큼 뒤에 현재 상태를 Idle 상태로 전환
-	CurrentState = State_Hit;
+	CurrentState = ECharacterState::STATE_Hit;
 	const float HitMontagePlayTime = HitMontage->GetPlayLength();
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
 		{
-			CurrentState = STATE_Idle;
+			CurrentState = ECharacterState::STATE_Idle;
 		}), HitMontagePlayTime, false, -1.f);
 }
 

@@ -20,14 +20,14 @@ enum EDirectionEnum
 	EDown,
 };
 
-UENUM()
-enum ECharacterState
+UENUM(BlueprintType)
+enum class ECharacterState : uint8
 {
-    STATE_Idle,
-	STATE_Attack,
-	STATE_Guard,
-	State_Hit,
-	STATE_Respawn
+    STATE_Idle = 0 UMETA(DisplayName = "Idle"),
+	STATE_Attack UMETA(DisplayName = "Attack"),
+	STATE_Guard UMETA(DisplayName = "Guard"),
+	STATE_Hit UMETA(DisplayName = "Hit"),
+	STATE_Respawn UMETA(DisplayName = "Respawn")
 };
 
 
@@ -51,6 +51,9 @@ public:
 	TObjectPtr<UAnimMontage> GuardMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> EmoteMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ECharacterState CurrentState;
 
 protected:
 	// Called when the game starts or when spawned
@@ -91,8 +94,6 @@ protected:
 	float SpecialAttackCooldown;
 	bool bCanSpecialAttack;
 	FTimerHandle SpecialAttackCooldownTimer;
-	
-	ECharacterState CurrentState;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	int32 MaxJumpCount;
