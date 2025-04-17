@@ -42,6 +42,9 @@ ABaseCharacter::ABaseCharacter()
 	Super::JumpMaxCount = MaxJumpCount;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 
+	bCanSpecialAttack = true;
+	SpecialAttackCooldown = 3.f;
+
 	// 가드 스피어 초기화
 	GuardSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuardSphere"));
 	GuardSphere->SetupAttachment(RootComponent);
@@ -88,7 +91,9 @@ void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	GetWorldTimerManager().ClearTimer(GuardStaminaTimer);
+	GetWorldTimerManager().ClearTimer(SpecialAttackCooldownTimer);
 	GuardStaminaTimer.Invalidate();
+	SpecialAttackCooldownTimer.Invalidate();
 }
 
 void ABaseCharacter::MulticastRPCApplyGuardSphereSize_Implementation(float DeltaTime)
@@ -295,6 +300,18 @@ void ABaseCharacter::MulticastRPCChangeGuard_Implementation(bool bGuardState)
 void ABaseCharacter::MulticastRPCHit_Implementation()
 {
 	PlayMontage(HitMontage);
+}
+
+void ABaseCharacter::SetCooldownTimer(float Cooldown)
+{
+	bCanSpecialAttack = false;
+	if (IsValid(GetWorld()) == true)
+	{
+		GetWorldTimerManager().SetTimer(SpecialAttackCooldownTimer, FTimerDelegate::CreateLambda([&]()
+		{
+			bCanSpecialAttack = true;
+		}), Cooldown, false);
+	}
 }
 
 // Called every frame

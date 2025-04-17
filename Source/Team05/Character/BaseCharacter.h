@@ -86,6 +86,11 @@ protected:
 	// 각 애니메이션이 끝났을 때 replication 됨
 	UPROPERTY(ReplicatedUsing = OnRep_InputEnabled)
 	uint8 bInputEnabled : 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float SpecialAttackCooldown;
+	bool bCanSpecialAttack;
+	FTimerHandle SpecialAttackCooldownTimer;
 	
 	ECharacterState CurrentState;
 
@@ -135,6 +140,8 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPCHit();
+
+	void SetCooldownTimer(float Cooldown);
 
 public:	
 	// Called every frame
