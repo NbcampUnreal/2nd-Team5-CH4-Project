@@ -1,13 +1,13 @@
 //MageProjectile.cpp
 
 
-#include "MageProjectile.h"
+#include "RogueProjectile.h"
 
 #include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
-AMageProjectile::AMageProjectile()
+ARogueProjectile::ARogueProjectile()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -38,19 +38,19 @@ AMageProjectile::AMageProjectile()
 	if (!ProjectileMeshComponent)
 	{
 		ProjectileMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMeshComponent"));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh>Mesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-		if(Mesh.Succeeded())
+		static ConstructorHelpers::FObjectFinder<UStaticMesh>ArrowMesh(TEXT("/Game/_Blueprint/Character/Meshes/SM_Arrow.SM_Arrow"));
+		if(ArrowMesh.Succeeded())
 		{
-			ProjectileMeshComponent->SetStaticMesh(Mesh.Object);
+			ProjectileMeshComponent->SetStaticMesh(ArrowMesh.Object);
 		}
 
-		static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("/Engine/VREditor/LaserPointer/LaserPointerMaterial.LaserPointerMaterial"));
-		if (Material.Succeeded())
+		static ConstructorHelpers::FObjectFinder<UMaterial>ArrowMaterial(TEXT("/Game/_Blueprint/Character/Meshes/M_Arrow.M_Arrow"));
+		if (ArrowMaterial.Succeeded())
 		{
-			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
+			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(ArrowMaterial.Object, ProjectileMeshComponent);
 		}
 		ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
-		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.65f, 0.65f, 0.65f));
+		ProjectileMeshComponent->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
 		ProjectileMeshComponent->SetupAttachment(RootComponent);
 	}
 
@@ -64,7 +64,7 @@ AMageProjectile::AMageProjectile()
 
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AMageProjectile::OnProjectileImpact);
+		CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ARogueProjectile::OnProjectileImpact);
 	}
 
 	// 데미지 타입 초기화
@@ -73,12 +73,12 @@ AMageProjectile::AMageProjectile()
 }
 
 // Called when the game starts or when spawned
-void AMageProjectile::BeginPlay()
+void ARogueProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
-void AMageProjectile::OnProjectileImpact(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+void ARogueProjectile::OnProjectileImpact(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor != GetInstigator())
@@ -89,12 +89,12 @@ void AMageProjectile::OnProjectileImpact(UPrimitiveComponent* OverlappedComp, AA
 }
 
 // Called every frame
-void AMageProjectile::Tick(float DeltaTime)
+void ARogueProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void AMageProjectile::FireInDirection(const FVector& ShootDirection)
+void ARogueProjectile::FireInDirection(const FVector& ShootDirection)
 {
 	ProjectileMovementComponent->Velocity = ShootDirection * ProjectileMovementComponent->InitialSpeed;
 }
