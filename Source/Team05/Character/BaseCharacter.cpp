@@ -45,11 +45,19 @@ ABaseCharacter::ABaseCharacter()
 	bCanSpecialAttack = true;
 	SpecialAttackCooldown = 3.f;
 
+	
 	// 가드 스피어 초기화
 	GuardSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuardSphere"));
 	GuardSphere->SetupAttachment(RootComponent);
 	GuardSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GuardSphere->SetVisibility(false);
+
+	// 가드 스피어 Mesh 설정
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>GuardSphereMesh(TEXT("/Game/_Blueprint/Character/SM_GuardSphere.SM_GuardSphere"));
+	if(GuardSphereMesh.Succeeded())
+	{
+		GuardSphere->SetStaticMesh(GuardSphereMesh.Object);
+	}
 	
 	CurrentGuardScale = FVector(1.0f);
 
@@ -84,6 +92,7 @@ void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GuardSphere->SetTranslucentSortPriority(100);
 }
 
 void ABaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
