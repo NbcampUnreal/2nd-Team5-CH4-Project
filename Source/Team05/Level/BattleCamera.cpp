@@ -16,7 +16,7 @@ void ABattleCamera::BeginPlay()
     // 타이머로 카메라 업데이트
     GetWorldTimerManager().SetTimerForNextTick([this]()
         {
-            GetWorldTimerManager().SetTimer(UpdateTimerHandle, this, &ABattleCamera::UpdateCamera, 0.01f, true, 6.0f);
+            GetWorldTimerManager().SetTimer(UpdateTimerHandle, this, &ABattleCamera::UpdateCamera, 0.01f, true, 1.0f);
         });
 
 }
