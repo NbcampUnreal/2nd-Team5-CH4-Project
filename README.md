@@ -55,6 +55,8 @@ A : 기본 공격, S : 특수 공격, D : 방어, 1번 키 : 춤추기
 
 - 레벨 디자인
 
+![HighresScreenshot00001](https://github.com/user-attachments/assets/b9c62a80-ba40-4035-83ea-2fe872489b35)
+
     [버섯동산]
   * 디자인 개요 
  2D와 3D 오브젝트 믹스 배치로 공감각적 매력을 느낄 수 있는 맵으로 제작 
@@ -65,6 +67,9 @@ A : 기본 공격, S : 특수 공격, D : 방어, 1번 키 : 춤추기
   * 특수 오브젝트
  OneWayFlatform 즉 한 곳에서 만 출입을 허가하는 플랫폼을 만듬. 캐릭터의 고저차를 이용해 IgnoreActorWhenMoving으로 플랫폼의 충돌체를 무시하게  만들어 이동의 방해를 최소화해 게임의 박진감을 더 느끼게 함
 
+![HighresScreenshot00002](https://github.com/user-attachments/assets/a8bcaf13-f817-4254-86b3-9258ed157570)
+
+
    [배틀 스타디움]
   * 디자인 개요 
  복잡한 기믹없이 투박하게 싸우지만 축제 느낌의 화려한 분위기로 제작
@@ -74,6 +79,9 @@ A : 기본 공격, S : 특수 공격, D : 방어, 1번 키 : 춤추기
 
   * 특수 오브젝트
  플레잉 화면을 Scene Capture Component를 만들어 캡쳐해 랜더타겟으로 이미지를 기록한다. 그 랜더타겟을 머티리얼에 넣고 화면을 보여줄 액터의 머티리얼로 추가해서 플레이 장면을 큰 화면에 비춰 실제로 중계하는 스타디움의 느낌을 줌
+
+![HighresScreenshot00004](https://github.com/user-attachments/assets/b7261492-a405-40f7-a719-bd9e3bd9b5a6)
+
 
    [아레나]
   * 디자인 개요 
